@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="348" height="216" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+						
+			private var fecha:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var inf:String;
+					
+			private function generar():void{
+				if(valida()){
+					if(inf != "-1"){
+						var consulta:String = global.urlInf;
+						var id:String = "&id=" + inf;
+						var fecha:String = "&fe=" + dtfFecha.text;
+						var opcion:String = "&op=" + cbxDiasMora.selectedItem.id;
+						consulta = consulta + id + fecha + opcion;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				inf = "12";
+				titulo = "Informe de Indicadores Mensual";
+				lblTitulo.text = titulo.toUpperCase();
+				
+				var oItem:Object;
+				var item:Array = new Array();
+				var acDiasMora:ArrayCollection;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Todos--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Menor o Igual a 60 días";
+				item.push(oItem);
+								
+				acDiasMora = new ArrayCollection(item);
+				cbxDiasMora.dataProvider = acDiasMora;
+				
+				limpiar();
+			}		
+		
+			private function limpiar():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				cbxDiasMora.selectedIndex = 0;
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="311" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="311.05" height="118.5" styleName="canvasMod">
+		<mx:Label x="23.5" y="10" text="Fecha" width="81" height="20"/>
+		<mx:DateField id="dtfFecha" x="23.5" y="28.5" width="111"/>
+		<mx:Label x="23.5" y="60.5" text="Dias de Mora:" width="81" height="20" id="lblDiasMora"/>
+		<mx:ComboBox x="23" y="78" id="cbxDiasMora" labelField="nombre"/>
+	</mx:Canvas>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="179.5" y="180" label="Generar" click="generar()"/>
+	<mx:Button x="258" y="180" label="Limpiar" width="71" height="24" click="limpiar()"/>
+</mx:Canvas>

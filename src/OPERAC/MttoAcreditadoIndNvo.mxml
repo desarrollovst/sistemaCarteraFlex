@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="512" height="580" 
+	title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+	creationPolicy="all">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.ComboBox;				   
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Globales;
+			import Data.PdfExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			private var info:DatosAcred;
+			private var _xmlAcred:XML = new XML();
+			private var _xmlInegiEqu:XML =  new XML();
+			
+			public var wsMS:WebService;	
+			public var wsReg:WebService;
+			public var tipoAccion:int;
+			public var band:Boolean;
+			public var grupo:String;
+			public var acred:String;
+			public var titulo:String;
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var consBuro:Boolean = new Boolean();
+			
+			public function cargaInfoAcred(acred:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				tipoAccion = 2;
+				this.acred = acred;
+				permisos();
+				du.sCursor();
+				du.initWsCat(wsCat);
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+												
+					if (_xmlAcred.elements().length() > 0){
+						llenaRegistros();
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+				});
+				params[0] = this.acred;
+				wsCat.getInfoAcred.send(1, params);
+			}
+			
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function consultaBuro():void{
+				initConexion();
+				du.sCursor();
+							
+				var titulo:String = "Consulta Reporte Crédito";
+				var acred:String = formDPAcred.txtCodigo.text;
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsMS);
+													
+					if(res.substr(0,1) == "1"){
+						var consulta:String;
+						var id:String = "&id=19";
+						var codAcred:String = "&acred=" + acred;
+						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var tipo:String = "&tipo=CC";
+						
+						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo;			
+						var pdfE:PdfExport = new PdfExport();
+						pdfE.cargaPdf(consulta);
+					}
+					else{
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsMS.setAccionCDC.send(acred, Application.application.U_ID);
+			}
+			
+			public function copiarDir(event:Event):void{
+				formDirNegAcred.copiaDir(formDirAcred.txtCalle.text, formDirAcred.txtEntreCalles.text, formDirAcred.txtNoExt.text
+					, formDirAcred.txtNoInt.text, formDirAcred.txtTelefono.text, formDirAcred.txtCodPostal.text, formDirAcred.txtColonia.text);
+			}
+			
+			public function enviar():void{
+				if(formDPAcred.obtieneBandCurp()){
+					info = new DatosAcred();
+					formDPAcred.enviarDatosAcred(info);
+					formDirAcred.enviarDatosAcred(info);
+					formDirNegAcred.enviarDatosAcred(info);
+					formOtroAcred.enviarDatosAcred(info);
+					formOficialAcred.enviarOficialAcred(info);
+					formPLDAcred.enviarDatosAcred(info);
+					validaFinal();
+				}
+				else
+					Alert.show("El proceso de cálculo de CURP Y RFC se está ejecutando. Intente nuevamente cuando se hayan actualizado los datos.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function guardaAcred():void{
+				initConexion();
+				Application.application.bloquear();
+				du.sCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionAcred);
+				wsMS.setAccionAcred.send(tipoAccion, Application.application.U_ID, this.grupo, 
+											 info.codigo, "", info.nombre, info.segNombre, info.aPaterno, 
+											 info.aMaterno, info.sexo, info.fecha, info.cdgPais, 
+											 info.cdgEntFed, info.cdgNac, info.rfc, info.curp, info.ife, 
+											 info.calle, info.entreCalles, info.telefono, info.codPostal,
+											 info.cdgDirEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
+										     info.edoCivil, info.nivelEsc, info.depend, info.marca, 
+										     info.causa, info.enano, info.cantEnano,"","",info.tipoPers,
+										     info.origen, info.destino, info.cdgDirEntFedNeg, info.cdgMunNeg,
+										     info.cdgLocNeg, info.coloniaNeg, info.calleNeg, info.codPostalNeg,
+										     info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
+										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg, info.tipoDomNeg);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Acreditado";
+				
+				formDirAcred.addEventListener("seleccionarDir", seleccionarDir);
+				formDirNegAcred.addEventListener("copiarDir", copiarDir);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function initConexionReg():void{				
+				wsReg = new WebService();			
+				wsReg.wsdl = Application.application.wsStr.wsdlReg.toString();
+				wsReg.loadWSDL();
+			}	
+			
+			public function llenaRegistros():void{
+				info = new DatosAcred();
+				//Datos personales del Acreditado
+				info.codigo = _xmlAcred.Table[0].CODIGO;
+				info.nombre = _xmlAcred.Table[0].NOMBRE1;
+				info.segNombre = _xmlAcred.Table[0].NOMBRE2;
+				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
+				info.aMaterno = _xmlAcred.Table[0].SEGAPE;
+				info.cdgco = _xmlAcred.Table[0].COORD;
+				info.sexo = _xmlAcred.Table[0].SEXO;
+				info.fecha = _xmlAcred.Table[0].NACIMIENTO;
+				info.cdgPais = _xmlAcred.Table[0].NACIOPAI;
+				info.cdgEntFed = _xmlAcred.Table[0].NACIOEF;
+				info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
+				info.rfc = _xmlAcred.Table[0].RFC;	
+				info.curp = _xmlAcred.Table[0].CURP;
+				info.ife = _xmlAcred.Table[0].IFE;
+				
+				//Direccion del Acreditado
+				info.calle = _xmlAcred.Table[0].CALLE;
+				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
+				info.telefono = _xmlAcred.Table[0].TELEFONO;
+				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
+				info.cdgDirEntFed = _xmlAcred.Table[0].CDGEF;
+				info.dirEntFed = _xmlAcred.Table[0].ENTFED;
+				info.cdgMun = _xmlAcred.Table[0].CDGMU;
+				info.municipio = _xmlAcred.Table[0].MUNIC;
+ 				info.cdgLoc = _xmlAcred.Table[0].CDGLO; 
+				info.localidad = _xmlAcred.Table[0].LOC;
+				info.cdgCol = _xmlAcred.Table[0].CDGCOL;
+				info.colonia = _xmlAcred.Table[0].COL;
+				info.noExt = _xmlAcred.Table[0].NOEXT;
+				info.noInt = _xmlAcred.Table[0].NOINT;
+				
+				//Otra información del Acreditado
+				info.edoCivil = _xmlAcred.Table[0].EDOCIVIL;
+				info.nivelEsc = _xmlAcred.Table[0].NIVESCOLAR;
+				info.depend = _xmlAcred.Table[0].NODEPEND;
+				info.nivelRiesgo = _xmlAcred.Table[0].NIVELRIESGO;
+				info.marca = _xmlAcred.Table[0].MARCA;
+				info.enano = _xmlAcred.Table[0].ENANO;
+				info.cantEnano = _xmlAcred.Table[0].CANTENANO;
+				info.tipoVivienda = _xmlAcred.Table[0].TIPOVIV;
+				
+				//Oficial de Crédito
+				info.cdgPr = _xmlAcred.Table[0].CDGOCPE;
+				info.promotor = _xmlAcred.Table[0].PROMOTOR;
+				info.cdgRec = _xmlAcred.Table[0].CDGPRPE;
+				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
+				
+				//Informacion de PLD
+				info.tipoPers = _xmlAcred.Table[0].CDGTIPOPERS;
+				info.origen = _xmlAcred.Table[0].CDGORIREC;
+				info.destino = _xmlAcred.Table[0].CDGDESREC;
+				
+				//Información de la dirección de Negocio
+				info.calleNeg = _xmlAcred.Table[0].CALLE_NEG;
+				info.entreCallesNeg = _xmlAcred.Table[0].ENTRECALLES_NEG;
+				info.noExtNeg = _xmlAcred.Table[0].NOEXT_NEG;
+				info.noIntNeg = _xmlAcred.Table[0].NOINT_NEG;
+				info.telefonoNeg = _xmlAcred.Table[0].TELEFONO_NEG;
+				info.codPostalNeg = _xmlAcred.Table[0].CDGPOSTAL_NEG;
+				info.tipoDomNeg = _xmlAcred.Table[0].TIPODOM_NEG;
+				
+				info.cdgDirEntFedNeg = _xmlAcred.Table[0].CDGEF_NEG;
+				info.cdgMunNeg = _xmlAcred.Table[0].CDGMU_NEG;
+				info.cdgLocNeg = _xmlAcred.Table[0].CDGLO_NEG;
+				
+				info.dirEntFedNeg = _xmlAcred.Table[0].NOMEF_NEG;
+				info.municipioNeg = _xmlAcred.Table[0].NOMMU_NEG;
+				info.localidadNeg = _xmlAcred.Table[0].NOMLO_NEG;
+				info.coloniaNeg = _xmlAcred.Table[0].COLONIA_NEG;
+				info.poblacionNeg = _xmlAcred.Table[0].POBLACION_NEG;
+			
+				formDPAcred.init(info);
+				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
+				//Asigna el codigo de sucursal almacenado en el registro de acreditado
+				Application.application.SUC_ID = info.cdgco;
+				formDirAcred.init(info);
+				formDirNegAcred.init(info);
+				formOtroAcred.init(info);
+				formOficialAcred.init(info);
+				formPLDAcred.init(info);
+			}
+			
+			public function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;
+				var i:int;
+				var cont:int;
+				
+				if (global.permisosConsBuro(Application.application.PERFIL_ID)){
+					consBuro = true;	
+				}
+				btnConsBuro.visible = consBuro;	
+			}
+			
+			public function registraInfoAcred():void{
+				tipoAccion = 1;
+				
+				info = null;
+				formDPAcred.init(info);
+				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE,selecCoord);											
+				formDirAcred.init(info);
+				formDirNegAcred.init(info);
+				formOtroAcred.init(info);
+				formOficialAcred.init(info);
+				formPLDAcred.init(info);
+			} 
+			
+			private function selecCoord(event:ListEvent):void{
+				Application.application.SUC_ID = ComboBox(event.currentTarget).selectedItem.id;
+				formOficialAcred.cargaPersonal();
+			}
+			
+			private function setAccionAcred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionAcred);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					initConexion();
+					du.sCursor();
+											
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var resQEQ:String = evt.result.toString();
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						if(resQEQ.substr(0,1) == "1"){
+							initConexionReg();
+							du.sCursor();
+											
+							du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
+								var resEnv:String = evt.result.toString();
+								
+								du.rCursor();
+								du.closeWs(wsReg);
+							
+								Alert.show(resQEQ.substr(2,resQEQ.length -1),titulo,4,null,null,global.iAlert);
+								cerrar();
+							});
+							wsReg.setEnviaEmail.send("","tupatrimoniofin@gmail.com",
+											 		 "PEP y Listas Restringidas","Se han encontrado coincidencias en PEP y Listas Restingidas del acreditado: " + acred);		
+						}
+						else if(resQEQ.substr(0,1) == "2")
+							cerrar();
+						else
+							Alert.show(resQEQ,titulo,4,null,null,global.iAlert);
+					});
+					//Metodo que Obtiene el estatus de la busqueda de coincidencias como PEP o Listas Negras
+					wsMS.setAccionQEQ.send(acred, Application.application.U_ID);
+				}
+				else if(res.substr(0,1) == "2"){
+					Application.application.desbloquear();
+					cerrar();
+				}
+				else{
+					Application.application.desbloquear();
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+				}	
+			}
+			
+			public function seleccionarDir(event:Event):void{
+				if(formDirNegAcred.txtEntFed.text == ""){
+					var idSepomex:String = formDirAcred.valorEF() + formDirAcred.valorMun() + formDirAcred.valorLoc();
+					
+					var wsCat:WebService = new WebService();
+					var Params:Array = new Array();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlInegiEqu = new XML(evt.result);
+								
+						du.rCursor();
+						du.closeWs(wsCat);
+								
+						if (_xmlInegiEqu.elements().length() > 0){
+							formDirNegAcred.limpiaDatosDir();
+							formDirNegAcred.cargaDirNeg(_xmlInegiEqu.Table[0]);
+						}							
+					});
+					Params[0] = idSepomex;
+					Params[1] = "";
+					Params[2] = "";
+					Params[3] = "";
+					Params[4] = "";
+					wsCat.getCatalogoGral.send(68, Params);
+				}
+			}
+			
+			public function validaDatosAcred(event:EventAcred):void{
+				info = event.customProp;
+			}
+			
+			public function validaFinal():void{
+				if (info.guardaDatos == true && info.guardaDir == true && 
+					info.guardaOtros == true && info.guardaOficial == true &&
+					info.guardaPLD == true && info.guardaDirNeg == true){
+					/*if(global.permisosModRegAcred(Application.application.PERFIL_ID) == true)
+						guardaAcred();
+					else{*/	
+					if(info.tipoVivienda.toString() != "" && info.tipoDomNeg.toString() != "")
+						validaSituacionAcred();
+					else
+						Alert.show("Tipo de Vivienda Requerido",titulo,4,null,null,global.iAlert);
+					//}
+				}
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+			
+			//Funcion que verifica que el usuario no se encuentre 
+			//registrado en una solicitud o prestamo vigente 
+			public function validaSituacionAcred():void{
+				if(tipoAccion == 2){
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						if(res.substr(0,1) == "1")
+							guardaAcred();
+						else
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getValidaSituacionAcred.send(acred, "I", Application.application.U_ID);
+				}
+				else
+					guardaAcred();
+			}
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="496" height="450" x="10" y="52" creationPolicy="all">
+		<mx:Canvas label="Datos Personales" width="100%" height="100%">
+			<Forms:FormDatosPerAcredInd id="formDPAcred" x="26" height="404" width="440"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dirección" width="100%" height="100%">	
+			<Forms:FormDirAcred id="formDirAcred" x="36" height="370" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas label="Negocio" width="100%" height="100%">
+			<Forms:FormDirNegAcred id="formDirNegAcred" x="10" height="370" width="474"/>
+		</mx:Canvas>
+		<mx:Canvas label="Otros Datos" width="100%" height="100%">	
+			<Forms:FormOtroAcred id="formOtroAcred" x="46"/> 
+		</mx:Canvas>
+		<mx:Canvas label="Oficial de Crédito" width="100%" height="100%">	
+			<Forms:FormOficialAcred id="formOficialAcred" x="47" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="PLD" width="100%" height="100%">
+			<Forms:FormPLDAcred id="formPLDAcred" x="19.5" width="455" y="10"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="462" y="508" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="414" y="508" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Image x="446" y="4" width="44" height="45" scaleContent="true">
+		<mx:source>assets/images/user2.png</mx:source>
+	</mx:Image>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep Crédito" visible="false"/>
+</mx:TitleWindow>

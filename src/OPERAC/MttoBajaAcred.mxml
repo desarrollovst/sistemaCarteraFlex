@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="410" height="180" creationPolicy="all">
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			
+			private var _xmlCausa:XML =  new XML();
+			
+			public var causaObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var titulo:String;	
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function formateaCausa(datos:String):void{
+				var oItem:Object;
+				var array:Array;
+				var arr:ArrayCollection;
+					
+				oItem = new Object();
+				oItem.CODIGO = "";
+				oItem.DESCRIPCION = "--Seleccionar--";
+					
+				var xml:XMLDocument = new XMLDocument( datos ); 
+	     		var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+	     		var data:Object = decoder.decodeXML( xml );  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				causaObj = new ArrayCollection(array);
+				causaObj.addItemAt(oItem,0);
+			}
+			
+			public function init():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Baja de Acreditado";
+				this.title = titulo;
+				
+				var fec:Date = Application.application._Current_Fecha;
+				fec = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				txtFecha.text = global.formatoFecha(fec);
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{											
+					_xmlCausa = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlCausa.elements().length() > 0){
+						formateaCausa(evt.result.toString());
+						cboCausa.dataProvider = causaObj; 
+					}
+				});
+				wsCat.getListado.send(8);			
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function obtieneCausa():String{
+				return cboCausa.selectedItem.CODIGO;	
+			}
+			
+			public function obtieneFecha():String{
+				return txtFecha.text;
+			}
+			
+			private function valida():Boolean{
+				if(cboCausa.selectedIndex == 0){
+					Alert.show("Debe seleccionar la causa de deserción del acreditado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Button id="btnCerrar" x="354" y="108" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="306" y="108" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Canvas id="cnvFecha" x="16" y="10" width="378" height="90" styleName="canvasMod">
+		<mx:TextInput id="txtFecha" x="82.25" y="16" width="89" editable="false"/>
+		<mx:Label id="lblFecha" textAlign="right" x="23.75" y="18" width="50.5" text="Fecha:"/>
+		<mx:Label id="lblCausa" textAlign="left" x="35.25" y="51" text="Causa:"/>
+		<mx:ComboBox id="cboCausa" labelField="DESCRIPCION" x="82.25" y="48" width="270"></mx:ComboBox>
+	</mx:Canvas>
+</mx:TitleWindow>

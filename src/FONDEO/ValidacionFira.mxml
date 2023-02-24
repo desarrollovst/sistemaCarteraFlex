@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="709" height="566" backgroundAlpha="1.0" creationPolicy="all"
+	creationComplete="initApp()" backgroundColor="#FFFFFF" xmlns:Data="Data.*" x="12.5" y="42">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		private var du:Utils;
+      	
+      	private var vId_persona:Array
+      	private var vOrgFond:String;
+      	private var vLineaCred:String;
+      	private var vDisp:String;
+      	private var vInicio:Array;
+      	private var vCurp:Array;
+      	private var vRfc:Array;
+      	private var vNo_cred_bco:Array;
+      	private var vFoperacion:Array;
+      	
+      	private var orgObj:ArrayCollection = new ArrayCollection();
+		private var dispObj:ArrayCollection = new ArrayCollection();
+		private var lineaObj:ArrayCollection = new ArrayCollection();
+
+		private var _xmlOF:XML = new XML();
+		private var _xmlDisp:XML = new XML();
+		private var _xmlLC:XML = new XML();
+		private var _xmlRep:XML = new XML();
+		
+        private var infoObj:ArrayCollection = new ArrayCollection();
+		
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        public function cargarInfo():void{
+        	if(valida()){
+        		if(formateaInfo() == true){
+		        	initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setValidacionFira);
+					wsMS.setValidacionFira.send(vId_persona, vCurp, vRfc, vInicio, vOrgFond, vLineaCred, vDisp, vNo_cred_bco, vFoperacion, 1); // Alta
+        		}
+        	}
+        }
+        
+        public function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	var i:int;
+        	vId_persona = new Array;
+        	vCurp = new Array;
+        	vRfc = new Array;
+        	vInicio = new Array;
+			vNo_cred_bco = new Array;
+			vFoperacion = new Array;
+			
+			vOrgFond = cboOF.selectedItem.codigo;
+			vLineaCred = cboLC.selectedItem.codigo;
+			vDisp = cboDisp.selectedItem.codigo;
+			
+			for (i = 0; i < info.length; i++){
+				vId_persona[i] = info[i].ID_PERSONA;
+				vCurp[i] = info[i].CURP;
+				vRfc[i] = info[i].RFC;
+			 	vInicio[i] = info[i].INICIO;
+				vNo_cred_bco[i] = info[i].NO_CRED_BCO;
+				vFoperacion[i] = info[i].FOPERACION;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function onLoadError():void{
+        	/*body not implemented*/
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 1; row<noOfRows;row++)
+	                    {
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0;col<noOfColumns;col++)
+	                        {
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell!=null)
+	                            {
+	                            	cellValue =(cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	}  
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = (noOfRows - 1) + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.ID_PERSONA = cellValue;
+            else if(index == 1)
+                cellObject.NO_CRED_BCO = cellValue;
+            else if(index == 2)
+                cellObject.FOPERACION = global.formatoFechaExcel(Number(cellValue));
+            else if(index == 3)
+                cellObject.CURP = cellValue;
+            else if(index == 4)
+                cellObject.RFC = cellValue;
+            else if(index == 5)
+                cellObject.INICIO = global.formatoFechaExcel(Number(cellValue));                
+        }
+		
+		private function formateaDisp():void{
+			var cont:int = _xmlDisp.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			dispObj.removeAll();
+			dispObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlDisp.Table[i].CODIGO;
+				oItem.desc = _xmlDisp.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			dispObj = new ArrayCollection(item);
+		}
+		
+		private function formateaLC():void{
+			var cont:int = _xmlLC.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			lineaObj.removeAll();
+			lineaObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlLC.Table[i].CODIGO;
+				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			lineaObj = new ArrayCollection(item);
+		}
+		
+		private function formateaOF():void{
+			var cont:int = _xmlOF.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for (var i:int = 0; i < cont; i++){
+				if(_xmlOF.Table[i].CODIGO == "0006"){
+					oItem = new Object();
+					oItem.nombre = _xmlOF.Table[i].NOMBRE;
+					oItem.codigo = _xmlOF.Table[i].CODIGO;
+					item.push(oItem);
+				}
+			}
+			orgObj = new ArrayCollection(item);
+		}
+		
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Validación FIRA";
+	      	lblTitulo.text = titulo.toUpperCase();
+	      	
+	      	var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOF = new XML(evt.result.toString());
+					
+				if(_xmlOF.elements().length() > 0){
+					formateaOF();
+					cboOF.dataProvider = orgObj;
+				}
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+			});
+			wsCat.getCatalogoGral.send(29);
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+	    
+	    private function seleccionarLC():void{
+			cboDisp.dataProvider = null;
+			
+			if(cboLC.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlDisp = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDisp = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlDisp.elements().length() > 0){
+						formateaDisp();
+						cboDisp.dataProvider = dispObj;
+						cboDisp.selectedIndex = 0;	
+					}
+				});
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				wsCat.getListado.send(22, params);
+			}
+		}
+		
+	    private function seleccionarOF():void{
+			cboLC.dataProvider = null;
+			cboDisp.dataProvider = null;
+			
+			if(cboOF.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlLC = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLC = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlLC.elements().length() > 0){
+						formateaLC();
+						cboLC.dataProvider = lineaObj;
+						cboLC.selectedIndex = 0;
+					}
+				});
+				params[0] = orgFond;
+				wsCat.getListado.send(21, params);
+			}
+		}
+		
+	    private function setValidacionFira(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, setValidacionFira);
+			wsMS = null;
+			
+			var res:String = event.result.toString();
+			
+			if (res.substr(0,1) == "1"){
+				dgInfo.dataProvider = null;	
+				Alert.show("Se guardo la información correctamente", titulo, 4, null, null, global.iAlert);
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	    
+	    private function valida():Boolean{
+	    	
+	    	if(cboOF.selectedIndex == 0){
+	    		Alert.show("Seleccione un fondeador.", titulo, 4, null, null, global.iAlert);
+	    		return false;
+	    	}
+	    	
+	    	if(cboLC.selectedIndex == 0){
+	    		Alert.show("Seleccione una línea de crédito.", titulo, 4, null, null, global.iAlert);
+	    		return false;
+	    	}
+	    	
+	    	if(cboDisp.selectedIndex == 0){
+	    		Alert.show("Seleccione una disposición.", titulo, 4, null, null, global.iAlert);
+	    		return false;
+	    	}
+	    	
+	    	if(dgInfo.rowCount == 0){
+	    		Alert.show("Seleccione el archivo de Excel a cargar.", titulo, 4, null, null, global.iAlert);
+	    		return false;
+	    	}
+	    	
+	    	return true;
+	    }
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="154" width="689" height="402" styleName="canvasMod">
+  		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="289.5" y="365" click="cargarInfo()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="395.1" y="333"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="227.1" y="333" width="160"/>
+		<mx:DataGrid id="dgInfo" x="10" y="10" width="667" height="288" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="ID PERSONA" dataField="ID_PERSONA" width="100"/>
+				<mx:DataGridColumn headerText="NO. CRED. BANCO" dataField="NO_CRED_BCO" width="120"/>
+				<mx:DataGridColumn headerText="F. OPERACIÓN" dataField="FOPERACION" width="100"/>
+				<mx:DataGridColumn headerText="CURP" dataField="CURP" width="100"/>
+				<mx:DataGridColumn headerText="RFC" dataField="RFC" width="100"/>
+				<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="227.1" y="306" width="232.75" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="10" y="39" width="334" height="107" styleName="canvasMod">
+		<mx:Label id="lblOF" x="15" y="12" text="Fondeadora:"/>
+		<mx:ComboBox id="cboOF" x="89" y="10" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+		<mx:Label id="lblLC" x="10" y="42" text="Línea Crédito:"/>
+		<mx:ComboBox id="cboLC" x="89" y="40" width="230" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+		<mx:Label id="lblDisp" x="18" y="72" text="Disposición:"/>
+		<mx:ComboBox id="cboDisp" x="89" y="70" width="230" labelField="desc" />
+	</mx:Canvas>
+</mx:Canvas>

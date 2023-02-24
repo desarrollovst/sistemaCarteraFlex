@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="468" 
+	height="534" title="BENEFICIARIO" fontWeight="normal">
+	
+	<mx:Validator id="fpagoV" source="{dtFPago}" property="text" 
+	invalid="{dtFPago.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="montoV" source="{txtMonto}" property="text" 
+	invalid="{txtMonto.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="porcentajeV" source="{txtPorcentaje}" property="text" 
+	invalid="{txtPorcentaje.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="primapeV" source="{txtPrimape}" property="text" 
+	invalid="{txtPrimape.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="nombre1V" source="{txtNombre1}" property="text" 
+	invalid="{txtNombre1.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el seguimiento de las defunciones-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosDefuncionBeneficiario;
+		import Data.EventDefuncionBeneficiario;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		[Bindable]
+		private var info:DatosDefuncionBeneficiario;
+		
+		private var _xmlAcred:XML = new XML();
+		private var _xmlMicro:XML = new XML();
+		private var _xmlDef:XML = new XML();
+		private var _xmlDefBenef:XML = new XML();
+		private var _xmlParentesco:XML = new XML();
+		
+		private var tipoParenObj:ArrayCollection = new ArrayCollection();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		
+		private var codigo:String;
+		private var cdgDefun:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de defunciones";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function calculaMonto():void{
+			if(txtPorcentaje.text != "")
+				txtMonto.text = ((_xmlMicro.MONTO_DEFUNCION * Number(txtPorcentaje.text)) / 100).toString();
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		public function registraInfoDefBenef(pXmlDefun:XML, pXmlMicro:XML):void{
+			tipoAccion = 1; //INSERTAR
+			codigo = "";
+			_xmlMicro = pXmlMicro;
+			_xmlDef = pXmlDefun;
+			
+			txtCdgcl.text = _xmlDef.ACREDITADO;
+			txtNombreAcre.text = _xmlDef.NOMBRE_CL;
+			
+			cdgDefun = _xmlDef.CODIGO;
+			txtNombreDefun.text = _xmlDef.NOMBRE_DEFUN;
+			
+			if(pXmlDefun.MISDATCL == "S") chbAcreditado.enabled = false; else chbAcreditado.enabled = true; 
+			
+			this.title = "Nuevo Beneficiario";
+			info = null;
+			
+			init();
+
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+				
+			du.initWsCat(wsCat);
+			du.sCursor();
+			Application.application.bloquear();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlAcred = new XML(event.result);
+					
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+					_xmlParentesco = new XML(event.result);
+					
+					if (_xmlParentesco.elements().length() > 0){
+						formateaParentesco();
+					 	cbCdgParen.dataProvider = tipoParenObj;	
+						cbCdgParen.selectedIndex = 0;
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();						
+					
+					txtCdgcl.text = _xmlMicro.CDGCL;
+					txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
+								_xmlAcred.Table[0].PRIMAPE + " " + _xmlAcred.Table[0].SEGAPE;
+				});			
+				wsCat.getListado.send(57, params);				
+			});
+			params[0] = _xmlMicro.CDGCL;
+			wsCat.getInfoAcred.send(1, params);
+		}
+		
+		private function limpiar():void{
+			txtNombre1.text = "";
+			txtNombre2.text = "";
+			txtPrimape.text = "";
+			txtSegape.text = "";
+			cbCdgParen.selectedIndex = 0;
+			cbCdgParen.enabled = true;
+			rdgSexo.selectedValue = null;
+			rdgEstatus.selectedValue = null;
+			rdCancelado.selected = false;
+			rdVigente.selected = false;
+			rdFemenino.selected = false;
+			rdMasculino.selected = false;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- CARGA COMBOBOX -->
+	<mx:Script>
+		<![CDATA[
+		private function cargaParentesco():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			du.initWsCat(wsCat);
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+				_xmlParentesco = new XML(event.result);
+						
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+				if (_xmlParentesco.elements().length() > 0){
+					formateaParentesco();
+				 	cbCdgParen.dataProvider = tipoParenObj;	
+					cbCdgParen.selectedIndex = 0;
+				}	
+			});
+		
+			wsCat.getListado.send(57, params);
+		}
+		
+		private function formateaParentesco():void{
+			var cont:int = _xmlParentesco.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				if(_xmlParentesco.Table[i].BENEFICIARIO == "S"){
+					oItem = new Object();
+					oItem.id = _xmlParentesco.Table[i].CODIGO;	
+					oItem.descripcion = _xmlParentesco.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+			}
+			
+			tipoParenObj = new ArrayCollection(item);
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Text;
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosDefuncionBeneficiario();
+				info.codigo = codigo;
+				info.cdgdefun = cdgDefun;
+				info.nombre1 = txtNombre1.text;
+				info.nombre2 = txtNombre2.text;
+				info.primape = txtPrimape.text;
+				info.segape = txtSegape.text;
+				info.sexo = rdgSexo.selectedValue.toString();
+				info.porcentaje = Number(txtPorcentaje.text);
+				info.monto = Number((_xmlMicro.MONTO_DEFUNCION * Number(txtPorcentaje.text)) / 100);
+				info.cdgparen = cbCdgParen.selectedItem.id;
+				info.estatus = rdgEstatus.selectedValue.toString();
+				info.fpago = dtFPago.text;
+				info.fregistro = "";
+				info.cdgpe = Application.application.U_ID;
+				info.factualiza = "";
+				info.actualizape = Application.application.U_ID;
+				info.forent = rdgForent.selectedValue.toString();
+				if(chbAcreditado.selected) info.misdatcl = "S"; else info.misdatcl = "N"; 
+
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1")
+						cerrar();
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionDefuncionBeneficiario.send( info.codigo, info.cdgdefun, info.nombre1
+						, info.nombre2, info.primape, info.segape, info.sexo, info.porcentaje
+						, info.monto, info.cdgparen, info.estatus, info.cdgcb
+						, info.fexp, info.nocheque, info.misdatcl, info.fpago, info.fregistro
+						, info.cdgpe, info.factualiza, info.actualizape, info.forent, tipoAccion);			
+			}
+		}
+		
+		private function valida():Boolean{
+			var iaFPAGO:Array = Validator.validateAll([fpagoV]);
+			var iaMONTO:Array = Validator.validateAll([montoV]);
+			var iaPORCENTAJE:Array = Validator.validateAll([porcentajeV]);
+			var iaPRIMAPE:Array = Validator.validateAll([primapeV]);
+			var iaNOMBRE1:Array = Validator.validateAll([nombre1V]);	
+			
+			if(txtCdgcl.text == ""){
+				Alert.show("Debe capturar el código de cliente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}			
+			if(iaNOMBRE1.length > 0){
+				Alert.show("Debe capturar el nombre.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaPRIMAPE.length > 0){
+				Alert.show("Debe capturar el apellido paterno.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(!rdMasculino.selected && !rdFemenino.selected){
+				Alert.show("Debe capturar el campo sexo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(!rdCancelado.selected && !rdVigente.selected){
+				Alert.show("Debe capturar el campo estatus.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(!rdCheque.selected && !rdOpago.selected){
+				Alert.show("Debe capturar la forma de entrega.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaPORCENTAJE.length > 0){
+				Alert.show("Debe capturar el porcentaje.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaMONTO.length > 0){
+				Alert.show("Debe capturar el monto.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(Number(txtPorcentaje.text) == 0){
+				Alert.show("El porcentaje debe ser mayor a cero.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaFPAGO.length > 0){
+				Alert.show("Debe capturar la fecha de pago.",titulo,4,null,null,global.iAlert);
+				return false;
+			} 
+
+			return true;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- LLENAR ACREDITADO -->
+	<mx:Script>
+		<![CDATA[
+			
+		private function llenarAcred():void{
+			if(chbAcreditado.selected){
+				if(txtNombreAcre.text != ""){
+					limpiar();
+					txtNombre1.text = _xmlAcred.Table[0].NOMBRE1;
+					txtNombre2.text = _xmlAcred.Table[0].NOMBRE2;
+					txtPrimape.text = _xmlAcred.Table[0].PRIMAPE;
+					txtSegape.text = _xmlAcred.Table[0].SEGAPE;
+					rdgSexo.selectedValue = _xmlAcred.Table[0].SEXO;
+					cbCdgParen.selectedIndex = 0;
+				}
+			}
+			else{
+				limpiar();
+			}
+		}
+		]]>
+	</mx:Script>
+		
+	<!-- CARGA DEFUNCION BENEFICIARIO -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfoDefuncionBenef(pXmlDefun:XML, pXmlDefunBenef:XML, pXmlMicro:XML):void{
+			tipoAccion = 2; //ACTUALIZAR
+			_xmlDef = pXmlDefun;
+			_xmlDefBenef = pXmlDefunBenef;
+			_xmlMicro = pXmlMicro;
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			this.title = "Edición de Beneficiario";
+			info = null;
+			
+			init();
+			
+			txtCdgcl.text = _xmlDef.ACREDITADO;
+			txtNombreAcre.text = _xmlDef.NOMBRE_CL;
+			
+			cdgDefun = _xmlDef.CODIGO;
+			txtNombreDefun.text = _xmlDef.NOMBRE_DEFUN;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlAcred = new XML(event.result);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+					_xmlParentesco = new XML(event.result);
+							
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+					if (_xmlParentesco.elements().length() > 0){
+						formateaParentesco();
+					 	cbCdgParen.dataProvider = tipoParenObj;	
+						cbCdgParen.selectedIndex = 0;
+					}
+									
+					var j:int;
+			
+					codigo = _xmlDefBenef.CODIGO;
+					txtNombre1.text = _xmlDefBenef.NOMBRE1;
+					txtNombre2.text = _xmlDefBenef.NOMBRE2;
+					txtPrimape.text = _xmlDefBenef.PRIMAPE;
+					txtSegape.text = _xmlDefBenef.SEGAPE;
+					rdgSexo.selectedValue = _xmlDefBenef.SEXO;
+					rdgEstatus.selectedValue = _xmlDefBenef.ESTATUS;
+					rdgForent.selectedValue = _xmlDefBenef.FORENT;
+					txtPorcentaje.text = _xmlDefBenef.PORCENTAJE;
+					txtMonto.text = _xmlDefBenef.MONTO;
+					dtFPago.selectedDate = DateField.stringToDate(_xmlDefBenef.FPAGO,"DD/MM/YYYY");
+					
+					if(rdgEstatus.selectedValue == "C")
+						btnAceptar.enabled = false;
+					
+					if(_xmlDefBenef.MISDATCL == "S")
+						chbAcreditado.selected = true; 
+					else
+						chbAcreditado.selected = false;
+					
+					if(_xmlDef.MISDATCL == "S")
+						chbAcreditado.enabled = false;		
+										
+					for(j = 0; j < tipoParenObj.length; j++){   
+						if (tipoParenObj[j].id.toString() == _xmlDefBenef.CDGPAREN){
+							cbCdgParen.selectedIndex = j;
+							break;
+						}
+					}
+				});		
+					
+				wsCat.getListado.send(57, params);
+			});
+			params[0] = _xmlMicro.CDGCL;
+			wsCat.getInfoAcred.send(1, params);
+		}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Button id="btnAceptar" x="322" y="462" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="13"/>
+	<mx:Button id="btnCancelar" x="394" y="462" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="14"/>
+		<mx:RadioButtonGroup id="rdgEstatus"/>
+		<mx:RadioButtonGroup id="rdgSexo"/>
+		<mx:RadioButtonGroup id="rdgForent"/>
+		<mx:Canvas x="10" y="134" width="448" height="320" styleName="canvasMod">
+				<mx:Label id="lblPrimape" x="59" y="45" text="Apellido Paterno:"/>
+				<mx:TextInput id="txtPrimape" x="155" y="45" width="110" maxChars="30" tabIndex="3"/>
+				<mx:Label id="lblNombres" x="96" y="15" text="Nombres:"/>
+				<mx:Label id="lblSegape" x="59" y="75" text="Apellido Materno:"/>
+				<mx:TextInput id="txtNombre1" x="155" y="15" width="110" maxChars="30" tabIndex="1"/>
+				<mx:TextInput id="txtSegape" x="155" y="75" width="110" maxChars="30" tabIndex="4"/>
+				<mx:TextInput id="txtNombre2" x="273" y="15" width="110" maxChars="30" tabIndex="2"/>
+				<mx:Label id="lblSexo" x="25" y="225" text="Sexo:"/>
+				<mx:Canvas x="25" y="242" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="10" label="Femenino" id="rdFemenino" groupName="rdgSexo" value="F" tabIndex="9"/>
+						<mx:RadioButton x="10" y="35" label="Masculino" id="rdMasculino" groupName="rdgSexo" value="M" tabIndex="10"/>
+				</mx:Canvas>
+				<mx:Label id="lblPocentaje" x="88" y="105" text="Porcentaje:"/>
+				<mx:TextInput id="txtPorcentaje" x="155" y="105" width="44" tabIndex="5" restrict="0-9; ." enter="calculaMonto()" focusOut="calculaMonto()"/>
+				<mx:Label id="lblMonto" x="110" y="135" text="Monto:"/>
+				<mx:TextInput id="txtMonto" x="155" y="135" width="110" tabIndex="6" editable="false"/>
+				<mx:Label id="lblCdgParen" x="84" y="165" text="Parentesco:"/>
+				<mx:ComboBox x="155" y="165" id="cbCdgParen" width="110" labelField="descripcion" tabIndex="7"></mx:ComboBox>
+				<mx:Label id="lblPagado" x="163" y="225" text="Estatus:"/>
+				<mx:Canvas x="163" y="242" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Vigente" id="rdVigente" groupName="rdgEstatus" value="V" tabIndex="11"/>
+						<mx:RadioButton x="10" y="33" label="Cancelado" id="rdCancelado" groupName="rdgEstatus" value="C" tabIndex="12"/>
+				</mx:Canvas>
+				<mx:Label id="lbl" x="203" y="107" text="%"/>
+				<mx:Label id="lblFPago" x="82" y="195" text="Fecha Pago:"/>
+				<mx:DateField x="155" y="195" width="127" id="dtFPago" showToday="true" tabIndex="8"/>
+				<mx:Label id="lbFormaEntrega" x="301" y="225" text="Forma de Entrega:"/>
+				<mx:Canvas x="301" y="242" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Cheque" id="rdCheque" groupName="rdgForent" value="C" tabIndex="13"/>
+						<mx:RadioButton x="10" y="33" label="Orden de Pago" id="rdOpago" groupName="rdgForent" value="O" tabIndex="14"/>
+				</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="10" width="447" height="41" cornerRadius="10" borderStyle="solid" styleName="canvasMod">
+				<mx:TextInput id="txtCdgcl" x="50" y="7" width="60" maxChars="6" restrict="0-9" editable="false"/>
+				<mx:Label id="lblCdgcl" x="9" y="9" text="Código:"/>
+				<mx:Label id="lblNombreAcre" x="117.5" y="9" text="Acreditado:"/>
+				<mx:TextInput id="txtNombreAcre" x="186" y="7" width="250" editable="false"/>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="59" width="447" height="41" cornerRadius="10" borderStyle="solid" styleName="canvasMod">
+				<mx:Label id="lblNombresDefun" x="68" y="9" text="Defunción:"/>
+				<mx:TextInput id="txtNombreDefun" x="128" y="7" width="250" editable="false"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosBeneficiario" x="11" y="114" text="Datos de Beneficiario:" width="140" fontSize="11" fontWeight="normal"/>
+		<mx:CheckBox x="310" y="112" label="mismos datos acreditado" id="chbAcreditado"  click="llenarAcred()"/>
+</mx:TitleWindow>

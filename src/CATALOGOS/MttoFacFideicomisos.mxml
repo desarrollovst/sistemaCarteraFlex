@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="321" height="285" 
+	title="FACTURA FIDEICOMISO" fontWeight="normal">
+	
+	<mx:Validator id="vNombre" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCuenta" source="{txtCuenta}" property="text" 
+	invalid="{txtCuenta.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de las facturas fideicomiso-->
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+				
+		private var vResult:ValidationResultEvent;
+		
+		private var _xmlORF:XML =  new XML();
+		private var acORF:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function Edicion(pxmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición de Facturas Fideicomiso";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+						
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+		 	du.sCursor();
+		 	Application.application.bloquear();
+		 		
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+				_xmlORF = new XML(event.result);
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+					
+				if (_xmlORF.elements().length() > 0){
+					formateaORF();
+					
+					for(var i:int = 0; i < acORF.length; i++){   
+						var a:String = acORF[i].codigo.toString();
+						var b:String = pxmlInfo.CDGORF;
+						if (acORF[i].codigo.toString() == pxmlInfo.CDGORF){
+							cbxNomORF.selectedIndex = i;
+							break;
+						}
+					}
+					
+					txtCodigo.text = pxmlInfo.CODIGO;
+					txtNombre.text = pxmlInfo.NOMBRE;
+					dtInicio.text = pxmlInfo.INICIO;
+					txtCuenta.text = pxmlInfo.CUENTA;
+				}
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(29, params);
+		}
+		
+		private function formateaORF():void{
+			var cont:int = _xmlORF.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				var a:String = _xmlORF.Table[i].CODIGO;
+				var b:String = _xmlORF.Table[i].NOMBRE1
+				
+				oItem.codigo = _xmlORF.Table[i].CODIGO;
+				oItem.nombre = _xmlORF.Table[i].NOMBRE1;
+				
+				a = oItem.codigo;
+				b = oItem.nombre;
+				 
+				item.push(oItem);
+			}
+			
+			acORF = new ArrayCollection(item);
+			cbxNomORF.dataProvider = acORF;
+			cbxNomORF.selectedIndex = 0;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mNombre:String = txtNombre.text;
+				var mInicio:String = dtInicio.text;
+				var mCdgorf:String = cbxNomORF.selectedItem.codigo;
+				var mCuenta:String = txtCuenta.text;
+					
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionFacFideicomisos.send(mCodigo, mNombre, mInicio, mCdgorf, mCuenta, tipoAccion);
+			}
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function Nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nueva Factura Fideicomiso";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			dtInicio.selectedDate = new Date();
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+		 	du.sCursor();
+		 	Application.application.bloquear();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+				_xmlORF = new XML(event.result);
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+					
+				if (_xmlORF.elements().length() > 0){
+					formateaORF();
+				}
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(29, params);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function valida():Boolean{
+			var iaNombre:Array = Validator.validateAll([vNombre]);
+			var iaCuenta:Array = Validator.validateAll([vCuenta]);		
+		
+			if (iaNombre.length != 0){
+				Alert.show("Debe capturar el nombre de la factura fideicomiso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaCuenta.length != 0){
+				Alert.show("Debe capturar la cuenta de la factura fideicomiso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (cbxNomORF.selectedIndex == 0){
+				Alert.show("Debe capturar la organización de la factura fideicomiso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			return true;
+		}
+	]]>
+	</mx:Script>
+	
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="301" height="171" x="10" y="34" styleName="canvasMod">
+	<mx:Label id="lblCodigo" x="38" y="12" text="Código:"/>
+	<mx:TextInput x="90" y="10" width="78" id="txtCodigo" editable="false" maxChars="2" tabIndex="1"/>
+	<mx:Label id="lblNombre" x="35" y="42" text="Nombre:"/>
+	<mx:TextInput id="txtNombre" x="90" y="40" width="182" maxChars="200" editable="true" tabIndex="2"/>
+	<mx:Label id="lblNomORF" x="10" y="72" text="Organización:"/>
+	<mx:ComboBox x="90" y="70" width="182" id="cbxNomORF" labelField="nombre" tabIndex="3"></mx:ComboBox>
+	<mx:Label id="lblInicio" x="50" y="102" text="Inicio:"/>
+	<mx:DateField x="90" y="100" width="106" id="dtInicio" tabIndex="4"/>
+	<mx:Label id="lblCuenta" x="40" y="132" text="Cuenta:"/>
+	<mx:TextInput id="txtCuenta" x="90" y="130" width="182" maxChars="15" editable="true" tabIndex="5"/>
+	
+</mx:Canvas>
+	<mx:Label id="lblDatos" x="11" y="10" text="Datos de la Factura Fideicomiso:" width="177" fontSize="11" fontWeight="normal"/>
+	<mx:Button id="btnAceptar" x="175" y="213" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="6"/>
+	<mx:Button id="btnCancelar" x="247" y="213" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="7"/>
+</mx:TitleWindow>

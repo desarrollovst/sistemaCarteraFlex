@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="670" height="190" creationPolicy="all">
+<mx:DataGrid id="dgAcred" x="295" y="117" width="240" visible="false" showHeaders="false" alpha="0.7" 
+	itemClick="selecciona()" keyDown="presDGAcred(event)" height="52">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>
+</mx:DataGrid>
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="nombreV" source="{txtNombreCheq}" property="text" 
+	invalid="{txtNombreCheq.setFocus()}" triggerEvent="" requiredFieldError="Nombre requerido"/>
+	
+	<mx:Validator id="cuentaV" source="{txtCodCuenta}" property="text" 
+	invalid="{txtCodCuenta.setFocus()}" triggerEvent="" requiredFieldError="Cuenta requerida"/>
+	
+	<mx:NumberValidator id="tipoDesV" source="{cboTipoDes}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Tipo de desembolso requerido"/>
+	 	 
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
+			import OPERAC.MttoCuenta;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var desObj:ArrayCollection = new ArrayCollection();
+			
+			public var _xmlCta:XML = new XML();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS
+			public var tipoAccion:int;
+			public var estatus:String;
+			public var texto:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function activaControles(_xmlControl:XML):void{
+				var formaEntrega:String = _xmlControl.Table[0].FIJAFEN;
+				//Forma de entrega
+				if(formaEntrega == "S")
+					cnvEntrega.enabled = false;
+				else if(formaEntrega == "N")
+					cnvEntrega.enabled = true;
+			}
+			
+			public function actualizarCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
+				buscaCuenta();		
+			}
+			
+			public function buscaAcred(event:Event):void{
+				if(TextInput(event.currentTarget).text != ''){	
+					dgAcred.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					acredObj.filterFunction = filtraAcred;
+					acredObj.refresh();
+					if (acredObj.length > 0){
+						dgAcred.validateNow();
+						dgAcred.scrollToIndex(0);
+						dgAcred.selectedIndex = 0;
+						dgAcred.visible = true;
+						this.setChildIndex(dgAcred,this.numChildren - 1);	
+					}
+					else
+						dgAcred.visible = false;									
+				}
+				else{
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function buscaCuenta():void{
+				if (txtCodCuenta.text != ""){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					txtCuenta.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlCta = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);	
+						Application.application.desbloquear();	
+						
+						if (_xmlCta.elements().length() > 0){
+							txtCuenta.text = _xmlCta.Table[0].BANCO;
+							formateaDesembolso();
+							cboTipoDes.dataProvider = desObj;
+							cboTipoDes.selectedIndex = 0;
+						}
+						else{
+							txtCuenta.text = "";
+							cboTipoDes.dataProvider = null;
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.","Entrega",4,null,null,global.iAlert);
+						}		
+					});
+					params[0] = "4";
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = Application.application.U_ID;
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
+				}	
+			}
+			
+			public function cargaAcred(Arr:ArrayCollection):void{
+				acredObj = Arr;
+				dgAcred.dataProvider = acredObj;
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				entrega.selectedValue = _xmlParam.Table[0].FORMAENTREGA;
+			}
+			
+			public function desactivaControles():void{
+				cnvEntrega.enabled = false;
+				cnvNombreCheq.enabled = false;	
+				cnvDesembolso.enabled = false;
+				cnvMicroSeg.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				if(valida()){
+					if(cnvNombreCheq.visible){
+						var invalidArray:Array = Validator.validateAll([nombreV]);
+						
+						if(invalidArray.length == 0 && entrega.selection != null && pagoMicroSeg.selection != null){	
+							formData.formaEntre = entrega.selectedValue.toString();
+							formData.nombreCheq = txtNombreCheq.text;
+							formData.cdgCb = txtCodCuenta.text;
+							if(cboTipoDes.selectedItem != null)
+								formData.tipoDes = cboTipoDes.selectedItem.id;
+							else 
+								formData.tipoDes = "";
+							formData.pagoMicroSeg = pagoMicroSeg.selectedValue.toString();
+							formData.guardaEntre = true;
+						}
+						else
+							formData.guardaEntre = false;
+					}
+					else{
+						if(entrega.selection != null && pagoMicroSeg.selection != null){	
+							formData.formaEntre = entrega.selectedValue.toString();
+							formData.nombreCheq = txtNombreCheq.text;
+							formData.cdgCb = txtCodCuenta.text;
+							if(cboTipoDes.selectedItem != null)
+								formData.tipoDes = cboTipoDes.selectedItem.id;
+							else 
+								formData.tipoDes = "";
+							formData.pagoMicroSeg = pagoMicroSeg.selectedValue.toString();
+							formData.guardaEntre = true;
+						}
+						else
+							formData.guardaEntre = false;
+					}
+				}
+				else
+					formData.guardaEntre = false;
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			private function filtraAcred(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 	
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function formateaDesembolso():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				desObj.removeAll();
+				desObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "-1";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "C";	
+				oItem.nombre = "Cheque";
+				item.push(oItem);
+				
+				if(_xmlCta.Table[0].NOCTACT.toString() != ""){
+					oItem = new Object();
+					oItem.id = "O";	
+					oItem.nombre = "Orden de Pago";
+					item.push(oItem);
+				}
+				desObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				if (info != null){
+					datos = info;	
+					
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+						desactivaControles();
+					
+					entrega.selectedValue = info.formaEntre;
+					muestraCampoNombre();
+					txtNombreCheq.text = info.nombreCheq;
+					txtCodCuenta.text = info.cdgCb;
+					pagoMicroSeg.selectedValue = info.pagoMicroSeg;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlCta = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);		
+								
+						if (_xmlCta.elements().length() > 0){
+							var cont:int = 0;
+							txtCuenta.text = _xmlCta.Table[0].BANCO;
+							formateaDesembolso();
+							cboTipoDes.dataProvider = desObj;
+							cont = desObj.length;
+							for(var i:int = 0; i < cont; i++){
+								if(info.tipoDes == desObj[i].id)
+									cboTipoDes.selectedIndex = i;
+							}
+						}
+					});
+					params[0] = "4";
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = Application.application.U_ID;
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function muestraCampoNombre():void{
+				txtNombreCheq.text = "";
+				if(rdbChequeGrupo.selected == true)
+					cnvNombreCheq.visible = true;
+				else
+					cnvNombreCheq.visible = false;
+			}
+			
+			public function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizarCta);
+				PopUpManager.centerPopUp(comMttoCta);	
+			}
+			
+			public function presAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgAcred.setFocus();
+				}	
+			}
+			
+			public function presDGAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					selecciona();
+					txtNombreCheq.setFocus();
+				}	
+			}
+			
+			public function selecciona():void{
+				if(dgAcred.selectedIndex >= 0){
+					var indice:int = dgAcred.selectedIndex;
+					if (datos.cdgAcredCheq != acredObj[indice].codigo){
+						txtNombreCheq.text = acredObj[indice].nombre;
+						datos.cdgAcredCheq = acredObj[indice].codigo;
+					}
+					else
+						txtNombreCheq.text = acredObj[indice].nombre;
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([cuentaV, tipoDesV]);
+				
+				if(invalidArray.length > 0 && tipoAccion == 1)
+					return false;
+					
+				return true;
+			}
+			
+			public function verificaAcred():void{
+				if (dgAcred.selectedIndex < 0){
+					dgAcred.visible = false;
+					texto = txtNombreCheq.text;
+					acredObj.filterFunction = filtraCaptura;
+					acredObj.refresh();
+					if (acredObj.length == 0){
+						txtNombreCheq.text = "";
+						datos.cdgAcredCheq = "";
+					}
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvEntrega" x="38.5" y="30" width="200" height="148" styleName="canvasMod">
+		<mx:RadioButtonGroup id="entrega" itemClick="muestraCampoNombre()"/>
+		<mx:RadioButton id="rdbEfectivo" x="15" y="10" label="Efectivo" groupName="entrega" value="E"/>
+		<mx:RadioButton id="rdbChequeClien" x="15" y="36" label="Un cheque por cliente" groupName="entrega" value="I"/>
+		<mx:RadioButton id="rdbChequeGrupo" x="15" y="62" label="Un cheque para todo el grupo" groupName="entrega" value="G"/>
+		<mx:RadioButton id="rdbTransElect" x="15" y="88" label="Transferencia electrónica" groupName="entrega" value="T"/>
+		<mx:RadioButton id="rdbDispersion" x="15" y="114" label="Dispersión de fondos" groupName="entrega" value="D"/>
+	</mx:Canvas>
+	<mx:Label x="38.5" y="10" text="Forma de entrega"/>
+	<mx:Canvas id="cnvNombreCheq" x="246.5" y="115" width="330" height="65" visible="false">
+		<mx:Canvas x="2" y="21" width="261.5" height="40" styleName="canvasMod">
+			<mx:TextInput id="txtNombreCheq" x="10" y="7" width="239.5" change="buscaAcred(event)" keyDown="presAcred(event)" enter="selecciona()" focusOut="verificaAcred()"/>
+		</mx:Canvas>
+		<mx:Label x="2" y="2" text="El cheque se expide a nombre de"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDesembolso" x="246.5" y="30" width="385" height="77" styleName="canvasMod">
+		<mx:Label id="lblCuenta" x="65" y="12" text="Cuenta:"/>
+		<mx:TextInput id="txtCodCuenta" x="112" y="10" width="45.5" maxChars="2" restrict="0-9" enter="buscaCuenta()"/>
+		<mx:TextInput id="txtCuenta" x="165.5" y="10" width="159.5" editable="false"/>		
+		<mx:Button id="btnBusqCta" x="333" y="10" icon="@Embed(source='assets/images/iconBusq.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+		<mx:Label id="lblTipoDes" x="10" y="44" text="Tipo de dispersión:"/>
+		<mx:ComboBox id="cboTipoDes" x="112" y="41" labelField="nombre" width="213"/>
+	</mx:Canvas>
+	<mx:Label x="246.5" y="10" text="Desembolso"/>
+	<mx:Label x="246.5" y="119" text="Pago Microseguro"/>
+	<mx:Canvas id="cnvMicroSeg" x="246.5" y="138" width="385" height="40" styleName="canvasMod">
+		<mx:RadioButtonGroup id="pagoMicroSeg"/>
+		<mx:RadioButton id="rdbFinanciado" x="78.25" y="7" label="Financiado" groupName="pagoMicroSeg" value="F"/>
+		<mx:RadioButton id="rdbUnaExh" x="186.75" y="7" label="Una sola exhibición" groupName="pagoMicroSeg" value="P"/>
+	</mx:Canvas>
+</mx:Canvas>

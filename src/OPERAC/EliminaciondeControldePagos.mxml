@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
+	width="100%" height="100%" creationComplete="init()" creationPolicy="all" 
+	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*" xmlns:GENERAL="GENERAL.*">
+	<mx:states>
+		<mx:State name="seleccion">
+			<mx:SetProperty target="{canvas1}" name="width" value="670"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="375"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgReg" x="17.5" y="142" width="640" height="190" doubleClickEnabled="true" >
+					<mx:columns>
+						<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="65"/>
+						<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMNS" width="140"/>
+						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="55"/>
+						<mx:DataGridColumn headerText="FECHA REGISTRO" dataField="FECREG" width="115"/>
+						<mx:DataGridColumn headerText="FECHA PAGO" dataField="FECPAGO" width="90"/>
+						<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="85"/>
+						<mx:DataGridColumn headerText="TIPO" dataField="TIPOREG" width="115"/>
+						<mx:DataGridColumn headerText="ELIMINAR" textAlign="center" rendererIsEditor="true" dataField="ELIMINAR" width="100" editorDataField="selected" editable="false">
+							<mx:itemRenderer>
+								<mx:Component>
+									<mx:CheckBox change="outerDocument.setEliminar(event)"/> 
+								</mx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:RemoveChild target="{btnBusqLimpiar}"/>
+			<mx:RemoveChild target="{btnBuscar}"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button x="589.5" y="340" label="Limpiar" click="limpiar()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="600.5" y="102" width="57" height="32" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas3">					
+					<mx:Button id="btnEliminar" x="7.5" y="4" icon="@Embed(source='assets/images/iconCancel.png')"
+						click="eliminaControlPagos()" toolTip="Eliminar Registros" width="40" height="22"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:transitions>
+		<mx:Transition toState="control">		
+			<mx:Sequence>
+				<mx:WipeRight duration="1000" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+		<mx:Transition toState="seleccion">		
+			<mx:Sequence>
+				<mx:Resize duration="1000" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+		<mx:Transition toState="">		
+			<mx:Sequence>
+				<mx:Fade duration="500" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.charts.chartClasses.NumericAxis;
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.CloseEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;			
+			import mx.effects.*;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.controls.CheckBox;
+			
+			private var _xmlPrn:XML =  new XML();
+			private var _xmlReg:XML =  new XML();
+			[Bindable]	
+			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
+			
+			public var frealpago:Array;
+			public var secuencia:Array;
+	
+			public var opcObj:ArrayCollection =  new ArrayCollection();
+			
+			private var vResult:ValidationResultEvent;
+			
+			public var openEffect:Effect = new Fade();
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var grupo:String;
+			public var ciclo:String;
+			public var sec:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function setEliminar(event:Event):void{
+				var cb:CheckBox = event.target as CheckBox;
+				var index:int = dgReg.selectedIndex; 
+				ArrayCollection(dgReg.dataProvider).getItemAt(index).ELIMINAR = cb.selected;			   			
+			}
+		
+			private function formateaPagos():void{
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				opcObj.removeAll();
+				opcObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CDGNS = _xmlReg.Table[i].CDGNS;
+					oItem.NOMNS = _xmlReg.Table[i].NOMNS;
+					oItem.CICLO = _xmlReg.Table[i].CICLO;
+					oItem.FECREG = _xmlReg.Table[i].FECREG;
+					oItem.FECPAGO = _xmlReg.Table[i].FECPAGO;
+					oItem.CANTIDAD = _xmlReg.Table[i].CANTIDAD;
+					oItem.TIPOREG = _xmlReg.Table[i].TIPOREG;
+					oItem.SECUENCIA = _xmlReg.Table[i].SECUENCIA;
+					oItem.ELIMINAR = false;	
+					item.push(oItem);
+				}
+				opcObj = new ArrayCollection(item);
+			}
+		
+			private function buscaListaControl():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if(validaBusqueda() == true){
+					grupo = txtBusqGrupo.text;
+					ciclo = txtBusqCiclo.text;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlReg = new XML(evt.result);			
+						
+						du.rCursor();
+						du.closeWs(wsCat);	
+						
+						if(_xmlReg.elements().length() > 0){
+							txtBusqGrupo.editable = false;
+							txtBusqCiclo.editable = false;
+							currentState = "seleccion";							 
+							formateaPagos();
+							dgReg.dataProvider = opcObj;
+						}
+						else{
+							du.initWsCat(wsCat);
+							du.sCursor(); 
+							
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlPrn = new XML(evt.result);			
+						
+								du.rCursor();
+								du.closeWs(wsCat);	
+								
+								if(_xmlPrn.elements().length() > 0){	
+									if(_xmlPrn.Table[0].SITUACION.toString() == "E"){
+										txtBusqGrupo.editable = false;
+										txtBusqCiclo.editable = false;
+										currentState = "seleccion";
+									}
+									else
+										Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								}
+								else
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							});
+							params[0] = grupo;
+							params[1] = ciclo;
+							wsCat.getInfoGrupo.send(14, params);
+						}
+					});
+					params[0] = grupo;
+					params[1] = ciclo;
+					params[2] = Application.application.U_ID;
+					//Obtiene el listado de controles de pago de un credito especifico
+					wsCat.getListado.send(40, params);
+				}
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			//funcion que da formato a la informacion que sera almacenada
+			private function formateaArrayPagos():Boolean{
+				var listaAcred:ArrayCollection;
+				
+				listaAcred = dgReg.dataProvider as ArrayCollection;
+					
+				if (listaAcred != null){
+					frealpago = new Array;
+					secuencia = new Array;
+				    
+				    var cont:int = listaAcred.length;
+					var contAux:int;
+					var j:int; 
+						
+					for(var i:int = 0; i < cont; i++){												 
+						if(Boolean(listaAcred[i].ELIMINAR) == true){
+							frealpago.push(listaAcred[i].FECPAGO);
+							secuencia.push(listaAcred[i].SECUENCIA);
+							ExternalInterface.call("console.log", "Eliminar["+i+"]="+ frealpago[i] );							
+						}
+					}
+					return frealpago.length > 0;
+				}
+				return false;
+			}
+	
+	      private function confirmaEliminarPagos():void{
+	       	Alert.show("¿Esta seguro de eliminar los registros seleccionados?", titulo, Alert.YES | Alert.NO,
+	      	 this, alertListener, global.iQuest);	      	 
+	      }
+	      
+		  private function alertListener(eventObj:CloseEvent):void {
+                // Check to see if the OK button was pressed.
+                if (eventObj.detail==Alert.YES) {                	
+                   var grupo:String = txtBusqGrupo.text;
+					var ciclo:String = txtBusqCiclo.text;
+					tipoAccion = 0;//proceso de accion unica
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();					
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionCtrlEliminacion);
+					
+					wsMS.setAccionEliminaCtrlPagos.send(tipoAccion, grupo, ciclo, frealpago,
+														secuencia, Application.application.U_ID);
+                } 
+            }
+			
+			private function eliminaControlPagos():void{
+				if(formateaArrayPagos() == true){ //Llena y valida que existan datos a eliminar
+					confirmaEliminarPagos();
+				} else {
+					Alert.show("No ha seleccionado ningún Control de Pago",titulo,4,null,null,global.iAlert);
+				}
+			}					
+			
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				titulo = "Eliminación de Control de Pagos";
+				lblTitulo.text = titulo.toUpperCase();
+				txtBusqGrupo.setFocus();
+				 
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpiar():void{
+				if(currentState == "seleccion")
+					dgReg.dataProvider = null;
+				
+				currentState = null;
+				
+				txtBusqGrupo.setFocus();
+				txtBusqGrupo.text = "";
+				txtBusqGrupo.editable = true;
+				txtBusqCiclo.text = "";
+				txtBusqCiclo.editable = true;
+			}
+			
+			private function setAccionCtrlEliminacion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCtrlEliminacion);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					limpiar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			private function validaBusqueda():Boolean{
+				if(txtBusqGrupo.text == ""){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtBusqCiclo.text == ""){
+					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+	        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="280" height="180" id="canvas1">
+		<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="16.5" y="53.5" width="247" height="80.5" styleName="canvasMod" id="canvas2">
+			<mx:Label id="lblBusqCiclo" x="9.95" y="44" text="Ciclo:" width="95.3" height="20" textAlign="right"/>
+			<mx:Label id="lblBusqGrupo" x="9.95" y="12" text="Grupo:" width="95.3" height="20" textAlign="right"/>
+			<mx:TextInput id="txtBusqGrupo" x="113.25" y="10" maxChars="6" restrict="0-9" enter="buscaListaControl()"/>
+			<mx:TextInput id="txtBusqCiclo" x="113.25" y="42" width="45" maxChars="2" restrict="0-9" enter="buscaListaControl()"/>
+		</mx:Canvas>
+		<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25" id="lblCriterios"/>
+		<mx:Button x="65" y="142" label="Buscar" click="buscaListaControl()" id="btnBuscar"/>
+		<mx:Button x="144" y="142" label="Limpiar" width="71" height="24" click="limpiar()" id="btnBusqLimpiar"/>
+	</mx:Canvas>
+</mx:Canvas>

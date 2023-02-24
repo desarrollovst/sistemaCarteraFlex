@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="190" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	 
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.events.IndexChangedEvent;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+        	import mx.events.*;
+            
+            [Bindable]
+            private var _xmlInfo:XML = new XML();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function activaControles(_xmlControl:XML):void{
+			}
+			
+			public function desactivaControles():void{
+				cnvAnalisis.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				formData.insDoc = txtInsDoc.text;
+				formData.integracion = txtInt.text;
+				formData.guardaAnalisis = true;
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+					
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				if (info != null){
+					var i:int;
+					var j:int;
+					datos = info;
+					txtInsDoc.text = info.insDoc;
+					txtInt.text = info.integracion;
+							
+					if(info.situacion == 'R')
+						desactivaControles();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlInfo = XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if(_xmlInfo.elements().length() > 0){
+							txtInsDoc.text = _xmlInfo.Table[0].INSDOC;
+							txtInt.text = _xmlInfo.Table[0].INTEGRACION;
+						}
+					});
+					params[0] = datos.cdgGrupo;
+					params[1] = datos.ciclo;
+					wsCat.getInfoGrupo.send(10, params);
+				}			
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvAnalisis" x="10" y="20" width="780" height="160" styleName="canvasMod">
+		<mx:Label id="lblInsDoc" x="10" y="7" text="Incidencias documentales:"/>
+		<mx:TextArea id="txtInsDoc" x="10" y="26" height="122" width="370" maxChars="4000"/>
+		<mx:Label id="lblInt" x="398" y="7" text="Integración:"/>
+		<mx:TextArea id="txtInt" x="398" y="26" height="122" width="370" maxChars="4000"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="0" text="Análisis"/>
+</mx:Canvas>

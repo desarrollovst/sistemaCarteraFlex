@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="664" height="528" title="Diagnósticos" fontWeight="normal">
+	
+	<mx:Validator id="diagnostico" source="{txtDiagnostico}" property="text" 
+	invalid="{txtDiagnostico.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="fechaDiag" source="{dtFechaDiag}" property="text" 
+	invalid="{dtFechaDiag.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="fechaNac" source="{dtFechaNac}" property="text" 
+	invalid="{dtFechaNac.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="primape" source="{txtPrimape}" property="text" 
+	invalid="{txtPrimape.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="nombre1" source="{txtNombre1}" property="text" 
+	invalid="{txtNombre1.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="cdgcl" source="{txtCdgcl}" property="text" 
+	invalid="{txtCdgcl.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el seguimiento de los diagnosticos-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosDiagnostico;
+		import Data.EventDiagnostico;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		[Bindable]
+		private var info:DatosDiagnostico;
+		
+		private var _xmlAcred:XML = new XML();
+		private var _xmlMicro:XML = new XML();
+		private var _xmlDiag:XML = new XML();
+		private var _xmlTDiag:XML = new XML();
+		
+		private var tipoDiagObj:ArrayCollection = new ArrayCollection();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		private var vg_cdgDiag:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+				
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de diagnósticos";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function registraInfoDiagnostico(pXmlMicro:XML):void{
+			if(pXmlMicro.elements().length() > 0){
+				tipoAccion = 1; //INSERTAR
+				_xmlMicro = pXmlMicro;
+				vg_cdgDiag = "";
+					
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.title = "Nuevo Diagnóstico";
+				info = null;
+				
+				init();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlAcred = new XML(event.result);
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+						_xmlTDiag = new XML(event.result);
+						
+						if (_xmlTDiag.elements().length() > 0){
+							formateaTipoDiag();
+						 	cbTDiag.dataProvider = tipoDiagObj;
+							cbTDiag.selectedIndex = 0;
+						}
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();						
+						
+						txtCdgcl.text = _xmlMicro.CDGCL;
+						txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
+									_xmlAcred.Table[0].PRIMAPE + " " + _xmlAcred.Table[0].SEGAPE;
+						txtNombre1.text = _xmlAcred.Table[0].NOMBRE1;
+						txtNombre2.text = _xmlAcred.Table[0].NOMBRE2;
+						txtPrimape.text = _xmlAcred.Table[0].PRIMAPE;
+						txtSegape.text = _xmlAcred.Table[0].SEGAPE;
+						dtFechaNac.selectedDate = DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY");
+						txtEdad.text = (global.calculaEdad(DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY"), Application.application._Current_Fecha)).toString();
+						var a:String = _xmlAcred.Table[0].SEXO;
+					});
+					wsCat.getCatalogoGral.send(50, params);				
+				});
+				params[0] = _xmlMicro.CDGCL;
+				wsCat.getInfoAcred.send(1, params);
+			}
+			else
+				btnAceptar.enabled = false;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- CARGA COMBOBOX -->
+	<mx:Script>
+		<![CDATA[
+		
+		private function cargaTipoDiag():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+						
+			du.initWsCat(wsCat);
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+				_xmlTDiag = new XML(event.result);
+						
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+				if (_xmlTDiag.elements().length() > 0){
+					formateaTipoDiag();
+				 	cbTDiag.dataProvider = tipoDiagObj;
+					cbTDiag.selectedIndex = 0;
+				}	
+			});
+			wsCat.getCatalogoGral.send(50, params);
+		}
+		
+		private function formateaTipoDiag():void{
+			var cont:int = _xmlTDiag.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlTDiag.Table[i].CODIGO;	
+				oItem.descripcion = _xmlTDiag.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			
+			tipoDiagObj = new ArrayCollection(item);
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosDiagnostico();
+				info.codigo = vg_cdgDiag;
+				info.cdgcl = txtCdgcl.text;
+				info.nombre1 = txtNombre1.text;
+				info.nombre2 = txtNombre2.text;
+				info.primape = txtPrimape.text;
+				info.segape = txtSegape.text;
+				if(tipoAccion == 1) info.sexo = _xmlAcred.Table[0].SEXO; else info.sexo = _xmlDiag.SEXO; 
+				info.nacimiento = dtFechaNac.text;
+				info.fdiagnostico = dtFechaDiag.text;
+				info.cdgTipoDiag = cbTDiag.selectedItem.id;
+				info.docorig = rdgDocOri.selectedValue.toString();
+				info.pagado = rdgPagado.selectedValue.toString();
+				info.diagnostico = txtDiagnostico.text;
+				info.observaciones = txtObservaciones.text;
+				info.cdgpms = _xmlMicro.CDGPMS;
+				info.iniciopms = _xmlMicro.INICIO;
+				info.edad = int(txtEdad.text);
+				info.cdgco = _xmlMicro.CDGCO;
+				info.cdgclns = _xmlMicro.CDGCLNS;
+				info.ciclo = _xmlMicro.CICLO;
+				info.clns = _xmlMicro.CLNS;
+				info.fregistro = "";
+				info.cdgpe = Application.application.U_ID;
+				info.factualiza = "";
+				info.actualizape = Application.application.U_ID;
+				
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1")
+						cerrar();
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionDiagnostico.send( info.codigo, info.nombre1, info.nombre2, info.primape, info.segape 
+											, info.sexo, info.nacimiento, info.fdiagnostico, info.edad
+											, info.diagnostico, info.cdgTipoDiag, info.docorig, info.pagado
+											, info.observaciones, info.cdgcl, info.cdgpms, info.iniciopms
+											, info.cdgco, info.cdgclns, info.ciclo, info.clns, info.fregistro, info.cdgpe
+											, info.factualiza, info.actualizape, tipoAccion);					
+			}
+		}
+		
+		private function valida():Boolean{
+			var iaDiagnostico:Array = Validator.validateAll([diagnostico]);
+			var iaFdiag:Array = Validator.validateAll([fechaDiag]);
+			var iaFnac:Array = Validator.validateAll([fechaNac]);
+			var iaPrimape:Array = Validator.validateAll([primape]);
+			var iaNombre1:Array = Validator.validateAll([nombre1]);
+			var iaCdgcl:Array = Validator.validateAll([cdgcl]);	
+			
+			if(iaCdgcl.length > 0){
+				Alert.show("Debe capturar el código de cliente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(txtNombreAcre.text == ""){
+				Alert.show("Debe capturar el código de cliente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(iaNombre1.length > 0){
+				Alert.show("Debe capturar el nombre.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaPrimape.length > 0){
+				Alert.show("Debe capturar el apellido paterno.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaFnac.length > 0){
+				Alert.show("Debe capturar la fecha de nacimiento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaFdiag.length > 0){
+				Alert.show("Debe capturar la fecha de diagnóstico.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbTDiag.selectedIndex == 0){
+				Alert.show("Seleccione un tipo de cáncer.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaDiagnostico.length > 0){
+				Alert.show("Debe capturar el diagnóstico.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var Fenac:Date = DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY");
+			var Fediag:Date = DateField.stringToDate(dtFechaDiag.text, "DD/MM/YYYY");
+			var hoy:Date = new Date();
+			
+			if(Fediag <= Fenac){
+				Alert.show("La fecha de diagnóstico no puede ser menor o igual a la fecha de nacimiento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(Fediag > hoy){
+				Alert.show("La fecha de diagnóstico no puede ser mayor a la fecha actual.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var FeFinMicro:Date = DateField.stringToDate(_xmlMicro.FIN, "DD/MM/YYYY");
+			
+			if(Fediag > FeFinMicro){
+				Alert.show("La fecha del microseguro no puede cubrir la fecha del diagnóstico.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+		]]>
+	</mx:Script>
+
+	<!-- CARGA INFO DIAGNOSTICO -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfoDiagnostico(pXmlDiag:XML, pXmlMicro:XML):void{
+			tipoAccion = 2; //ACTUALIZAR
+			_xmlMicro = pXmlMicro;
+			_xmlDiag = pXmlDiag;
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			this.title = "Edición de Diagnóstico";
+			info = null;
+			
+			init();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			Application.application.bloquear();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+				_xmlTDiag = new XML(event.result);
+				
+				if (_xmlTDiag.elements().length() > 0){
+					formateaTipoDiag();
+				 	cbTDiag.dataProvider = tipoDiagObj;
+					cbTDiag.selectedIndex = 0;
+				}
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+			
+				txtNombre1.text = _xmlDiag.NOMBRE1;
+				txtNombre2.text = _xmlDiag.NOMBRE2;
+				txtPrimape.text = _xmlDiag.PRIMAPE;
+				txtSegape.text = _xmlDiag.SEGAPE;
+				dtFechaNac.selectedDate = DateField.stringToDate(_xmlDiag.NACIMIENTO,"DD/MM/YYYY");
+				dtFechaDiag.selectedDate = DateField.stringToDate(_xmlDiag.FDIAGNOSTICO,"DD/MM/YYYY");
+				txtEdad.text = _xmlDiag.EDAD;
+				rdgDocOri.selectedValue = _xmlDiag.DOCORIG;
+				rdgPagado.selectedValue = _xmlDiag.PAGADO;
+				txtDiagnostico.text = _xmlDiag.DIAGNOSTICO;
+				txtObservaciones.text = _xmlDiag.OBSERVACIONES;
+				
+				for(var j:int = 0; j < tipoDiagObj.length; j++){   
+					if (tipoDiagObj[j].id.toString() == _xmlDiag.CDGTDIAG){
+						cbTDiag.selectedIndex = j;
+						break;
+					}
+				}
+				
+				vg_cdgDiag = _xmlDiag.CODIGO;					
+				txtCdgcl.text = _xmlDiag.CDGCL;
+				txtNombreAcre.text = _xmlDiag.NOMBRE1 + " " + _xmlDiag.NOMBRE2 + " " + 
+							_xmlDiag.PRIMAPE + " " + _xmlDiag.SEGAPE;
+			});
+			wsCat.getCatalogoGral.send(58, params);
+		}
+		]]>
+	</mx:Script>
+	        
+	<mx:Button id="btnAceptar" x="518" y="454" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="23"/>
+	<mx:Button id="btnCancelar" x="590" y="454" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="24"/>
+		<mx:RadioButtonGroup id="rdgDocOri"/>
+		<mx:RadioButtonGroup id="rdgPagado"/>
+		<mx:Canvas x="10" y="98" width="358" height="350" styleName="canvasMod">
+				<mx:Label id="lblPrimape" x="15.5" y="45" text="Apellido Paterno:"/>
+				<mx:TextInput id="txtPrimape" x="111.5" y="43" width="110" maxChars="30" tabIndex="7" editable="false"/>
+				<mx:Label id="lblNombres" x="52.5" y="10" text="Nombres:"/>
+				<mx:Label id="lblSegape" x="15.5" y="80" text="Apellido Materno:"/>
+				<mx:TextInput id="txtNombre1" x="111.5" y="10" width="110" maxChars="30" tabIndex="5" editable="false"/>
+				<mx:TextInput id="txtSegape" x="111.5" y="78" width="110" maxChars="30" tabIndex="8" editable="false"/>
+				<mx:TextInput id="txtNombre2" x="229.5" y="10" width="110" maxChars="30" tabIndex="6" enabled="true" editable="false"/>
+				<mx:TextInput id="txtEdad" x="111" y="183" width="58.75" editable="true" tabIndex="11" restrict="0-9"/>
+				<mx:Label id="lblFechaDiag" x="6" y="150" text="Fecha Diagnóstico:"/>
+				<mx:Label id="lblEdad" x="71" y="185" text="Edad:"/>
+				<mx:DateField x="111" y="148" id="dtFechaDiag" editable="true" showToday="true" width="110.5" tabIndex="10"/>
+				<mx:Label id="lblTDiag" x="37" y="220" text="Tipo Cáncer:"/>
+				<mx:ComboBox x="111" y="217" id="cbTDiag" width="193.5" labelField="descripcion" tabIndex="12"></mx:ComboBox>
+				<mx:Label id="lblFechaNac" x="10" y="115" text="Fecha Nacimiento:"/>
+				<mx:DateField x="111" y="113" id="dtFechaNac" editable="true" showToday="true" width="110" tabIndex="9" enabled="true"/>
+				<mx:Label id="lblDocOri" x="52.5" y="251" text="Documentos Originales:"/>
+				<mx:Label id="lblPagado" x="185.5" y="251" text="Pagado:"/>
+				<mx:Canvas x="52.5" y="271" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Si" id="rdDocOriS" groupName="rdgDocOri" value="S" tabIndex="17"/>
+						<mx:RadioButton x="10" y="33" label="No" id="rdDocOriN" groupName="rdgDocOri" value="N" tabIndex="18"/>
+				</mx:Canvas>
+				<mx:Canvas x="185.5" y="271" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Si" id="rdPagadoS" groupName="rdgPagado" value="S" tabIndex="19"/>
+						<mx:RadioButton x="10" y="33" label="No" id="rdPagadoN" groupName="rdgPagado" value="N" tabIndex="20"/>
+				</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas x="376" y="98" width="278" height="348" styleName="canvasMod">
+				<mx:Label id="lblDiagnostico" x="10" y="10" text="Diagnóstico"/>
+				<mx:TextInput id="txtDiagnostico" x="10" y="29" width="252" maxChars="200" editable="true" height="138" tabIndex="21"/>
+				<mx:TextInput id="txtObservaciones" x="10" y="198" width="252" editable="true" height="138" tabIndex="22"/>
+				<mx:Label id="lblObservaciones" x="10" y="173" text="Observaciones:"/>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="29" width="644" height="41" cornerRadius="10" borderStyle="solid" styleName="canvasMod">
+				<mx:TextInput id="txtCdgcl" x="153.5" y="8" width="60" maxChars="6" restrict="0-9" tabIndex="1" editable="false"/>
+				<mx:Label id="lblCdgcl" x="104.5" y="10" text="Código:"/>
+				<mx:Label id="lblNombres0" x="226" y="10" text="Nombre:"/>
+				<mx:TextInput id="txtNombreAcre" x="274" y="8" width="250" tabIndex="3" editable="false"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosDiag" x="10" y="77" text="Datos del Diagnóstico:" width="140" fontSize="11" fontWeight="normal"/>
+		<mx:Label id="lblDatosAcre" x="10" y="8" text="Datos de Acreditado:" width="140" fontSize="11" fontWeight="normal"/>
+</mx:TitleWindow>

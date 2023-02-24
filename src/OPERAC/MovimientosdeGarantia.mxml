@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	height="100%">
+	<mx:states>
+		<mx:State name="Destino">
+			<mx:SetProperty target="{canvas1}" name="height" value="472"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="442"/>
+			<mx:SetProperty target="{cnvDetalle}" name="height" value="350"/>
+			<mx:SetProperty target="{dgMovsGL}" name="y" value="168"/>
+			<mx:AddChild relativeTo="{lblGL}" position="before">
+				<mx:Label id="lblGrupoDest" x="70.3" y="138" text="Grupo Destino:" textAlign="right"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{lblFecha}" name="y" value="42"/>
+			<mx:SetProperty target="{lblMonto}" name="y" value="74"/>
+			<mx:SetProperty target="{lblDevolucion}" name="y" value="106"/>
+			<mx:SetProperty target="{dtfFecha}" name="y" value="40"/>
+			<mx:SetProperty target="{txtMonto}" name="y" value="72"/>
+			<mx:SetProperty target="{lblInfoGL}" name="y" value="8"/>
+			<mx:SetProperty target="{cboMov}" name="y" value="104"/>
+			<mx:AddChild relativeTo="{cnvDetalle}" position="lastChild">
+				<mx:TextInput id="txtCodGrupoDest" x="155.3" y="136" width="68" maxChars="6" restrict="0-9"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente de Movimientos de Garantia-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;		
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			          
+			public var _xmlGL:XML = new XML();
+			public var _xmlGrupo:XML = new XML();
+			public var _xmlMovs:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var titulo:String;
+			public var ciclo:String;
+			public var codGrupo:String;
+			public var clns:String;
+			private var global:Globales;
+			private var du:Utils;
+			private var vResult:ValidationResultEvent;
+			private var vDestino:String = "N";
+		
+			public var listaObj:ArrayCollection = new ArrayCollection();
+			public var movsObj:ArrayCollection = new ArrayCollection();
+							
+			public function activarControles():void{
+			}				
+			
+			private function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodGrupo.text != ""){
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlGrupo = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						dgMovsGL.dataProvider = null;
+						
+						if (_xmlGrupo.elements().length() > 0){
+							codGrupo = txtCodGrupo.text;
+							txtGrupo.text = _xmlGrupo.Table[0].NOMBRE;
+							
+							lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
+							
+							activarControles();
+							
+							du.initWsCat(wsCat);
+							du.sCursor();
+
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlGL = XML(evt.result.toString());
+						
+								Application.application.desbloquear();
+								du.rCursor();
+								du.closeWs(wsCat);
+								
+								if(_xmlGL.elements().length() > 0){
+									formateaListaMovsGL(evt.result.toString());
+									dgMovsGL.dataProvider = listaObj;		
+								}	
+							});//METODO QUE CONSULTA LOS REGISTROS DE LOS MOVIMIENTOS DE GARANTIA REALIZADOS
+							params[0] = codGrupo;
+							params[1] = clns;
+							wsCat.getListado.send(23, params);							
+						}
+						else{
+							Application.application.desbloquear();
+							txtGrupo.text = "";
+							lblInfoGL.text = "";
+							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = "0";
+					params[1] = txtCodGrupo.text;
+					wsCat.getInfoGrupo.send(2, params);
+				}	
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					var grupo:String = txtCodGrupo.text;
+					var fecha:String = dtfFecha.text;
+					var mov:String = cboMov.selectedItem.id;
+					var monto:Number = Number(txtMonto.text);
+					var grupoDest:String
+					
+					if(vDestino == "S")
+						grupoDest = txtCodGrupoDest.text;
+					else
+						grupoDest = "";
+					
+					initConexion();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+				
+						du.rCursor();
+						du.closeWs(wsMS);
+					
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);	
+							limpiar();
+						}
+						else{
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+						}
+					});
+					//Registro de Movimiento de garantia
+					wsMS.setRegistroAjusteGL.send(grupo, clns, fecha, monto, mov, grupoDest, Application.application.U_ID); 
+				}
+			}
+			
+			public function formateaListaMovsGL(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;			
+							
+				listaObj.removeAll();
+				listaObj.refresh();
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				listaObj = new ArrayCollection(array);	
+			}
+			
+			private function formateaMovsGL():void{
+				var cont:int = _xmlMovs.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				movsObj.removeAll();
+				movsObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMovs.Table[i].CODIGO;
+					oItem.descripcion = _xmlMovs.Table[i].DESCMOV;		
+					item.push(oItem);
+				}
+				movsObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Movimientos de Garantía";
+				clns = "G";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+					_xmlMovs = XML(evt.result.toString());
+			
+					du.rCursor();
+					du.closeWs(wsCat);
+								
+					if(_xmlMovs.elements().length() > 0){
+						formateaMovsGL();
+						cboMov.dataProvider = movsObj;		
+					}	
+				});
+				//Obtiene el listado de Movimientos de Garantia Disponibles
+				params[0] = "A";
+				wsCat.getCatalogoGral.send(40, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			private function limpiar():void{
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				txtCodGrupo.text = "";
+				txtGrupo.text = "";
+				lblInfoGL.text = "";
+				txtMonto.text = "";
+				cboMov.selectedIndex = 0;
+				dgMovsGL.dataProvider = null;
+				
+				if(vDestino == "S")
+					txtCodGrupoDest.text = "";
+			}
+			
+			private function seleccionarDestino():void{
+				var vCodigo:String = cboMov.selectedItem.id;
+				currentState = null;
+				vDestino = "N";
+				
+				if(vCodigo != "0"){
+					for(var i:int; i <= _xmlMovs.elements().length(); i ++){
+						if(vCodigo == _xmlMovs.Table[i].CODIGO){
+							vDestino =  _xmlMovs.Table[i].DESTINO;
+							break;
+						}
+					}
+				}
+				if(vDestino == "S"){
+					currentState = "Destino";
+					txtCodGrupoDest.text = "";
+				}
+			}
+			
+			private function valida():Boolean{
+				if(txtCodGrupo.text == "" || txtGrupo.text == ""){
+					Alert.show("Debe capturar la información del grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtMonto.text == "" || Number(txtMonto.text) <= 0){
+					Alert.show("Debe capturar el monto del movimiento de Garantía.",titulo,4,null,null,global.iAlert);
+					return false;
+				}				
+				
+				if(vDestino == "S"){
+					if(txtCodGrupoDest.text == ""){
+						Alert.show("Debe capturar grupo destino de la Garantía.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="610" height="460" id="canvas1">
+		<mx:Canvas id="cnvDetalle" x="10" y="84" width="590" height="330" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblFecha" x="109.3" y="42" text="Fecha:" textAlign="right"/>
+			<mx:Label id="lblMonto" x="110.3" y="74" text="Monto:" textAlign="right"/>
+			<mx:Label id="lblDevolucion" x="86.3" y="106" text="Movimiento:" textAlign="right"/>
+			<mx:Label id="lblGL" x="37.65" y="10" text="Saldo de Garantía:" fontSize="12" fontWeight="bold" fontStyle="italic" textAlign="right"/>
+			<mx:Label id="lblInfoGL" x="155.65" y="8" width="247.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:ComboBox id="cboMov" x="155.3" y="104" width="411.6" labelField="descripcion" change="seleccionarDestino()"/>		
+			<mx:DateField id="dtfFecha" x="155.3" y="40" width="100"/>
+			<mx:TextInput id="txtMonto" x="155.3" y="72" width="100" maxChars="9" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<Data:RowColorDataGrid id="dgMovsGL" x="21.05" y="144" width="545.85" height="170"
+				resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="65"/>
+					<mx:DataGridColumn headerText="FECHA MOV." dataField="FECHA" width="90"/>
+					<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA" width="90"/>
+					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="300"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="544.5" y="39" width="55.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarGrupo()" toolTip="Buscar Grupo" />
+		</mx:Canvas>
+		<mx:Canvas x="10" y="39" width="526.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblCodGrupo" x="15" y="6" text="Código:" textAlign="right"/>
+			<mx:Label id="lblGrupo" x="141" y="6" text="Grupo:" />
+			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtGrupo" x="187" y="5" width="327.5" maxChars="50" editable="false"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button id="btnAceptar" x="520" y="422" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

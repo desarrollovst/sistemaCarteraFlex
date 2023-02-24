@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" xmlns:Administracion="Administracion.*"
+    x="12.5" y="42" creationPolicy="all" creationComplete="init()">
+
+	<mx:states>
+		<mx:State name="rptCtrlMovs">
+			<mx:SetProperty target="{canvas1}" name="height" value="640"/>
+			 	<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+					<mx:DataGrid id="dgReporteCtrlMovs" x="21" y="180" width="785.05" visible="true" height="200" horizontalScrollPolicy="on">
+							<mx:columns>
+								<mx:DataGridColumn headerText="Tipo de archivo" dataField="TIPO_ARCH" width="110"/>
+								<mx:DataGridColumn headerText="Tipo de registro" dataField="TIPO_REG" width="140"/>
+								<mx:DataGridColumn headerText="ID_IFNB" dataField="ID_IFNB" width="130"/>
+								<mx:DataGridColumn headerText="ID Credito ABC" dataField="ID_CRED_ABC" width="90"/>
+								<mx:DataGridColumn headerText="Producto IFNB" dataField="PROD_IFNB" width="90"/>
+								<mx:DataGridColumn headerText="Número de movimientos" dataField="NUM_MOVS" width="120"/>
+								<mx:DataGridColumn headerText="Suma de saldos de capital" dataField="SUM_SDO_CAP" width="120"/>
+								<mx:DataGridColumn headerText="Suma de saldos de intereses" dataField="SUM_SDO_INT" width="120"/>
+								<mx:DataGridColumn headerText="Fecha de corte de saldos" dataField="FMARCADO" width="120"/>						
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="height" value="426"/>
+			<mx:SetProperty target="{canvas1}" name="y" value="1"/>
+			<mx:SetProperty target="{canvas1}" name="width" value="844"/>
+		</mx:State>
+		<mx:State name="rptDetMovs">
+			<mx:AddChild position="lastChild">
+				<mx:DataGrid id="dgReporteDetMovs" x="21" y="180" width="785.05" visible="true" height="200" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Tipo de archivo" dataField="TIPO_ARCHIVO" width="110"/>
+						<mx:DataGridColumn headerText="Tipo de registro" dataField="TIPO_REG" width="140"/>
+						<mx:DataGridColumn headerText="ID_IFNB" dataField="ID_IFNB" width="130"/>
+						<mx:DataGridColumn headerText="ID Credito ABC" dataField="IDCREDABC" width="90"/>
+						<mx:DataGridColumn headerText="ID Cliente IFNB" dataField="IDCL_IFNB" width="110"/>
+						<mx:DataGridColumn headerText="ID Credito IFNB" dataField="IDCRED_IFNB" width="140"/>
+						<mx:DataGridColumn headerText="Nombre del acreditado" dataField="NOM_CLIENTE" width="130"/>
+						<mx:DataGridColumn headerText="Sucursal" dataField="SUCURSAL" width="90"/>
+						<mx:DataGridColumn headerText="Tipo de persona" dataField="TIPO_PERSONA" width="60"/>
+						<mx:DataGridColumn headerText="Producto_IFNB" dataField="PROD_IFNB" width="60"/>
+						<mx:DataGridColumn headerText="Tipo de Movimiento" dataField="TIPO_MOV" width="70"/>
+						<mx:DataGridColumn headerText="Recurso Utilizado" dataField="REC_UTILI" width="130"/>
+						<mx:DataGridColumn headerText="Fecha de apertura de crédito" dataField="INICIO" width="120"/>
+						<mx:DataGridColumn headerText="Fecha de vencimiento del crédito" dataField="FECFIN" width="130"/>
+						<mx:DataGridColumn headerText="Fecha de incumplimiento" dataField="FEC_INCUMP" width="110"/>
+						<mx:DataGridColumn headerText="Número de dias de incumplimiento" dataField="NUM_DIAS_INCUMP" width="110"/>
+						<mx:DataGridColumn headerText="Periodicidad del pago" dataField="PERIODICIDAD" width="100"/>
+						<mx:DataGridColumn headerText="Importe del crédito" dataField="CANTENTRE" width="100"/>
+						<mx:DataGridColumn headerText="Tipo de tasa" dataField="TIPO_TASA" width="100"/>
+						<mx:DataGridColumn headerText="Tasa" dataField="TASA" width="100"/>
+						<mx:DataGridColumn headerText="Plazo" dataField="PLAZO" width="100"/>
+						<mx:DataGridColumn headerText="Número de cuotas" dataField="NUM_CUOTAS" width="100"/>
+						<mx:DataGridColumn headerText="Cuotas pagadas" dataField="CUOTAS_PAGADAS" width="100"/>
+						<mx:DataGridColumn headerText="Número de cuotas vencidas" dataField="CUOTAS_VENCIDAS" width="100"/>
+						<mx:DataGridColumn headerText="Saldo capital vigente" dataField="SALDO_CAP_VIG" width="100"/>
+						<mx:DataGridColumn headerText="Saldo capital vencido" dataField="CAP_VENCIDO" width="100"/>
+						<mx:DataGridColumn headerText="Saldo de intereses vigentes" dataField="SDO_INT_VIGENTE" width="100"/>
+						<mx:DataGridColumn headerText="Saldo de intereses vencidos" dataField="SDO_INT_VENCIDO" width="100"/>
+						<mx:DataGridColumn headerText="Calificación inicial" dataField="CALIF_INICIAL" width="100"/>
+						<mx:DataGridColumn headerText="fecha de registro en portafolio" dataField="FREGISTRO_PORT" width="100"/>
+						<mx:DataGridColumn headerText="fecha de corte de saldos" dataField="FECMOV" width="100"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="width" value="844"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="426"/>
+		</mx:State>
+		<mx:State name="rptCtrlMovsCalif">
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgReporteCtrlMovsCalif" x="21" y="180" width="785.05" visible="true" height="200" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Tipo de archivo" dataField="TIPO_ARCHIVO" width="110"/>
+						<mx:DataGridColumn headerText="Tipo de registro" dataField="TIPO_REG" width="140"/>
+						<mx:DataGridColumn headerText="ID_IFNB" dataField="ID_IFNB" width="130"/>
+						<mx:DataGridColumn headerText="ID Credito ABC" dataField="IDCREDABC" width="90"/>
+						<mx:DataGridColumn headerText="Producto IFNB" dataField="PRODUCTO_IFNB" width="90"/>
+						<mx:DataGridColumn headerText="Número de movimientos" dataField="NUM_MOVS" width="120"/>
+						<mx:DataGridColumn headerText="Suma de saldos base" dataField="SUM_SDO_BASE_CALIF" width="120"/>
+						<mx:DataGridColumn headerText="Suma de saldos de reservas" dataField="SUM_SDO_RESERV" width="120"/>
+						<mx:DataGridColumn headerText="Fecha de corte" dataField="FECHA_CORTE" width="120"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="width" value="844"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="426"/>
+		</mx:State>
+		<mx:State name="rptDetCalif">
+			<mx:AddChild position="lastChild">
+				<mx:DataGrid id="dgReporteDetCalif" x="21" y="180" width="785.05" visible="true" height="200" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Tipo de archivo" dataField="TIPO_ARCHIVO" width="110"/>
+						<mx:DataGridColumn headerText="Tipo de registro" dataField="TIPO_REG" width="140"/>
+						<mx:DataGridColumn headerText="ID_IFNB" dataField="ID_IFNB" width="130"/>
+						<mx:DataGridColumn headerText="ID Credito ABC" dataField="IDCREDABC" width="90"/>
+						<mx:DataGridColumn headerText="ID Cliente IFNB" dataField="IDCL_IFNB" width="90"/>
+						<mx:DataGridColumn headerText="ID Credito IFNB" dataField="IDCRED_IFNB" width="90"/>
+						<mx:DataGridColumn headerText="Tipo de movimiento" dataField="TIPO_MOV" width="100"/>
+						<mx:DataGridColumn headerText="Califiación deudor" dataField="CALIF_DEUDOR" width="130"/>
+						<mx:DataGridColumn headerText="Calificación de la operación" dataField="CALIF_OPERAC" width="140"/>
+						<mx:DataGridColumn headerText="Saldo base de calificación" dataField="SDO_BASE_CALIF" width="140"/>
+						<mx:DataGridColumn headerText="Saldo cubierto" dataField="SDO_CUBIERTO" width="110"/>
+						<mx:DataGridColumn headerText="Saldo descubierto" dataField="SDO_DESCUB" width="110"/>
+						<mx:DataGridColumn headerText="% Reserva cubierta" dataField="RES_CUBIERTA" width="120"/>
+						<mx:DataGridColumn headerText="% Reserva descubierta" dataField="RES_DESCUBIERTA" width="130"/>
+						<mx:DataGridColumn headerText="Importe reserva porcion cubierta" dataField="IMP_RES_CUB" width="150"/>
+						<mx:DataGridColumn headerText="Importe reserva porcion descubierta" dataField="IMP_RES_DESC" width="150"/>
+						<mx:DataGridColumn headerText="Total reserva" dataField="TOT_RES" width="100"/>
+						<mx:DataGridColumn headerText="Fecha de corte" dataField="FECHA_CORTE" width="100"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="width" value="844"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="426"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="rptAnexoA">
+			<mx:AddChild position="lastChild">
+				<mx:DataGrid id="dgReporteAnexoA" x="21" y="180" width="785.05" visible="true" height="200" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Consecutivo" dataField="CONSECUTIVO" width="110"/>
+						<mx:DataGridColumn headerText="ID_Cliente" dataField="ID_CLIENTE" width="140"/>
+						<mx:DataGridColumn headerText="ID_Crédito" dataField="ID_CREDITO" width="130"/>
+						<mx:DataGridColumn headerText="RFC" dataField="RFC" width="90"/>
+						<mx:DataGridColumn headerText="Nombre_Acreditado" dataField="NOM_ACRED" width="200"/>
+						<mx:DataGridColumn headerText="Fecha de Apertura" dataField="INICIO" width="70"/>
+						<mx:DataGridColumn headerText="Fecha de Vencimiento" dataField="FECFIN" width="70"/>
+						<mx:DataGridColumn headerText="Monto de la linea de crédito" dataField="CANTENTRE" width="130"/>
+						<mx:DataGridColumn headerText="Saldo total" dataField="SDO_CAPITAL" width="120"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="width" value="844"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="426"/>
+			<mx:SetProperty target="{canvas1}" name="y" value="1"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{canvas1}"/> 
+				<mx:AddChildAction duration="500" target="{canvas1}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+	<mx:Script>
+		<![CDATA[
+		import Data.ExcelExportXls;
+		import mx.events.CloseEvent;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		
+		[Bindable]
+		private var _xmlOF:XML = new XML();
+		[Bindable]
+		private var _xmlRes:XML = new XML();
+		
+		public var orgObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var titulo:String;
+		public var texto:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		private var totalMovsRptControlMovs:String; 
+		private var totalMovsRptDetalleMovs:String; 
+		private var totalMovsRptControlCalif :String;
+		private var totalMovsRptDetCalif:String;
+		private var totalMovsRptAnexoA:String;
+		
+		public function enviar():void{
+		    if(dtfFecha.text != ""){
+				var opcion:String = cboRpt.selectedItem.codigo;
+				
+				switch (opcion) {
+					case "0":
+					Alert.show("No se ha seleccionado un reporte, seleccione uno",titulo,4,null,null,global.iAlert);
+					break;
+					
+					case "1":
+						getRptControlMovs();
+					break
+					
+					case "2":
+						getRptDetalleMovs();
+					break
+					
+					case "3":
+						getRptControlCalif();
+					break
+					
+					case "4":
+						 getRptDetCalif();
+					break
+					
+					case "5":
+						getRptAnexoA();
+					break
+					
+					
+				}	
+		    }
+		    else {
+		    	Alert.show("No se ha seleccionado una fecha",titulo,4,null,null,global.iAlert);
+		    }
+			 
+		}
+		
+		public function getRptControlCalif():void{
+				//asignacion de variables para realizar la consulta de seleccion
+			var cont:int;
+			var opcion:String = cboRpt.selectedItem.codigo;
+			var fecha:String = dtfFecha.text;
+			initConexionRep();
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlRes = new XML(evt.result.toString());
+
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				dgReporteCtrlMovsCalif.dataProvider = null;
+				btnExportar.enabled = false;
+				
+				if(_xmlRes.elements().length() > 0) {
+					var cont:int = _xmlRes.elements().length();
+					dgReporteCtrlMovsCalif.dataProvider = _xmlRes.Table;
+					btnExportar.enabled = true;
+					lblTotal.text = cont.toString() + " Registro(s)";				
+				 	totalMovsRptControlCalif = lblTotal.text;					 
+				}
+				else {
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}	
+			});
+			wsMS.getRepControlMovsCalificacion.send( fecha);
+		}
+		
+		
+		public function getRptDetCalif():void{
+				//asignacion de variables para realizar la consulta de seleccion
+			var cont:int;
+			var opcion:String = cboRpt.selectedItem.codigo;
+			var fecha:String = dtfFecha.text;
+			initConexionRep();
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlRes = new XML(evt.result.toString());
+
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				dgReporteDetCalif.dataProvider = null;
+				btnExportar.enabled = false;
+				
+				if(_xmlRes.elements().length() > 0) {
+					var cont:int = _xmlRes.elements().length();
+					dgReporteDetCalif.dataProvider = _xmlRes.Table;
+					btnExportar.enabled = true;
+					lblTotal.text = cont.toString() + " Registro(s)";
+					totalMovsRptDetCalif = lblTotal.text;				 	
+				}
+				else {
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}	
+			});
+			wsMS.getRepDetalleCalificacion.send( fecha);
+		}
+		
+		public function getRptAnexoA():void{
+				//asignacion de variables para realizar la consulta de seleccion
+			var cont:int;
+			var opcion:String = cboRpt.selectedItem.codigo;
+			var fecha:String = dtfFecha.text;
+			initConexionRep();
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlRes = new XML(evt.result.toString());
+
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				dgReporteAnexoA.dataProvider = null;
+				btnExportar.enabled = false;
+				
+				if(_xmlRes.elements().length() > 0) {
+					var cont:int = _xmlRes.elements().length();
+					dgReporteAnexoA.dataProvider = _xmlRes.Table;
+					btnExportar.enabled = true;
+					lblTotal.text = cont.toString() + " Registro(s)";
+				 	totalMovsRptAnexoA = lblTotal.text;
+				}
+				else {
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}	
+			});
+			wsMS.getRepAnexoA.send( fecha);
+		}
+		
+		
+		public function getRptDetalleMovs():void{
+				//asignacion de variables para realizar la consulta de seleccion
+			var cont:int;
+			var opcion:String = cboRpt.selectedItem.codigo;
+			var fecha:String = dtfFecha.text;
+			initConexionRep();
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlRes = new XML(evt.result.toString());
+
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				dgReporteDetMovs.dataProvider = null;
+				btnExportar.enabled = false;
+				
+				if(_xmlRes.elements().length() > 0) {
+					var cont:int = _xmlRes.elements().length();
+					dgReporteDetMovs.dataProvider = _xmlRes.Table;
+					btnExportar.enabled = true;
+					lblTotal.text = cont.toString() + " Registro(s)";
+				 	totalMovsRptDetalleMovs = lblTotal.text;
+					
+				}
+				else {
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}	
+			});
+			wsMS.getRepDetalleMovimientos.send( fecha);
+		}
+		
+		public function getRptControlMovs():void{
+				//asignacion de variables para realizar la consulta de seleccion
+			var cont:int;
+			var opcion:String = cboRpt.selectedItem.codigo;
+			var fecha:String = dtfFecha.text;
+			initConexionRep();
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlRes = new XML(evt.result.toString());
+
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				dgReporteCtrlMovs.dataProvider = null;
+				btnExportar.enabled = false;
+				
+				if(_xmlRes.elements().length() > 0) {
+					var cont:int = _xmlRes.elements().length();
+					dgReporteCtrlMovs.dataProvider = _xmlRes.Table;
+					btnExportar.enabled = true;
+					lblTotal.text = cont.toString() + " Registro(s)";
+					totalMovsRptControlMovs = lblTotal.text;
+				}
+				else {
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}	
+			});
+			wsMS.getRepControlMovimientos.send( fecha);
+		}
+		public function cambiaLayoutRep():void{
+			var opcion:String = cboRpt.selectedItem.codigo;
+			
+			switch (opcion) {
+				case "0":
+					currentState = null;
+					lblTotal.text = "";
+				break;
+				
+				case "1":
+					currentState = "rptCtrlMovs";
+					lblTotal.text = totalMovsRptControlMovs; 				 	
+				break;
+				
+				case "2":
+					currentState = "rptDetMovs";
+					lblTotal.text = totalMovsRptDetalleMovs; 				 			
+				break;
+				
+				case "3":
+					currentState = "rptCtrlMovsCalif";	
+					lblTotal.text = totalMovsRptControlCalif;						
+				break;
+				
+				case "4":
+					currentState = "rptDetCalif";
+					lblTotal.text = totalMovsRptDetCalif;				 			
+				break;
+			 
+			 	case "5":
+			 		currentState = "rptAnexoA";
+			 		lblTotal.text = totalMovsRptAnexoA;	
+				break;
+				
+				
+			}
+			
+		}
+		
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			var opcion:String = cboRpt.selectedItem.codigo;
+			
+			switch (opcion) {
+				case "0":
+					 
+				break;
+				
+				case "1"://listo en espera de tabla de borrado
+					dgE.loadDGInExcel(dgReporteCtrlMovs,null,"Control de movimientos");
+				break;
+				
+				case "2"://listo en espera de tabla de borrado
+					dgE.loadDGInExcel(dgReporteDetMovs,null,"Detalle de los movimientos");	
+				break;
+				
+				case "3":
+					dgE.loadDGInExcel(dgReporteCtrlMovsCalif,null,"Control de movimiento de calificación");		
+				break;
+				
+				case "4":
+					dgE.loadDGInExcel(dgReporteDetCalif,null,"Detalle de calificación");		
+				break;
+			 
+			 	case "5":
+			 		dgE.loadDGInExcel(dgReporteAnexoA,null,"Anexo A");
+				break;
+				
+				
+			}
+					
+		}
+		
+		public function initCboReportes():void{
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+	
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Todas--";
+			item.push(oItem);	
+			 	
+			var oItem1:Object = new Object();
+			oItem1.codigo = "1";
+			oItem1.nombre = "Control de movimientos";
+			item.push(oItem1);
+			
+			var oItem2:Object = new Object();
+			oItem2.codigo = "2";
+			oItem2.nombre = "Detalle de los movimientos";
+			item.push(oItem2);
+			
+			var oItem3:Object = new Object();
+			oItem3.codigo = "3";
+			oItem3.nombre = "Control de movimiento de calificación";
+			item.push(oItem3);
+			
+			var oItem4:Object = new Object();
+			oItem4.codigo = "4";
+			oItem4.nombre = "Detalle de calificación";
+			item.push(oItem4);
+			
+			var oItem5:Object = new Object();
+			oItem5.codigo = "5";
+			oItem5.nombre = "Anexo A";
+			item.push(oItem5); 
+			
+			cboRpt.dataProvider = new ArrayCollection(item);
+		}
+		
+		public function init():void{
+			global = new Globales();  
+			titulo = "Reportes de ABC";
+			lblTitulo.text = titulo.toUpperCase();
+			initCboReportes();
+			du = new Utils();
+			totalMovsRptControlMovs = ""; 
+		 	totalMovsRptDetalleMovs = ""; 
+		 	totalMovsRptControlCalif = "";
+			totalMovsRptDetCalif = "";
+		 	totalMovsRptAnexoA = "";
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function limpiar():void{
+			var opcion:String = cboRpt.selectedItem.codigo;
+			
+			switch (opcion) {
+				case "0":
+					 
+				break;
+				
+				case "1"://listo en espera de tabla de borrado
+					 dgReporteCtrlMovs.dataProvider = null; 
+				break;
+				
+				case "2"://listo en espera de tabla de borrado
+					 dgReporteDetMovs.dataProvider = null; 
+				break;
+				
+				case "3":
+					 dgReporteCtrlMovsCalif.dataProvider = null; 		
+				break;
+				
+				case "4":
+					 dgReporteDetCalif.dataProvider = null;		
+				break;
+			 
+			 	case "5":
+			 		 dgReporteAnexoA.dataProvider = null; 
+				break;		
+			}
+			
+			btnExportar.enabled = false;
+			cboRpt.selectedIndex = 0;
+			dtfFecha.selectedDate = null;
+			lblTotal.text = "";
+		}
+		
+		]]>
+	</mx:Script>
+
+		<mx:Canvas id="canvas1" backgroundColor="#FFFFFF" backgroundAlpha="1.0" width="438" height="206" horizontalScrollPolicy="off" verticalScrollPolicy="off">	
+			<mx:Canvas id="cnvFondeo" x="21" y="55" width="330" height="80" styleName="canvasMod">
+				<mx:Label id="lblOF" x="10" y="13" textAlign="right" text="Reporte:" width="68"/>
+				<mx:ComboBox id="cboRpt" x="86" y="10" width="230" change="cambiaLayoutRep()" labelField="nombre"></mx:ComboBox>
+				<mx:Label id="lblFecha" x="10" y="45" textAlign="right" text="Fecha:" width="68"/>
+				<mx:DateField id="dtfFecha" x="86" y="42" width="100"></mx:DateField>
+			</mx:Canvas>
+			<mx:Label id="lblFondeo" x="21" y="36" text="Criterios de Selección"/>
+			<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:Button x="118.5" y="143" label="Generar" click="enviar()" />
+			<mx:Button x="197" y="143" label="Limpiar" width="71" height="24" click="limpiar()"/>
+			<mx:Label id="lblTotal" x="21" y="389" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		 		<mx:Button id="btnExportar" x="703.05" y="143" label="Exportar Excel" click="exportar()" enabled="false"/>
+	</mx:Canvas>
+</mx:Canvas>

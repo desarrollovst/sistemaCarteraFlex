@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:control="Controls.*" creationPolicy="all">
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import flash.net.navigateToURL;
+			
+			public function muestraPdf(consulta:String):void{
+				trace(consulta);
+				//navigateToURL(new URLRequest(consulta), "_blank");
+				iFrame.source = consulta; 
+				iFrame.visible = true;
+			}
+			
+			public function ocultarPdf():void{	
+				iFrame.source = ""; 
+				iFrame.visible = false;
+			}
+		]]>
+	</mx:Script>
+	<control:IFrameB id="iFrame" x="0" y="0" width="100%" height="100%"/>
+</mx:Canvas>

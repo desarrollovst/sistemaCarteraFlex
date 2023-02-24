@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="709" height="520" 
+	backgroundAlpha="1.0" creationPolicy="all" creationComplete="initApp()" 
+	backgroundColor="#FFFFFF" xmlns:Data="Data.*" x="12.5" y="42">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var du:Utils;
+      	private var sheet:Sheet;
+      	public var wsMS:WebService;
+      	public var titulo:String;
+      	
+      	private var asesor:Array;
+      	private var mes:Array;
+      	private var anio:Array;
+      	private var meta:Array;
+      	private var pondCol:Array;
+      	private var pondCte:Array;
+      	private var pondDes:Array;
+      	private var pondMora:Array;
+      	
+        private var infoObj:ArrayCollection = new ArrayCollection();
+        public var _xmlRep:XML = new XML();
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.NOMINA = cellValue;
+            else if(index == 1)
+                cellObject.MES = cellValue;
+            else if(index == 2)
+                cellObject.ANIO = cellValue;
+            else if(index == 3)
+                cellObject.META = cellValue;
+            else if(index == 4)
+                cellObject.PONDCOL = cellValue;
+            else if(index == 5)
+                cellObject.PONDCTES = cellValue;
+            else if(index == 6)
+                cellObject.PONDDES = cellValue;
+            else if(index == 7)
+                cellObject.PONDMORA = cellValue;               
+        }
+       
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        private function calcularTotalMetas():Number{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	var total:Number = 0;
+        	
+        	for(var i:int = 0; i <= info.length - 1; i++){
+        		total += Number(info[i].META);
+        	}
+        	return total;
+        }
+        
+        public function cargarInfo():void{
+        	if(formateaInfo() == true){
+	        	initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				//Servicio invocado para realizar el registro de las metas de colocacion
+				wsMS.addEventListener(ResultEvent.RESULT, setRegistroMeta);
+				wsMS.setRegistroMeta.send(asesor, mes, anio, meta, pondCol, pondCte, pondDes, pondMora, Application.application.U_ID);
+        	}
+        }
+        
+		private function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        private function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+			asesor = new Array;
+			mes = new Array;
+			anio = new Array;
+			meta = new Array;
+			pondCol = new Array;
+			pondCte = new Array;
+			pondDes = new Array;
+			pondMora = new Array;
+			
+			for (var i:int = 0; i < info.length; i++){
+				asesor[i] = info[i].NOMINA;
+				mes[i] = info[i].MES;
+				anio[i] = info[i].ANIO;
+			 	meta[i] = info[i].META;
+				pondCol[i] = info[i].PONDCOL;
+				pondCte[i] = info[i].PONDCTES;
+				pondDes[i] = info[i].PONDDES;
+				pondMora[i] = info[i].PONDMORA;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var totalMeta:Number;
+	            var filas:int;
+	            var cols:int;
+	            
+	            if(fileData != null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet != null){
+	            	    filas = sheet.rows;
+	                    cols = sheet.cols;
+	                    for(var i:int = 1; i < filas; i++){
+	                	    var cellObject:Object = {};
+	                        for(var j:int = 0; j < cols; j++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(i, j);
+	                            if(cell != null){
+	                            	cellValue = (cell.value).toString();
+	                                addProperty(cellObject, j, cellValue);
+	                            }
+	                     	}  
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    filas--;
+	                    totalMeta = calcularTotalMetas();
+	                    lblResultado.text = "Total Metas: " + global.formatoMoneda(totalMeta.toString()) + " - " + filas + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }  
+        
+        private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Asignación de Metas";
+	      	lblTitulo.text = titulo.toUpperCase();  
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function onLoadError():void{
+        	/*body not implemented*/
+        }
+       	    
+	    private function setRegistroMeta(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setRegistroMeta);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				dgInfo.dataProvider = null;	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+						
+					var cont:int = _xmlRep.elements().length();	
+					dgInfo.dataProvider = _xmlRep.Table;
+					lblResultado.text = cont + " Registro(s) Procesado(s)";
+					btnCargar.visible = false;
+					btnExportar.visible = true;	
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();				
+				});
+				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de Metas
+				wsMS.getRepMetaArchivo.send(Application.application.U_ID);		
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="39" width="689" height="471" styleName="canvasMod">
+  		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="288.5" y="434" click="cargarInfo()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="395.85" y="402"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="227.85" y="402" width="160"/>
+		<mx:DataGrid id="dgInfo" x="10" y="10" width="667" height="353" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NÓMINA ASESOR" dataField="NOMINA" width="120"/>
+				<mx:DataGridColumn headerText="MES" dataField="MES" width="60"/>
+				<mx:DataGridColumn headerText="AÑO" dataField="ANIO" width="60"/>
+				<mx:DataGridColumn headerText="META" dataField="META" width="80"/>
+				<mx:DataGridColumn headerText="PONDERACIÓN COLOCACION" dataField="PONDCOL" width="180"/>
+				<mx:DataGridColumn headerText="PONDERACIÓN CLIENTES" dataField="PONDCTES" width="170"/>
+				<mx:DataGridColumn headerText="PONDERACIÓN DESERCION" dataField="PONDDES" width="180"/>
+				<mx:DataGridColumn headerText="PONDERACIÓN MORA" dataField="PONDMORA" width="150"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCEST" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="161" y="371" fontStyle="italic" fontWeight="bold" fontSize="12" width="365" textAlign="center"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="292" y="435" click="exportar()"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

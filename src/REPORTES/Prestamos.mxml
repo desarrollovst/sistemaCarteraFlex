@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationPolicy="all" creationComplete="initApp()" verticalScrollPolicy="auto" 
+	horizontalScrollPolicy="auto" xmlns:Data="Data.*" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IViewCursor
+			import mx.containers.TitleWindow;			
+			import mx.controls.AdvancedDataGrid;
+		 	import mx.controls.Alert;
+		 	import mx.controls.DataGrid;
+		 	import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			private var _xmlTipoProd:XML = new XML();
+			[Bindable]
+			private var repObj:ArrayCollection;
+			private var tipoProdObj:ArrayCollection;
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var rep:String;
+			public var fecha:String;
+			public var fechaFin:String;
+			private var du:Utils;
+			private var global:Globales;		
+
+			public function exportar(tituloRep:String):void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,tituloRep);		
+			}		
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Préstamos"
+				lblTitulo.text = titulo.toUpperCase();
+				rep = "-1";
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+	
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTipoProd = XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					formateaProd();
+					cboTipoProd.dataProvider = tipoProdObj;
+				});
+				params[0] = "";
+				params[1] = "";
+				params[2] = "";
+				wsCat.getCatalogoGral.send(11, params)
+			}
+					
+			public function generar():void{
+				if(valida()){	
+					var tituloRep:String;			
+					var textoInicio:String = "";
+					var textoFin:String = "";
+					var textoPago:String = "";
+					var cartVig:int = Number(chkCartVig.selected); 
+					var cartVenc:int = Number(chkCartVenc.selected);
+					var cartRest:int = Number(chkCartRest.selected);
+					var cartCast:int = Number(chkCartCast.selected);
+
+					textoInicio = " - Inicio de Ciclo desde " + dtfIniDesde.text + " hasta " + dtfIniHasta.text;
+					textoPago = " - Pagos hasta " + dtfPagos.text;
+					
+					if(dtfFinDesde.text != "" || dtfFinHasta.text != ""){
+						textoFin = " - Fin de Ciclo";
+						if(dtfFinDesde.text != "")
+							textoFin += " desde " + dtfFinDesde.text;
+						if(dtfFinHasta.text != "")
+							textoFin += " hasta " + dtfFinHasta.text;	
+					}
+						
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+							
+						if(_xmlRep.elements().length() > 0){
+							tituloRep = "Reporte de Préstamos " + textoInicio + textoFin + textoPago;
+							exportar(tituloRep);				
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getRepPrestamos.send(Number(prestamos.selectedValue), Number(ciclos.selectedValue),
+											  dtfIniDesde.text, dtfIniHasta.text, dtfFinDesde.text, 
+											  dtfFinHasta.text, dtfPagos.text, Number(chkSitCart.selected), 
+											  Number(chkSitTes.selected), Number(chkSitSaldo.selected), 
+											  Number(chkSitLiq.selected), Number(chkSitDev.selected),   
+										      cartVig, cartVenc, cartRest, cartCast, Application.application.U_ID,
+										      Application.application.lblUser.text, ctrlFiltro.cboRegion.selectedItem.codigo,
+										      ctrlFiltro.cboSucursal.selectedItem.codigo, ctrlFiltro.cboCoord.selectedItem.codigo, 
+										      ctrlFiltro.cboAsesor.selectedItem.codigo, cboTipoProd.selectedItem.id);	
+				}
+			}
+			
+			private function formateaProd():void{
+				var cont:int = _xmlTipoProd.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";
+				oItem.nombre = "--Todos--";
+				item.push(oItem);
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlTipoProd.Table[i].CODIGO;
+					oItem.nombre = _xmlTipoProd.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				tipoProdObj = new ArrayCollection(item);			
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				var fec:Date;
+				ctrlFiltro.limpiar();
+				fec = Application.application._Current_Fecha;
+				dtfIniDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfIniHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFinDesde.selectedDate = null;
+				dtfFinHasta.selectedDate = null;
+				dtfPagos.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				chkSitSaldo.selected = true;
+				chkSitCart.selected = false;
+				chkSitTes.selected = false;
+				chkSitLiq.selected = false;
+				chkSitDev.selected = false;
+				chkCartVig.selected = true;
+				chkCartVenc.selected = true;
+				chkCartRest.selected = true;
+				chkCartCast.selected =  true;
+				prestamos.selectedValue = 0;
+				ciclos.selectedValue = 0;
+				ciclos.dispatchEvent(new Event("change"));
+				rdbUltCiclo.enabled = true;
+				cboTipoProd.selectedIndex = 0;
+			}
+			
+			public function valida():Boolean{
+				if(chkCartVig.selected == false && chkCartVenc.selected == false && 
+				   chkCartRest.selected == false && chkCartCast.selected == false){
+					Alert.show("Debe seleccionar al menos un Tipo de Cartera.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaFechaIni():void{
+				if(dtfIniDesde.selectedDate > dtfIniHasta.selectedDate){
+					Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+					dtfIniDesde.selectedDate = dtfIniHasta.selectedDate;
+				}
+			}
+			
+			public function validaFechaFin():void{
+				if(dtfFinDesde.selectedDate == null)
+					dtfFinDesde.selectedDate = dtfFinHasta.selectedDate;
+				if(dtfFinHasta.selectedDate == null)
+					dtfFinHasta.selectedDate = dtfFinDesde.selectedDate;
+				if(dtfFinDesde.selectedDate > dtfFinHasta.selectedDate){
+					Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+					dtfFinDesde.selectedDate = dtfFinHasta.selectedDate;
+				}
+			}
+			
+			public function validaSituacion(event:Event):void{
+				if(chkSitSaldo.selected == false && chkSitCart.selected == false && chkSitTes.selected == false &&
+				   chkSitLiq.selected == false && chkSitDev.selected == false){
+					var obj:CheckBox = event.target as CheckBox;
+					obj.selected = true;
+					Alert.show("Debe seleccionar al menos una Situación.",titulo,4,null,null,global.iAlert);
+				}
+				if(chkSitDev.selected == true)
+					rdbUltCiclo.enabled = false;
+				else
+					rdbUltCiclo.enabled = true;
+			}
+			
+			public function validaCiclos():void{
+				if(ciclos.selectedValue == "0")
+					chkSitDev.enabled = true;
+				else if(ciclos.selectedValue == "1")
+					chkSitDev.enabled = false;		
+			}	
+		]]>
+	</mx:Script>
+	<mx:Canvas styleName="canvasComp" width="570" height="610" backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+	<mx:Label x="18.05" y="389" text="Préstamos" id="lblPrestamos"/>
+	<mx:Canvas x="18.05" y="408" width="264" height="61" styleName="canvasMod" id="cnvPrestamos">
+		<mx:RadioButtonGroup id="prestamos"/>
+		<mx:RadioButton x="64.5" y="5" label="Grupales" height="23" width="108" id="chkPrnGrupales" groupName="prestamos" value="0"/>
+		<mx:RadioButton x="64.5" y="31" label="Acreditados de Grupo" height="23" width="133" id="chkPrnAcred" groupName="prestamos" value="1" enabled="false"/>
+	</mx:Canvas>
+	<mx:Label x="290" y="129.5" text="Fin del Ciclo" id="lblFinCiclo"/>
+	<mx:Canvas x="290" y="149" width="264.05" height="70" styleName="canvasMod" id="cnvFinCiclo">
+		<mx:DateField id="dtfFinDesde" x="104.5" y="6" width="100" change="validaFechaFin()"/>
+		<mx:DateField id="dtfFinHasta" x="104.5" y="38" width="100" change="validaFechaFin()"/>
+		<mx:Label x="51.5" y="8" text="Desde:" width="45" textAlign="right"/>
+		<mx:Label x="51.5" y="40" text="Hasta:" width="45" textAlign="right"/>
+	</mx:Canvas>
+	<mx:Label x="290.05" y="301" text="Situación" id="lblSituacion"/>
+	<mx:Canvas x="290.05" y="320" width="264" height="149" styleName="canvasMod" id="cnvSituacion">
+		<mx:CheckBox x="58" y="14" label="Autorizado por Cartera" id="chkSitCart" change="validaSituacion(event)"/>
+		<mx:CheckBox x="58" y="38" label="Autorizado por Tesorería" id="chkSitTes" change="validaSituacion(event)"/>
+		<mx:CheckBox x="58" y="62" label="Con Saldo" id="chkSitSaldo" change="validaSituacion(event)"/>
+		<mx:CheckBox x="58" y="86" label="Liquidado" id="chkSitLiq" change="validaSituacion(event)"/>
+		<mx:CheckBox x="58" y="110" label="Devuelto" id="chkSitDev" change="validaSituacion(event)"/>
+	</mx:Canvas>
+	<mx:Label x="290.05" y="227" text="Pagos" id="lblPagos"/>
+	<mx:Canvas x="290.05" y="246" width="264" height="47" styleName="canvasMod" id="cnvPagos">
+		<mx:DateField id="dtfPagos" x="107.5" y="11" width="100"/>
+		<mx:Label x="54.5" y="13" text="Hasta:" width="45" textAlign="right"/>
+	</mx:Canvas>
+	<mx:Label x="290.05" y="477" text="Ciclos" id="lblCiclos"/>
+	<mx:Canvas x="290.05" y="496" width="264" height="61" styleName="canvasMod" id="cnvCiclos">
+		<mx:RadioButtonGroup id="ciclos" change="validaCiclos()" />
+		<mx:RadioButton id="rdbTodosCiclos" x="64.5" y="5" label="Todos los Ciclos" height="23" width="108" groupName="ciclos" value="0"/>
+		<mx:RadioButton id="rdbUltCiclo" x="64.5" y="31" label="Último Ciclo" height="23" width="133" groupName="ciclos" value="1"/>
+	</mx:Canvas>
+	<mx:Label x="290" y="34" text="Inicio del Ciclo" id="lblIniCiclo"/>
+	<mx:Canvas x="290" y="53.5" width="264.05" height="70" styleName="canvasMod" id="cnvIniCiclo">
+		<mx:DateField id="dtfIniDesde" x="104.5" y="6" width="100" change="validaFechaIni()"/>
+		<mx:DateField id="dtfIniHasta" x="104.5" y="38" width="100" change="validaFechaIni()"/>
+		<mx:Label x="51.5" y="8" text="Desde:" width="45" textAlign="right"/>
+		<mx:Label x="51.5" y="38" text="Hasta:" width="45" textAlign="right"/>
+	</mx:Canvas>
+	
+	<mx:Button x="207.5" y="570" label="Generar" click="generar()" id="btnGenerar"/>
+	<mx:Button x="291.5" y="570" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Canvas x="18.05" y="301" width="264" height="80" styleName="canvasMod" id="canvas4">
+		<mx:CheckBox id="chkCartVig" x="19" y="10" label="Vigente" height="23" width="108"/>
+		<mx:CheckBox id="chkCartCast" x="135" y="10" label="Castigada" height="23" width="108"/>
+		<mx:CheckBox id="chkCartRest" x="19" y="41" label="Reestructurada" height="23" width="108"/>
+		<mx:CheckBox id="chkCartVenc" x="135" y="41" label="Vencida" height="23" width="108"/>
+	</mx:Canvas>
+	<mx:Label x="18.05" y="282" text="Tipo de Cartera"/>
+	<mx:Canvas x="18" y="53.5" width="264.05" height="220.5" styleName="canvasMod" id="canvas2">
+		<control:CtrlFiltroInfo id="ctrlFiltro" x="6" y="10"/>
+	</mx:Canvas>
+	<mx:DataGrid id="dgReporte" dataProvider="{_xmlRep.dtPrestamos}" x="18" y="52" width="550" visible="false" 
+		horizontalScrollPolicy="on" height="289">
+			<mx:columns>
+				<mx:DataGridColumn headerText="TIPO PRODUCTO" dataField="TIPOPROD"/>
+				<mx:DataGridColumn headerText="COD GRUPO" dataField="COD_GRUPO"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+				<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
+				<mx:DataGridColumn headerText="DURACION" dataField="PLAZO"/>
+				<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD"/>
+				<mx:DataGridColumn headerText="FIN CICLO" dataField="FIN"/>
+				<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
+				<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD"/>
+				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
+				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
+				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE"/>
+				<mx:DataGridColumn headerText="CANT A PAGAR" dataField="CANT_TOTAL"/>
+				<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP"/>
+				<mx:DataGridColumn headerText="CARGOS" dataField="CARGOS"/>
+				<mx:DataGridColumn headerText="ABONOS" dataField="ABONOS"/>
+				<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="PAGADO_CAPITAL"/>
+				<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADO_INTERES"/>
+				<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADO_RECARGOS"/>
+				<mx:DataGridColumn headerText="SALDO_CAPITAL" dataField="SDO_CAPITAL"/>
+				<mx:DataGridColumn headerText="ULTIMO PAGO" dataField="FEC_ULT_PAGO"/>
+				<mx:DataGridColumn headerText="CANT ULTIMO PAGO" dataField="ULT_PAGO"/>
+				<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL"/>
+				<mx:DataGridColumn headerText="COD ASESOR" dataField="COD_ASESOR"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR"/>
+				<mx:DataGridColumn headerText="COD REGION" dataField="COD_REGION"/>
+				<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION"/>
+				<mx:DataGridColumn headerText="COD GERENTE" dataField="COD_GTE"/>
+				<mx:DataGridColumn headerText="NOMBRE GERENTE" dataField="GERENTE"/>
+				<mx:DataGridColumn headerText="COD SUCURSAL" dataField="COD_SUCURSAL"/>
+				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL"/>
+				<mx:DataGridColumn headerText="MUJERES CON PRESTAMO" dataField="MUJERES"/>
+				<mx:DataGridColumn headerText="HOMBRES CON PRESTAMO" dataField="HOMBRES"/>
+				<mx:DataGridColumn headerText="TOTAL CLIENTES" dataField="NUM_CTES"/>
+				<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
+				<mx:DataGridColumn headerText="REFERENCIA GL" dataField="REFERENCIAGL"/>
+				<mx:DataGridColumn headerText="SALDO GL" dataField="SDO_GL"/>
+				<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL"/>
+				<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL"/>
+				<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES"/>
+				<mx:DataGridColumn headerText="DIAS MORA" dataField="DIAS_MORA"/>
+				<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>	
+				<mx:DataGridColumn headerText="TIPO CARTERA" dataField="TIPOCART"/>
+				<mx:DataGridColumn headerText="COD COORDINADOR" dataField="COD_COORD"/>
+				<mx:DataGridColumn headerText="NOMBRE COORDINADOR" dataField="COORDINADOR"/>
+				<mx:DataGridColumn headerText="COD ASESOR ORIGEN" dataField="COD_ASESOR_INI"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR ORIGEN" dataField="ASESOR_INI"/>
+				<mx:DataGridColumn headerText="GRUPO ANTERIOR" dataField="COD_GRUPO_ANT"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO ANTERIOR" dataField="NOM_GRUPO_ANT"/>
+				<mx:DataGridColumn headerText="CICLO ANTERIOR" dataField="CICLO_ANT"/>		
+				<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NOMINA_ASESOR"/>
+			</mx:columns>
+		</mx:DataGrid>
+	<mx:Label x="18.05" y="477" text="Tipo de Producto" id="lblproducto"/>
+		<mx:Canvas x="18.05" y="496" width="264" height="61" styleName="canvasMod1" id="cnvTipoProd1" borderStyle="solid" cornerRadius="10" borderColor="#A5A7A9">
+			<mx:ComboBox id="cboTipoProd" x="46" y="18" labelField="nombre" width="170"></mx:ComboBox>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

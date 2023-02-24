@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationPolicy="all" 
+	creationComplete="initApp()" verticalScrollPolicy="auto" horizontalScrollPolicy="auto" 
+	xmlns:control="Controls.*">
+	
+	<!--Componente de Reporte de Diagnosticos-->
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.events.IndexChangedEvent;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML = new XML();
+			
+			private var wsMS:WebService;
+			private var mes:String;
+			private var anio:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " de " + mes + " del " + anio);
+			}
+		
+			public function generar():void{
+				if(compMesAnio.valida()){
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+					
+						btnExportar.enabled = false;
+													
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();							
+							btnExportar.enabled = true;
+							dgReporte.dataProvider = _xmlRep.Table;
+							lblTotal.text = cont + " Registro(s)";   
+							mes = compMesAnio.obtieneNomMes();
+							anio = compMesAnio.obtieneAnio();
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							dgReporte.dataProvider = null;
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepDiagnostico.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio());
+				}	
+			}
+									
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Diagnósticos";
+				compMesAnio.init(titulo);
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				compMesAnio.limpiar();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="896" height="420" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Label id="lblTitulo" x="18" y="10" width="543" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button x="71.75" y="130" label="Generar" click="generar()"/>
+		<mx:Button x="150.25" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+		<mx:DataGrid id="dgReporte" x="18.45" y="162" width="858.55" visible="true" height="221" horizontalScrollPolicy="auto">
+			<mx:columns>
+                                    
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="ACREDITADO" width="250"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CDGCLNS" width="60"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+				<mx:DataGridColumn headerText="MES DIAGNOSTICO" dataField="MESDIAG" width="130"/>
+				<mx:DataGridColumn headerText="MES REPORTE" dataField="MESREP" width="120"/>
+				<mx:DataGridColumn headerText="EDAD" dataField="EDAD" width="50"/>
+				<mx:DataGridColumn headerText="TIPO DE CANCER" dataField="TIPOCANCER" width="150"/>
+				<mx:DataGridColumn headerText="PAGADO" dataField="PAGADO" width="60"/>
+				<mx:DataGridColumn headerText="DOCUMENTACION RECIBIDA" dataField="DOCRECIB" width="170"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="80"/>
+				<mx:DataGridColumn headerText="NOMBRE BENEFICIARIO" dataField="BENEFICIARIO" width="250"/>
+				<mx:DataGridColumn headerText="ASEGURADORA" dataField="ASEGURADORA" width="300"/>
+
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnExportar" x="774" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Label id="lblTotal" x="18.4" y="391" width="858.6" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Canvas x="18" y="53.5" width="247.05" height="68.5" styleName="canvasMod">
+			<control:FiltroMesAnio id="compMesAnio" y="6.5" x="7.5" width="230"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

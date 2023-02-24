@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" height="330">
+	
+	<mx:Validator id="codAntV" source="{txtCodAnt}" property="text" 
+	invalid="{txtCodAnt.setFocus()}" triggerEvent="" requiredFieldError="Código de Antigüedad Requerido"/>
+	<mx:Validator id="codCartV" source="{txtCodCart}" property="text" 
+	invalid="{txtCodCart.setFocus()}" triggerEvent="" requiredFieldError="Código de Cartera Requerido"/>
+	<mx:Validator id="antMinV" source="{txtAntMin}" property="text" 
+	invalid="{txtAntMin.setFocus()}" triggerEvent="" requiredFieldError="Antigüedad Mínima Requerida"/>
+	<mx:Validator id="antMaxV" source="{txtAntMax}" property="text" 
+	invalid="{txtAntMax.setFocus()}" triggerEvent="" requiredFieldError="Antigüedad Máxima Requerida"/>
+	<mx:Validator id="cartMinV" source="{txtCartMin}" property="text" 
+	invalid="{txtCartMin.setFocus()}" triggerEvent="" requiredFieldError="Cartera Mínima Requerida"/>
+	<mx:Validator id="cartMaxV" source="{txtCartMax}" property="text" 
+	invalid="{txtCartMax.setFocus()}" triggerEvent="" requiredFieldError="Cartera Máxima Requerida"/>
+	<mx:Validator id="porcV" source="{txtPorc}" property="text" 
+	invalid="{txtPorc.setFocus()}" triggerEvent="" requiredFieldError="Porcentaje Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosTipoAsesor;
+		import Data.EventTipoAsesor;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosTipoAsesor;
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoTipoAsesor(codAnt:String,codCart:String,antMin:Number,antMax:Number,cartMin:Number,cartMax:Number,porc:Number):void{
+			init();
+			tipoAccion = 2; 
+			
+			info = new DatosTipoAsesor();
+			//Datos del tipo de Asesor
+			info.codAnt = codAnt;
+			info.codCart = codCart;
+			info.antMin = antMin;
+			info.antMax = antMax;
+			info.cartMin = cartMin;
+			info.cartMax = cartMax;
+			info.porc = porc;
+			
+			llenaRegistros();
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosTipoAsesor();
+				
+			var invalidArray:Array = Validator.validateAll([codAntV, codCartV, antMinV, antMaxV, cartMinV, cartMaxV, porcV]);
+				
+			if(invalidArray.length == 0){	
+				info.codAnt = txtCodAnt.text;
+				info.codCart = txtCodCart.text;
+				info.antMin = Number(txtAntMin.text);
+				info.antMax = Number(txtAntMax.text);
+				info.cartMin = Number(txtCartMin.text);
+				info.cartMax = Number(txtCartMax.text);
+				info.porc = Number(txtPorc.text);
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function guardaTipoAsesor():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
+			wsMS.setAccionTipoAsesor.send(tipoAccion, info.codAnt, info.codCart, info.antMin, info.antMax,
+									      info.cartMin, info.cartMax, info.porc);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			this.title = "Tipo de Asesor";
+			titulo = "Mantenimiento de Tipo de Asesor";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 500;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			txtCodAnt.editable = false;
+			txtCodCart.editable = false;
+			
+			txtCodAnt.text = info.codAnt;
+			txtCodCart.text = info.codCart;
+			txtAntMin.text = info.antMin.toString();
+			txtAntMax.text = info.antMax.toString();
+			txtCartMin.text = info.cartMin.toString()
+			txtCartMax.text = info.cartMax.toString();
+			txtPorc.text = info.porc.toString();
+		}
+			
+		public function registraInfoTipoAsesor():void{
+			init();
+			tipoAccion = 1;
+			
+			info = null;
+			
+			txtCodAnt.setFocus();
+			txtCodAnt.editable = true;
+			txtCodCart.editable = true;
+		}
+		
+		private function setAccionTipoAsesor(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaDatosTipo(event:EventTipoAsesor):void{
+			info = event.customProp;
+		}
+		
+		private function validaFinal():void{
+			if (info.guarda == true)
+				guardaTipoAsesor();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="338" height="240" styleName="canvasMod">
+		<mx:Label id="lblCodAnt" x="67" y="12" text="Código Antigüedad:"/>
+		<mx:TextInput id="txtCodAnt" x="174" y="10" width="40" maxChars="2"/>
+		<mx:Label id="lblCodCart" x="86" y="44" text="Código Cartera:"/>
+		<mx:TextInput id="txtCodCart" x="174" y="42" width="40"/>
+		<mx:Label id="lblAntMax" x="64" y="108" text="Antigüedad Máxima:"/>
+		<mx:TextInput id="txtAntMax" x="174" y="106" width="80"/>
+		<mx:Label id="lblAntMin" x="68" y="76" text="Antigüedad Mínima:"/>
+		<mx:TextInput id="txtAntMin" x="174" y="74" width="80"/>
+		<mx:Label id="lblCartMin" x="87" y="140" text="Cartera Mínima:"/>
+		<mx:TextInput id="txtCartMin" x="174" y="138" width="80"/>
+		<mx:Label id="lblCartMax" x="83" y="172" text="Cartera Máxima:"/>
+		<mx:TextInput id="txtCartMax" x="174" y="170" width="80"/>
+		<mx:Label id="lblPorc" x="107" y="204" text="Porcentaje:"/>
+		<mx:TextInput id="txtPorc" x="174" y="202" width="80"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="258" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="258" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

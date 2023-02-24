@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!-- Componente de impresion de cheques para beneficiarios de defunciones -->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+			private var _xmlDiag:XML = new XML();
+			private var _xmlBenef:XML = new XML();
+			private var _xmlChq:XML = new XML();
+			private var _xlmPermisos:XML = new XML();
+			private var _xmlCta:XML = new XML();
+			
+			private var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var titulo:String;
+			private var rep:String;
+			
+			private var aCodigo:Array;
+			private var aCheque:Array;
+			
+			private var benefObj:ArrayCollection = new ArrayCollection();
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+			private function activaContBenef(band:Boolean):void{
+				btnDatosBen.enabled = band;
+			}
+			
+			private function calculaRegSel():Number{
+				var listaBenef:ArrayCollection = dgBenef.dataProvider as ArrayCollection;
+				var cont:Number = 0;
+				
+				for (var i:int = 0; i < listaBenef.length; i++){
+					if(listaBenef[i].REGISTRO == true)
+						cont++;
+				}
+				return cont;
+			}
+			
+			private function desabilitaEdicion(event:DataGridEvent):void{
+				event.preventDefault();
+			}
+			
+			private function formateaListaBenef():void{
+				var cont:int = _xmlBenef.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				var fpago:String = dtfFecha.text;
+				 
+				benefObj.removeAll();
+				benefObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					if(_xmlBenef.Table[i].FPAGO == fpago){
+						if(_xmlBenef.Table[i].NOCHEQUE.toString() == ""){
+							oItem = new Object();
+							oItem.REGISTRO = true;
+							oItem.CODIGO = _xmlBenef.Table[i].CODIGO;
+							oItem.NOMBRE_BENEF = _xmlBenef.Table[i].NOMBRE_BENEF;
+							oItem.MONTO = _xmlBenef.Table[i].MONTO;
+							item.push(oItem);
+						}
+					}
+				}
+				benefObj = new ArrayCollection(item);
+			}
+			
+			private function formateaRegBenef():void{
+				var n:int;
+				var cont:int;
+				var ini:Number;
+				var listaBenef:ArrayCollection = dgBenef.dataProvider as ArrayCollection;  
+				
+				n = 0;
+				cont = listaBenef.length;
+				ini = Number(txtChqIni.text);
+				aCodigo = new Array;
+				aCheque = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					if(listaBenef[i].REGISTRO == true){
+						aCodigo[n] = listaBenef[i].CODIGO;
+						aCheque[n] = ini.toString(); 
+						n++;
+						ini++;
+					}
+				}
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "56";
+				titulo = "Impresión de Cheques de Diagnósticos";
+				lblTitulo.text = titulo.toUpperCase();
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+						
+			private function selecciona():void{
+				if(dgDiag.selectedIndex >= 0)
+					activaContBenef(true);
+				else
+					activaContBenef(false);
+			}
+						
+			public function seleccionaRegBenef(event:Event):void{
+				var ind:int = dgBenef.selectedIndex;
+				var vScroll:Number = dgBenef.verticalScrollPosition;
+				benefObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				if(calculaRegSel() == 0){
+					benefObj[ind].REGISTRO = !CheckBox(event.currentTarget).selected;
+					benefObj.refresh();
+					dgBenef.validateNow();
+					dgBenef.verticalScrollPosition = vScroll;
+					dgBenef.selectedIndex = ind;
+					Alert.show("Debe seleccionar al menos un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);	
+				}
+				actualizaRangoCheque();
+				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+			}
+			
+			private function validaDg():Boolean{
+				if(dgDiag.selectedIndex >= 0){
+					return true;
+				}
+				else{
+					limpiaCuenta();
+					Alert.show("No se ha seleccionado ningun registro de diagnóstico.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- CHEQUES -->
+	<mx:Script>
+		<![CDATA[
+			private function actualizaRangoCheque():void{
+				if (_xmlChq.elements().length() > 0){
+					var chqIni:Number = Number(_xmlChq.Table[0].CHQSIG);
+					var chqFin:Number = chqIni + (calculaRegSel() - 1);
+					txtChqIni.text = chqIni.toString();
+					txtChqFin.text = chqFin.toString();
+				}
+				else{
+					txtChqIni.text = "";
+					txtChqFin.text = "";
+				}
+			}
+			
+			private function buscaSigCheque():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if(txtCodCuenta.text != "" && txtCuenta.text != ""){
+					var codCuenta:String = txtCodCuenta.text;
+					var coord:String = dgDiag.selectedItem.CDGCO;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlChq = new XML(evt.result);
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						actualizaRangoCheque();
+					});
+					params[0] = codCuenta;
+					params[1] = coord;
+					wsCat.getInfoRegistro.send(5, params);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- CUENTA -->
+	<mx:Script>
+		<![CDATA[
+		private function actualizarCta(event:Event):void{
+			var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+			txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
+			txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
+			buscaSigCheque();			
+		}
+		
+		private function buscaCuenta():void{
+			if(validaDg()){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				txtCuenta.setFocus();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCta = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);	
+					Application.application.desbloquear();	
+					
+					if (_xmlCta.elements().length() > 0){
+						txtCuenta.text = _xmlCta.Table[0].BANCO.toString() + " - " + _xmlCta.Table[0].NUMERO.toString();
+						buscaSigCheque();
+					}
+					else{
+						txtCuenta.text = "";
+						Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					}		
+				});
+				params[0] = "4";
+				params[1] = txtCodCuenta.text;
+				params[2] = "";
+				params[3] = Application.application.U_ID;
+				params[4] = "";
+				wsCat.getInfoRegistro.send(3, params);
+			}
+		}
+		
+		private function limpiaCuenta():void{
+			txtCuenta.text = "";
+			txtCodCuenta.text = "";
+			txtChqIni.text = "";
+			txtChqFin.text = ""
+		}
+		
+		private function muestraFormCta():void{
+			if(validaDg()){
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizarCta);
+				PopUpManager.centerPopUp(comMttoCta);
+			}
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIAR -->
+	<mx:Script>
+		<![CDATA[
+			private function enviar():void{
+				if(valida() == true){
+					var codigo:String = dgDiag.selectedItem.CDGDIAG;
+					var coord:String = dgDiag.selectedItem.CDGCO;
+					var cuenta:String = txtCodCuenta.text;
+					var chqIni:String = txtChqIni.text;
+					var chqFin:String = txtChqFin.text;
+					formateaRegBenef();
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var resp:String = evt.result.toString();
+						
+						if(resp.substr(0,1) == "1"){			
+							
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+								var res:String = evt.result.toString();
+								
+								du.rCursor();
+								du.closeWs(wsMS);
+								
+								var id:String = "&id=" + rep;
+								var consCodigo:String = "&codigo=" + codigo;
+								var consCuenta:String = "&cuenta=" + cuenta;
+								var consCoord:String = "&coord=" + coord;
+								var consChqIni:String = "&chqIni=" + chqIni;
+								var consChqFin:String = "&chqFin=" + chqFin;
+								var consulta:String = global.urlPdf + id + consCodigo + consCuenta + consCoord + consChqIni + consChqFin;
+								
+								if (res.substr(0,1) == "1")
+									Application.application.muestraPdf(consulta);
+								else if(res.substr(0,1) == "2"){
+									Alert.show(res.substr(2,res.length -1), titulo, 4, null, 
+										function(e:Event):void{
+											Application.application.muestraPdf(consulta);
+										}, global.iAlert);
+								}
+								else
+									Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+							});
+							wsMS.setAccionImpChequeDiagBenef.send(aCodigo, cuenta, aCheque);
+						}	
+						else{
+							du.rCursor();
+							du.closeWs(wsMS);
+							
+							Alert.show(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
+						}	
+					});
+					wsMS.getValidaRangoCheques.send(coord, cuenta, chqFin);
+				}
+			}
+			
+			private function valida():Boolean{
+				if(dgDiag.selectedIndex < 0){
+					Alert.show("No han sido desplegados los diagnósticos.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(benefObj.length == 0){
+					Alert.show("No han sido desplegados los beneficiarios.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
+					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqIni.text == "" || txtChqFin.text == ""){
+					Alert.show("No ha sido desplegado el rango de cheques.\n\nVerifique la información de la cuenta",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- BUSCA LISTAS -->
+	<mx:Script>
+		<![CDATA[
+			private function buscarListaBenef():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if(dgDiag.selectedIndex >= 0){
+					dgBenef.dataProvider = null;
+					txtCodCuenta.text = "";
+					txtCuenta.text = "";
+					txtChqIni.text = "";
+					txtChqFin.text = "";
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlBenef = new XML(event.result);
+					
+						if (_xmlBenef.elements().length() > 0){
+							formateaListaBenef();
+							dgBenef.dataProvider = benefObj;
+							lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+						}
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					});
+					
+					params[0] = "";
+					params[1] = dgDiag.selectedItem.CDGDIAG;
+					params[2] = "C";
+					wsCat.getListado.send(73, params);
+				}
+			}
+			
+			private function buscarListaDiag():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if(dtfFecha.text != ""){
+					if (txtCdgcl.text != "" || txtNombrecl.text != "" || txtPaternocl.text != ""){
+						dgDiag.dataProvider = null;
+						dgBenef.dataProvider = null;
+						btnDatosBen.enabled = false;
+												
+						du.initWsCat(wsCat);
+						du.sCursor();
+						Application.application.bloquear();
+						
+						du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+							_xmlDiag = new XML(event.result);
+						
+							if (_xmlDiag.elements().length() > 0)
+								dgDiag.dataProvider = _xmlDiag.Table;
+							
+							du.closeWs(wsCat);
+							du.rCursor();
+							Application.application.desbloquear();
+						});
+						
+						params[0] = txtCdgcl.text;
+						params[1] = txtNombrecl.text;
+						params[2] = txtPaternocl.text;
+						params[3] = dtfFecha.text;
+						
+						wsCat.getListado.send(75, params);
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="564" y="0">
+		<mx:Canvas x="261.75" y="31" width="236.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblFecha" x="20.35" y="8" text="Fecha de Pago:" width="87.75" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="112.1" y="6" width="100" tabIndex="1"/>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="90" width="671.45" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodAcre" x="13.25" y="7" text="Acreditado:"/>
+			<mx:TextInput id="txtCdgcl" x="78.35" y="5" width="50" maxChars="6" restrict="0-9" enter="buscarListaDiag()" tabIndex="2"/>
+			<mx:Label id="lblNombreAcre" x="147.35" y="7" text="Nombre:" height="18"/>
+			<mx:TextInput id="txtNombrecl" x="200.35" y="5" width="170"  maxChars="50" enter="buscarListaDiag()" tabIndex="3"/>
+			<mx:TextInput id="txtPaternocl" x="488.3" y="5" width="170"  maxChars="50" enter="buscarListaDiag()" tabIndex="4"/>
+			<mx:Label id="lblPaternoAcre" x="393.35" y="7" text="Apellido Paterno:" width="86.95" height="18"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="67" text="DIAGNÓSTICO POR ACREDITADO" width="222" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblDefuncion"/>
+		<mx:Canvas id="cnvDetalle" x="10" y="130" width="739.45" height="140" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgDiag" x="10" y="8" width="717.45" height="120" 
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+				doubleClickEnabled="true" itemClick="selecciona()" tabIndex="6" >				
+				<mx:columns>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="60" />
+					<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="450" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label x="10" y="296" text="BENEFICIARIO" width="113" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblBeneficiarios"/>
+		<mx:Canvas id="cnvTasa" x="10" y="317" width="739.45" height="135" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgBenef" x="10" y="10" width="717.45" height="115" editable="true"
+				sortableColumns="false" resizableColumns="false" itemEditBeginning="desabilitaEdicion(event)" tabIndex="8"> 			
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.seleccionaRegBenef(event)" width="25" fontSize="10" verticalCenter="0"/>
+			  				</mx:Component> 
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60" visible="true"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE_BENEF" width="450" visible="true"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="80" visible="true"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="689.45" y="278" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosBen" x="9" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaBenef()" enabled="false" toolTip="Listado de beneficiarios" width="40" tabIndex="7"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitCuenta" x="114.4" y="460" text="CHEQUERA" width="83" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="113.1" y="480" width="465.75" height="75" styleName="canvasMod" visible="true">
+			<mx:TextInput id="txtCuenta" x="170.05" y="7" width="231.5" editable="false" tabIndex="10"/>
+			<mx:TextInput id="txtCodCuenta" x="117.05" y="7" width="45" maxChars="2" restrict="0-9" tabIndex="9" enter="buscaCuenta()"/>
+			<mx:Label id="lblEtiqCuenta" x="51.05" y="9" text="Cuenta:" width="60" textAlign="right"/>
+			<mx:Button id="btnBusqCta" x="410.05" y="5" icon="@Embed(source='assets/images/iconBusq.png')" toolTip="Buscar Cuenta" width="40" visible="false"/>
+			<mx:Label id="lblChqIni" x="14" y="41" text="Cheque Inicial:" width="95" textAlign="right"/>
+			<mx:TextInput id="txtChqIni" x="117.05" y="39" width="70.05" editable="false" tabIndex="12"/>
+			<mx:Label id="lblChqFin" x="197.05" y="41" text="Cheque Final:" width="80" textAlign="right"/>
+			<mx:TextInput id="txtChqFin" x="281.1" y="39" width="70.05" editable="false" tabIndex="13"/>
+			<mx:Button id="btnBusqCta0" x="410.55" y="7" icon="@Embed(source='assets/images/iconBusq.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40" tabIndex="11"/>
+		</mx:Canvas>
+		<mx:Canvas x="586.85" y="518" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnImprimir" x="7.75" y="3" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Imprimir" width="40" tabIndex="14"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="2" text="..." width="398" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblTitulo"/>
+		<mx:Canvas x="689.45" y="90" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatos" x="9" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarListaDiag()" enabled="true" toolTip="Búsqueda de defunción" width="40" tabIndex="5"/>
+		</mx:Canvas>
+		<mx:Label id="lblControl" x="160.05" y="296" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

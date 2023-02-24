@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="570" height="360" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" 
+	xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+		 	import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IViewCursor
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;	
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}		
+					
+			private function generar(event:Event):void{
+				if(comRepSol.valida()){				
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(_xmlRep.elements().length() > 0)
+							exportar();	
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getRepSolicitudes.send(comRepSol.obtienePrestamo(), comRepSol.obtieneFecSolDesde(), 
+										      comRepSol.obtieneFecSolHasta(), comRepSol.obtieneFecIniDesde(), 
+										      comRepSol.obtieneFecIniHasta(), comRepSol.obtieneSitSol(), 
+											  comRepSol.obtieneSitAut(), comRepSol.obtieneSitRec(), 
+											  Application.application.U_ID, Application.application.lblUser.text, 
+											  comRepSol.obtieneRegion(), comRepSol.obtieneSucursal(), 
+											  comRepSol.obtieneAsesor());	
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Solicitudes";
+				comRepSol.init("-1", titulo, "");
+				comRepSol.addEventListener("enviar",generar);	
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="dgReporte" dataProvider="{_xmlRep.dtPrestamos}" x="18" y="52" width="860.5" visible="false" horizontalScrollPolicy="on" height="289">
+			<mx:columns>
+				<mx:DataGridColumn headerText="COD GRUPO" dataField="COD_GRUPO"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+				<mx:DataGridColumn headerText="SOLICITUD" dataField="SOLICITUD"/>
+				<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
+				<mx:DataGridColumn headerText="DURACION" dataField="PLAZO"/>
+				<mx:DataGridColumn headerText="FIN CICLO" dataField="FIN"/>
+				<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
+				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
+				<mx:DataGridColumn headerText="CANT SOLICITADA" dataField="CANT_SOLIC"/>
+				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
+				<mx:DataGridColumn headerText="AUTORIZA" dataField="AUTCARPE"/>
+				<mx:DataGridColumn headerText="FECHA AUTORIZA" dataField="FAUTCAR"/>
+				<mx:DataGridColumn headerText="TIEMPO AUTORIZA" dataField="TIEMPOAUT"/>
+				<mx:DataGridColumn headerText="COD ASESOR" dataField="COD_ASESOR"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR"/>
+				<mx:DataGridColumn headerText="COD REGION" dataField="COD_REGION"/>
+				<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION"/>
+				<mx:DataGridColumn headerText="COD SUCURSAL" dataField="COD_SUCURSAL"/>
+				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL"/>
+				<mx:DataGridColumn headerText="MUJERES CON PRESTAMO" dataField="MUJERES"/>
+				<mx:DataGridColumn headerText="HOMBRES CON PRESTAMO" dataField="HOMBRES"/>
+				<mx:DataGridColumn headerText="SALDO GL" dataField="SDO_GL"/>			
+			</mx:columns>
+		</mx:DataGrid>
+	<control:FiltroRepSolicitudes id="comRepSol" height="360"/>
+	<mx:Button id="btnExportar" x="775.5" y="20" label="Exportar Excel" enabled="false" click="exportar()"/>
+	<mx:Label id="lblTitulo" x="18" y="10" width="470.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

@@ -1,0 +1,843 @@
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:SetProperty target="{canvas1}" name="width" value="900"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<Data:RowColorDataGrid id="dgReg" x="499" y="55" width="380" height="493" horizontalScrollPolicy="on" sortableColumns="true">
+					<Data:columns>
+						<mx:DataGridColumn headerText="" dataField="REG" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+							<mx:itemRenderer>
+								<mx:Component>
+			  						<mx:CheckBox change="outerDocument.seleccionarRegAcred(event)" width="25" fontSize="10" verticalCenter="0"/> 
+			  					</mx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+						<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="150"/>
+						<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SALDO" width="80"/>
+						<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="70"/>
+						<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+						<mx:DataGridColumn headerText="CANTIDAD ENTREGADA" dataField="CANTIDAD" width="80"/>
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:AddChild>
+			<mx:RemoveChild target="{btnAceptar}"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button id="btnLimpiar" label="Limpiar" x="726" y="556" click="limpiarResultado()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button id="btnRegistrar" label="Registrar" x="802" y="556" click="asignaFondeoBajio()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label id="lblCtrlReg" x="499" y="10" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label id="lblCtrlMonto" x="499" y="33" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente que permite realizar el marcado de fondeo para Bajio-->
+
+	<mx:Script>
+		<![CDATA[
+		import mx.controls.CheckBox;
+		import mx.events.IndexChangedEvent;
+		import mx.events.CloseEvent;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.controls.DataGrid;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;
+		import mx.validators.Validator;
+
+		import mx.messaging.AbstractConsumer;
+
+		private var vResult:ValidationResultEvent;
+
+		private var global:Globales;
+		private var du:Utils;
+		private var titulo:String;
+
+		private var orgObj:ArrayCollection = new ArrayCollection();
+		private var dispObj:ArrayCollection = new ArrayCollection();
+		private var lineaObj:ArrayCollection = new ArrayCollection();
+		private var acProductos:ArrayCollection = new ArrayCollection();
+		private var acredObj:ArrayCollection = new ArrayCollection();
+
+		private var _xmlParamBj:XML = new XML();
+		private var _xmlInfo:XML = new XML();
+		private var _xmlOF:XML = new XML();
+		private var _xmlDisp:XML = new XML();
+		private var _xmlLC:XML = new XML();
+		private var _xmlProd:XML = new XML();
+		private var _xmlRes:XML = new XML();
+
+		private var tipoAccion:int;
+		private var control:Number;
+
+		private var wsMS:WebService;
+
+		public function asignaFondeoAcred(event:CloseEvent):void{
+			if(event.detail==Alert.YES){
+				tipoAccion = 2;
+				titulo = "Asignación Individual de Fondeo Bajio";
+				lblTitulo.text = titulo.toUpperCase();
+				txtImporte.editable = false;
+				buscarInfoDisp();
+			}
+			else
+				buscarInfoDisp();
+		}
+
+		public function asignaFondeoBajio():void{
+			var orgFond:String = cboOF.selectedItem.codigo;
+			var lineaCred:String = cboLC.selectedItem.codigo;
+			var disp:String = cboDisp.selectedItem.codigo;
+			var cadena:Array;
+			var registro:String = "";
+
+			cadena = formateaRegAcred().split(";");
+			
+			if(cadena[0].toString() != ""){
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
+					var res:String = evt.result.toString();
+					
+					if (res.substr(0,1) == "1"){
+						wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeo);
+						wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, 2, registro, Application.application.U_ID);
+					}
+					else{
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
+						buscarInfoDisp();
+					}
+				});
+				// ENVIA LOS REGISTROS A FONDEAR A LA TABLA FONDEO_CADENA
+				wsMS.setAccionFondeoCadena.send(cadena, Application.application.U_ID, "BAJIO", orgFond, lineaCred, disp, 1);
+			}
+		}
+
+		private function buscarInfoDisp():void{
+			if(cboOF.selectedIndex > 0 && cboLC.selectedIndex > 0 &&
+			   cboDisp.selectedIndex > 0 && dtfFecSaldo.selectedDate){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var disp:String = cboDisp.selectedItem.codigo;
+				var fecSaldo:String = dtfFecSaldo.text;
+				var cdgProd:String  = "";
+				var tipo:Number = 1; // CUANTOS REGISTROS NO CUMPLEN CON LOS PARAMETROS DE BAJIO
+
+				du.initWsCat(wsCat);
+				du.sCursor();
+
+				_xmlInfo = null;
+
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+
+					du.rCursor();
+					du.closeWs(wsCat);
+
+					if(_xmlInfo.elements().length() > 0){
+						llenaRegistros();
+					}
+				});
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				params[2] = disp;
+				params[3] = fecSaldo;
+				wsCat.getInfoRegistro.send(13, params);
+			}
+			else{
+				lblImpDisp.text = "";
+				lblImpMarc.text = "";
+				lblSaldo.text = "";
+				lblAforo.text = "";
+				lblTotDisp.text = "";
+			}
+		}
+
+		public function calculaRegSel():void{
+			var listaAcred:ArrayCollection = dgReg.dataProvider as ArrayCollection;
+			var cont:int = 0;
+			var cantMarc:Number = 0;
+
+			for (var i:int = 0; i < listaAcred.length; i++){
+				if(listaAcred[i].REG == true){
+					cantMarc += Number(listaAcred[i].SALDO);
+					cont++;
+				}
+			}
+			control = cantMarc;
+			lblCtrlReg.text = cont.toString() + " Registro(s) seleccionado(s)"; 
+			lblCtrlMonto.text = "Monto Marcado: " + global.formatoMoneda(control.toString());
+		}
+
+		private function cargaListaParametros():void{
+			limpiaParam();
+
+			if(cboProducto.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codigo:String = cboProducto.selectedItem.codigo;
+
+				du.initWsCat(wsCat);
+				du.sCursor();
+
+				_xmlParamBj = null;
+
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlParamBj = new XML(evt.result.toString());
+
+					du.rCursor();
+					du.closeWs(wsCat);
+
+					if(_xmlParamBj.elements().length() > 0){
+						lblPeriodicidad.text = _xmlParamBj.Table[0].PERIODICIDADSTR;
+						lblLocalidades.text = global.formatoEntero(Number(_xmlParamBj.Table[0].LOCALIDADES).toString());
+						lblDias_Atraso.text = global.formatoEntero(Number(_xmlParamBj.Table[0].DIAS_ATRASO).toString());
+					}
+				});
+				params[0] = "4";
+				params[1] = codigo;
+				wsCat.getCatalogoGral.send(59, params);
+			}
+		}
+
+		private function cargaTipoProducto():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+
+			acProductos.removeAll();
+			acProductos.refresh();
+
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+				_xmlProd = new XML(event.result);
+
+				if(_xmlProd.elements().length() >0){
+					formateaProducto();
+					cboProducto.dataProvider = acProductos;
+				}
+
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+			});
+			params[0] = "2";
+			params[1] = "";
+			wsCat.getCatalogoGral.send(59, params);
+		}
+
+		private function enviar():void{
+			if(valida()){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				var occursImporte:int = txtImporte.text.split(",").length - 1;
+				var occursSaldo:int = txtImporte.text.split(",").length - 1;
+				var importeStr:String;
+				var saldoStr:String;
+				var i:int;
+				
+				importeStr = txtImporte.text;
+				saldoStr = lblSaldo.text;
+				
+				for(i = 0; i<= occursImporte; i++){
+					importeStr = importeStr.replace(',','');
+				}
+				
+				for(i = 0; i<= occursSaldo; i++){
+					saldoStr = saldoStr.replace(',','');
+					saldoStr = saldoStr.replace('$','');
+				}
+				
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var disp:String = cboDisp.selectedItem.codigo;
+				var importe:Number = Number(importeStr);
+				var fecSaldo:String = dtfFecSaldo.text;
+				var inicio:String = dtfFecIni.text;
+				var fin:String = dtfFecFin.text;
+				
+				Application.application.bloquear();
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+	
+	   				du.closeWs(wsMS);		
+					
+					if(res.substr(0,1) == "1"){
+						du.initWsCat(wsCat);
+						
+						du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void {
+							_xmlRes = new XML(ev.result.toString());
+							
+							du.rCursor();
+							du.closeWs(wsCat);
+							Application.application.desbloquear();
+							
+							if(_xmlRes.elements().length() - 1 > 0){
+								var cont:Number = 0;
+								var mensaje:String;
+								var monto:Number = 0;
+	
+								if(tipoAccion == 1){
+									for(var i:int = 0; i< _xmlRes.elements().length() - 1; i++){
+										if(_xmlRes.Table[i].REGISTRO == "F"){
+											monto = monto + Number(_xmlRes.Table[i].SALDO);
+											cont = cont + 1;
+										}
+									}
+									
+									mensaje = "Se han encontrado " + cont.toString() + " creditos(s) cuyo monto asciende a " 
+									+ global.formatoMoneda(monto.toString()) 
+									+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
+										
+									formateaRegistro(ev.result.toString());
+									Alert.show(mensaje,titulo,Alert.YES|Alert.NO,null,manejaAsignaFondeoBajio,global.iQuest);
+								}
+								else if(tipoAccion == 2){
+									currentState = "resultado";
+									cont = _xmlRes.elements().length();
+									formateaRegistro(ev.result.toString());
+									dgReg.dataProvider = acredObj;
+									calculaRegSel();
+									modificarColor();
+								}
+							}
+							else{
+								Alert.show("No se encontró información que coincida con los criterios de consulta " +
+								" o no encontraron credito(s) que cumpla con el monto requerido de: $" + txtImporte.text + "." + 
+								"\n\nVerifique la información selecionada.",titulo,4,null,null,global.iAlert);
+							}
+						});
+						params[0] = Application.application.U_ID;
+						wsCat.getListado.send(34, params);
+					}
+					else{
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
+					}					
+				});
+				wsMS.getInfoFondeoBajio.send(orgFond, lineaCred, disp, fecSaldo, importe, inicio, fin, tipoAccion, Application.application.U_ID);
+			}
+		}
+		
+		private function formateaDisp():void{
+			var cont:int = _xmlDisp.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			dispObj.removeAll();
+			dispObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlDisp.Table[i].CODIGO;
+				oItem.desc = _xmlDisp.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			dispObj = new ArrayCollection(item);
+		}
+		
+		private function formateaLC():void{
+			var cont:int = _xmlLC.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			lineaObj.removeAll();
+			lineaObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlLC.Table[i].CODIGO;
+				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			lineaObj = new ArrayCollection(item);
+		}
+		
+		private function formateaOF():void{
+			var cont:int = _xmlOF.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for (var i:int = 0; i < cont; i++){
+				if(_xmlOF.Table[i].CODIGO == "0006"){
+					oItem = new Object();
+					oItem.nombre = _xmlOF.Table[i].NOMBRE;
+					oItem.codigo = _xmlOF.Table[i].CODIGO;
+					item.push(oItem);
+				}
+			}
+			orgObj = new ArrayCollection(item);
+		}
+		
+		private function formateaProducto():void{
+			var cont:int = _xmlProd.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			acProductos = null;
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProd.Table[i].CODIGO;	
+				oItem.nombre = _xmlProd.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductos = new ArrayCollection(item);
+		}
+		
+		public function formateaRegAcred():String{
+			var listaAcred:ArrayCollection = acredObj;
+			var registro:String = "";
+			var i:int;
+			var contador:int = 250;
+			var repeticion:int = 1;
+			
+			if(tipoAccion == 1){
+				for (i = 0; i < listaAcred.length; i++){
+						registro += (registro != "" ? ",":"") + listaAcred[i].CDGNS + listaAcred[i].CICLO + listaAcred[i].CDGCL;
+					
+					if(i == contador){
+						registro += ";"
+						repeticion = repeticion + 1;
+						contador = contador + 250;
+					}
+				}
+				
+				for(i = 0; i <= repeticion; i++){
+					registro = registro.replace(";,",";");
+				}
+			}
+			else if(tipoAccion == 2){
+				if(validaRegAcred()){
+					for (i = 0; i < listaAcred.length; i++){
+						if(listaAcred[i].REG == true)
+							registro += (registro != "" ? ",":"") + listaAcred[i].CDGNS + listaAcred[i].CICLO + listaAcred[i].CDGCL;
+						
+						if(i == contador){
+							registro += ";"
+							repeticion = repeticion + 1;
+							contador = contador + 250;
+						}
+					}
+					
+					for(i = 0; i <= repeticion; i++){
+						registro = registro.replace(";,",";");
+					}
+				}
+			}
+			
+			return registro;
+		}
+		
+		public function formateaRegistro(datos:String):void{
+			var array:Array;
+			var xml:XMLDocument = new XMLDocument( datos ); 
+     		var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     		var data:Object = decoder.decodeXML( xml );  
+     	
+			array = ArrayUtil.toArray(data.NewDataSet.Table);
+			
+			var cont:Number = array.length;
+			   
+			acredObj = new ArrayCollection(array);
+			acredObj.removeItemAt(cont-1);
+		}
+		
+		public function init(tipo:int):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales(); 
+			du = new Utils();
+			tipoAccion = tipo;
+			dtfFecIni.selectedDate = Application.application._Current_Fecha;
+			dtfFecFin.selectedDate = Application.application._Current_Fecha;
+			
+			if(tipoAccion == 1)
+				titulo = "Asignación de Fondeo Bajio";
+			else 
+				titulo = "Asignación de Fondeo Individual Bajio";
+			
+			lblTitulo.text = titulo.toUpperCase();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOF = new XML(evt.result.toString());
+					
+				if(_xmlOF.elements().length() > 0){
+					formateaOF();
+					cboOF.dataProvider = orgObj;
+				}
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+			});
+			//Obtiene informacion de las Organizaciones Fondeadoras
+			wsCat.getCatalogoGral.send(29);			
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function llenaRegistros():void{
+			var porc:Number = Number(_xmlInfo.Table[0].AFORO);
+			var impDis:Number = Number(_xmlInfo.Table[0].CANTIDAD);
+			var porcImp:Number = (porc * impDis) / 100; 
+			var cant:Number = Number(_xmlInfo.Table[0].AFORO);
+			
+			if(_xmlInfo.Table[0].FAFORO == "P"){
+				lblAforo.text = porc + " %";
+				lblTotDisp.text = global.formatoMoneda((impDis + porcImp).toString());
+				lblSaldo.text = global.formatoDecimal(((impDis + porcImp) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());  
+			}
+			else if (_xmlInfo.Table[0].FAFORO == "E"){					
+				lblAforo.text = cant.toString();
+				lblTotDisp.text = global.formatoMoneda((cant + impDis).toString());
+				lblSaldo.text = global.formatoDecimal(((cant + impDis) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());
+			}
+			
+			lblImpDisp.text = global.formatoMoneda(Number(impDis).toString());
+			lblImpMarc.text = global.formatoMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
+			txtImporte.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+
+			if(_xmlInfo.Table[0].FFIN.toString() != ""){
+				lblFecEnvio.text = "ÚLTIMO REPORTE ENVIADO EL " + _xmlInfo.Table[0].FFIN.toString(); 	
+			}
+		}
+
+		private function limpiaParam():void{
+			lblPeriodicidad.text = "";
+			lblLocalidades.text = "";
+			lblDias_Atraso.text = "";
+		}
+		
+		public function limpiarResultado():void{
+			if(currentState == "resultado"){
+				dgReg.dataProvider = null;
+				lblCtrlReg.text = "";
+				lblCtrlMonto.text = "";
+				currentState = null;
+			}
+		}
+		
+		private function manejaAsignaFondeoBajio(event:CloseEvent):void{
+			if(event.detail==Alert.YES){
+				asignaFondeoBajio();
+			}
+		}
+		
+		public function modificarColor():void{
+			dgReg.rowColorFunction = seleccionarColor; 
+		}
+		
+		private function seleccionarColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+			var Info:ArrayCollection = dgReg.dataProvider as ArrayCollection;
+			var rColor:uint;
+			if(Info[rowIndex].REGANT == true)
+				rColor = 0xC3C3C3;
+			else
+				rColor = color;
+			return rColor;
+		}
+
+		private function QuitaMontoFormato():void{
+			var occurs:int = txtImporte.text.split(",").length - 1;
+			
+			for(var i:int = 0; i<= occurs; i++){
+				txtImporte.text = txtImporte.text.replace(',','');
+			}
+		}
+		
+		private function seleccionarLC():void{
+			cboDisp.dataProvider = null;
+			
+			if(cboLC.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlDisp = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDisp = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlDisp.elements().length() > 0){
+						formateaDisp();
+						cboDisp.dataProvider = dispObj;
+						cboDisp.selectedIndex = 0;	
+					}
+					buscarInfoDisp();
+				});
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				wsCat.getListado.send(22, params);
+			}
+			else
+				buscarInfoDisp();
+		}
+		
+		private function seleccionarOF():void{
+			cboLC.dataProvider = null;
+			cboDisp.dataProvider = null;
+			txtImporte.text = "";
+			
+			cboProducto.dataProvider = null;
+			limpiaParam();
+			
+			if(cboOF.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlLC = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLC = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlLC.elements().length() > 0){
+						formateaLC();
+						cboLC.dataProvider = lineaObj;
+						cboLC.selectedIndex = 0;
+						seleccionarTipoFondeo(orgFond);
+					}
+					buscarInfoDisp();
+				});
+				params[0] = orgFond;
+				wsCat.getListado.send(21, params);
+			}	
+			else
+				buscarInfoDisp();
+		}
+		
+		public function seleccionarRegAcred(event:Event):void{
+			var ind:int = dgReg.selectedIndex;
+			var vScroll:Number = dgReg.verticalScrollPosition;
+			acredObj[ind].REG = CheckBox(event.currentTarget).selected;
+			calculaRegSel();
+		}	
+		
+		private function seleccionarTipoFondeo(orgFond:String):void{
+			txtImporte.text = "";
+			txtImporte.editable = false;
+			cargaTipoProducto();
+		}
+		
+		private function setAsignaFondeo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaFondeo);
+			
+			var res:String = event.result.toString();
+			
+			if (res.substr(0,1) == "1"){
+				var cont:int = _xmlRes.elements().length() - 1;
+				var monto:Number = _xmlRes.Table[cont].SALDO;
+				
+				if(tipoAccion == 1){
+					if(monto < Number(global.formatoNumerico(lblTotDisp.text)))
+						Alert.show("¿Desea completar el proceso realizando la Asignación Individual de Fondeo?",titulo,Alert.YES|Alert.NO,null,asignaFondeoAcred,global.iQuest);
+					else{
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						buscarInfoDisp();
+					}
+				}
+				else{
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					buscarInfoDisp();
+				}
+			}	
+			else{
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+				buscarInfoDisp();
+			}		
+		}
+		
+		public function valida():Boolean{
+			if(cboOF.selectedIndex == 0){
+				Alert.show("Seleccione una organización fondeadora",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cboLC.selectedIndex == 0){
+				Alert.show("Seleccione una línea de crédito",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cboDisp.selectedIndex == 0){
+				Alert.show("Seleccione una disposición",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(dtfFecIni.text == ""){
+				Alert.show("Seleccione la fecha de inicio",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFecFin.text == ""){
+				Alert.show("Seleccione la fecha final",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var inicio:Date = DateField.stringToDate(dtfFecIni.text, "DD/MM/YYYY");
+			var fin:Date = DateField.stringToDate(dtfFecFin.text, "DD/MM/YYYY");
+			
+			if(inicio >= fin){
+				Alert.show("La fecha final debe de ser mayor a la fecha inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+		
+		public function validaFecha():void{
+			dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		private function validaMontoFormato():void{
+			txtImporte.text = global.formatoDecimal(Number(txtImporte.text).toString());
+		}
+		
+		public function validaRegAcred():Boolean{
+			if(control > Number(global.formatoNumerico(lblTotDisp.text))){
+				Alert.show("El importe marcado no puede ser mayor que el importe de la disposición.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Canvas x="0" y="0" width="492" height="635" backgroundAlpha="1.0" backgroundColor="#FFFFFF"  id="canvas1">
+		<mx:Canvas id="cnvFondeo" x="17" y="55" width="460" height="254" styleName="canvasMod">
+		<mx:Label id="lblOF" x="70.05" y="13" text="Fondeadora:"/>
+			<mx:ComboBox id="cboOF" x="144.05" y="11" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+			<mx:Label id="lblLC" x="65.05" y="43" text="Línea Crédito:"/>
+			<mx:ComboBox id="cboLC" x="144.05" y="41" width="230" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+			<mx:Label id="lblDisp" x="73.05" y="73" text="Disposición:"/>
+			<mx:ComboBox id="cboDisp" x="144.05" y="71" width="230" labelField="desc" change="buscarInfoDisp()"/>
+			<mx:Label id="lblEtqImpDisp" x="35.9" y="133" text="Importe Disposición:"/>
+			<mx:Label id="lblEtqImpMarc" x="246.8" y="133" text="Importe Marcado:"/>
+			<mx:Label id="lblEtqSaldo" x="299.8" y="103" text="Saldo:"/>
+			<mx:Button id="btnBusqDisp" x="378.9" y="43" icon="@Embed(source='assets/images/iconBusq.png')" toolTip="Buscar Info Disposición" width="40" click="buscarInfoDisp()" visible="false"/>
+			<mx:Label id="lblImpDisp" x="144.9" y="133"/>
+			<mx:Label id="lblImpMarc" x="342.9" y="133"/>
+			<mx:Label id="lblSaldo" x="342.9" y="103"/>
+			<mx:Label id="lblFecSaldo" x="9.9" y="103" text="Fecha Cálculo de Saldos:"/>
+			<mx:DateField id="dtfFecSaldo" width="110" x="144.9" y="101" change="buscarInfoDisp()"/>
+			<mx:Label id="lblFecEnvio" x="97.85" y="223" width="262.05" fontStyle="italic" fontWeight="bold" textAlign="center"/>
+			<mx:Label id="lblEtqAforo" x="100.9" y="163" text="Aforo:"/>
+			<mx:Label id="lblAforo" x="144.9" y="163"/>
+			<mx:Label id="lblEtqTotDisp" x="47.9" y="193" text="Total Disposición:"/>
+			<mx:Label id="lblTotDisp" x="144.9" y="193"/>
+		</mx:Canvas>
+		<mx:Label id="lblFondeo" x="17" y="36" text="Criterios de Fondeo"/>
+		<mx:Label id="lblTitulo" x="17" y="10" width="460" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvDir" x="16" y="338" styleName="canvasMod" width="460" height="87">
+			<mx:Label id="lblImporte" x="153.45" y="15" text="Importe:"/>
+			<mx:TextInput id="txtImporte" x="204.5" y="13" width="100" maxChars="13" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)" editable="true"/>
+			<mx:Label id="lblFecIni" x="38" y="50" text="Fecha de Inicio:"/>
+			<mx:DateField id="dtfFecIni" width="117" x="126" y="47" enabled="true" change="validaFecha()" showToday="true"/>
+			<mx:DateField id="dtfFecFin" width="117" x="303" y="47" enabled="true" change="validaFecha()" showToday="true"/>
+			<mx:Label id="lblHasta" x="260" y="50" text="hasta:"/>
+		</mx:Canvas>
+		<mx:Label id="lblConsulta" x="17" y="317" text="Criterios de Selección"/>
+		<mx:Button id="btnAceptar" x="412" y="604" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+		<mx:Canvas x="16" y="461" width="460" height="135" styleName="canvasMod">
+			<mx:Label id="lblPeriodicidad" x="176.95" y="41"/>
+			<mx:Label x="48.95" y="71" text="Localidades menores a:" id="lblLoc" textAlign="right"/>
+			<mx:Label id="lblLocalidades" x="176.95" y="71"/>
+			<mx:Label x="102" y="41" text="Periodicidad:" id="lblPerio" textAlign="right"/>
+			<mx:Label id="lblProducto" x="80" y="11" text="Tipo de Producto:"/>
+			<mx:ComboBox id="cboProducto" x="177" y="8" width="230" labelField="nombre" change="cargaListaParametros()"/>
+			<mx:Label x="90.95" y="101" text="Días de atraso:" id="lblDiasA" textAlign="right"/>
+			<mx:Label id="lblDias_Atraso" x="176.95" y="101"/>
+		</mx:Canvas>
+		<mx:Label id="lblProducto0" x="17" y="440" text="Información de Parámetros:"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="492" 
+	height="560" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*"
+	creationPolicy="all">
+	
+	<mx:Validator id="moraminV" source="{txtMoraMin}" property="text" 
+	invalid="{txtMoraMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="moramaxV" source="{txtMoraMax}" property="text" 
+	invalid="{txtMoraMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="montominV" source="{txtMontoMin}" property="text" 
+	invalid="{txtMontoMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="montomaxV" source="{txtMontoMax}" property="text" 
+	invalid="{txtMontoMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="integminV" source="{txtIntegMin}" property="text" 
+	invalid="{txtIntegMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="integmaxV" source="{txtIntegMax}" property="text" 
+	invalid="{txtIntegMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="edadminV" source="{txtEdadMin}" property="text" 
+	invalid="{txtEdadMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="edadmaxV" source="{txtEdadMax}" property="text" 
+	invalid="{txtEdadMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="vigminV" source="{txtVigMin}" property="text" 
+	invalid="{txtVigMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="vigmaxV" source="{txtVigMax}" property="text" 
+	invalid="{txtVigMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="integhmaxV" source="{txtIntegH}" property="text" 
+	invalid="{txtIntegH.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosParamMarcABC;
+		import Data.EventParamMarcABC;
+		import Data.DatosParamMarcABCProd;
+		import Data.EventParamMarcABCProd;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.charts.DateTimeAxis;
+		import mx.collections.ArrayCollection;
+		import mx.collections.IList;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.core.DragSource;
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		import mx.effects.*;
+		import mx.events.*;
+		import mx.events.EffectEvent;
+		import mx.events.IndexChangedEvent;
+		import mx.effects.easing.Elastic;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;
+		import mx.managers.DragManager;
+		import mx.rpc.events.FaultEvent;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.states.State;
+		import mx.validators.Validator;	
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		private var info:DatosParamMarcABC;
+		private var infoP:DatosParamMarcABCProd;
+		
+		private var _xmlProd:XML = new XML();
+		private var _xmlProdAsig:XML = new XML();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var acFMaxIntegHom:ArrayCollection = new ArrayCollection();
+		private var acProductos:ArrayCollection = new ArrayCollection();
+		private var acProductosAsignados:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		
+		private var wsMS:WebService;
+			
+		private var dropInitiator:String;
+		private var indice:int;
+		private var titulo:String;
+		private var tipoAccion:Number;
+		private var vg_codigo:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[			
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		public function formateaProducto():void{
+			var cont:int = _xmlProd.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProd.Table[i].CODIGO;	
+				oItem.nombre = _xmlProd.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductos = new ArrayCollection(item);
+		}
+		public function formateaProductoAsignado():void{
+			var cont:int = _xmlProdAsig.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProdAsig.Table[i].CODIGO;	
+				oItem.nombre = _xmlProdAsig.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductosAsignados = new ArrayCollection(item);
+		}
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Parámetros de Marcado ABC";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			destGrid.dataProvider = new ArrayCollection([]);
+		}
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		public function nuevo():void{
+			init();
+			tipoAccion = 1; //INSERTAR
+			vg_codigo = "";
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlProd = new XML(event.result);
+				
+				if(_xmlProd.elements().length() >0){
+					formateaProducto();
+					dgProductos.dataProvider = acProductos;
+					
+					var oItem:Object;
+					var item:Array = new Array();
+					
+					oItem = new Object();
+					oItem.codigo = "";	
+					oItem.descripcion = "--Seleccionar--";
+					item.push(oItem);
+					
+					oItem = new Object();
+					oItem.codigo = "P";	
+					oItem.descripcion = "PORCENTAJE";
+					item.push(oItem);
+					
+					oItem = new Object();
+					oItem.codigo = "E";	
+					oItem.descripcion = "ENTERO";
+					item.push(oItem);
+					
+					acFMaxIntegHom = new ArrayCollection(item);
+					cbxFIntegH.dataProvider = acFMaxIntegHom;
+					cbxFIntegH.selectedIndex = 0;
+				}
+					
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+				
+			});
+			wsCat.getCatalogoGral.send(46, params);
+		}
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosParamMarcABC();
+				info.codigo = vg_codigo;
+				info.moramin = Number(txtMoraMin.text);
+				info.moramax = Number(txtMoraMax.text);
+				info.montomin = Number(txtMontoMin.text);
+				info.montomax = Number(txtMontoMax.text);
+				info.integmin = Number(txtIntegMin.text);
+				info.integmax = Number(txtIntegMax.text);
+				info.edadmin = Number(txtEdadMin.text);
+				info.edadmax = Number(txtEdadMax.text);
+				info.maxinteghom = Number(txtIntegH.text);
+				info.fmaxinteghom = cbxFIntegH.selectedItem.codigo;
+				info.plazo = Number(txtPlazo.text);
+				info.periodicidad = rdgPeriodicidad.selectedValue.toString();
+				info.vigmin = Number(txtVigMin.text);
+				info.vigmax = Number(txtVigMax.text);
+				
+				var n:int = 0;
+				var acCdgTPC:ArrayCollection = destGrid.dataProvider as ArrayCollection;
+				var aCdgTPC:Array = new Array;
+				
+				for(var i:int = 0; i < acCdgTPC.length; i++){
+					var prueba:String = acCdgTPC[i].codigo;
+					aCdgTPC[n] = acCdgTPC[i].codigo;
+					n++;
+				}
+				
+				Application.application.bloquear();				
+				initConexion();
+				du.sCursor();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1")
+						cerrar();
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionParametrosABC.send(info.codigo, info.moramin, info.moramax, info.montomin
+				, info.montomax, info.integmin, info.integmax, info.edadmin, info.edadmax, info.maxinteghom, info.fmaxinteghom
+				, info.plazo, info.periodicidad, info.vigmin, info.vigmax, aCdgTPC, tipoAccion);					
+			}
+		}
+		private function valida():Boolean{
+			var iaMoraMin:Array = Validator.validateAll([moraminV]);
+			var iaMoraMax:Array = Validator.validateAll([moramaxV]);
+			var iaMontoMin:Array = Validator.validateAll([montominV]);
+			var iaMontoMax:Array = Validator.validateAll([montomaxV]);
+			var iaIntegMin:Array = Validator.validateAll([integminV]);
+			var iaIntegMax:Array = Validator.validateAll([integmaxV]);
+			var iaEdadMin:Array = Validator.validateAll([edadminV]);
+			var iaEdadMax:Array = Validator.validateAll([edadmaxV]);
+			var iaVigMin:Array = Validator.validateAll([vigminV]);
+			var iaVigMax:Array = Validator.validateAll([vigmaxV]);
+			var iaPlazo:Array = Validator.validateAll([plazoV]);
+			var iaIntegHMAx:Array = Validator.validateAll([integhmaxV]);	
+			
+			if(!rdbCatorcenal.selected && !rdbMensual.selected && !rdbQuincenal.selected && !rdbSemanal.selected){
+				Alert.show("Debe elegir al periodicidad.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaMontoMin.length > 0){
+				Alert.show("Debe capturar el monto mínimo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaMontoMax.length > 0){
+				Alert.show("Debe capturar el monto máximo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaIntegMin.length > 0){
+				Alert.show("Debe capturar los integrantes mínimos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaIntegMax.length > 0){
+				Alert.show("Debe capturar los integrantes máximos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaIntegHMAx.length > 0){
+				Alert.show("Debe capturar la cantidad máxima de participación de hombres.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxFIntegH.selectedIndex == 0){
+				Alert.show("Debe seleccionar el formato de la participación máxima de hombres.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaVigMin.length > 0){
+				Alert.show("Debe capturar la vigencia mínima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaVigMax.length > 0){
+				Alert.show("Debe capturar la vigencia máxima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaEdadMin.length > 0){
+				Alert.show("Debe capturar la edad mínima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaEdadMax.length > 0){
+				Alert.show("Debe capturar la edad máxima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaMoraMin.length > 0){
+				Alert.show("Debe capturar los días mínimos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaMoraMax.length > 0){
+				Alert.show("Debe capturar los días máximos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaPlazo.length > 0){
+				Alert.show("Debe capturar el plazo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(destGrid.dataProvider < 1){
+				Alert.show("Debe asignar al menos un producto.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			return true;
+		}
+		]]>
+	</mx:Script>
+
+	<!-- CARGA INFO PARAMETRO -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfo(pXmlDatos:XML):void{
+			init();
+			tipoAccion = 2; //ACTUALIZAR
+			vg_codigo = pXmlDatos.CODIGO;
+					
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlProd = new XML(event.result);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlProdAsig = new XML(event.result);
+					
+					if(_xmlProdAsig.elements().length() >0){
+						var oItem:Object;
+						var item:Array = new Array();
+						
+						oItem = new Object();
+						oItem.codigo = "";	
+						oItem.descripcion = "--Seleccionar--";
+						item.push(oItem);
+						
+						oItem = new Object();
+						oItem.codigo = "P";	
+						oItem.descripcion = "PORCENTAJE";
+						item.push(oItem);
+						
+						oItem = new Object();
+						oItem.codigo = "E";	
+						oItem.descripcion = "ENTERO";
+						item.push(oItem);
+						
+						acFMaxIntegHom = new ArrayCollection(item);
+						cbxFIntegH.dataProvider = acFMaxIntegHom;
+						cbxFIntegH.selectedIndex = 0;
+																	
+						rdgPeriodicidad.selectedValue = pXmlDatos.PERIODICIDAD;				
+						txtMontoMin.text = pXmlDatos.MONTOMIN;
+						txtMontoMax.text = pXmlDatos.MONTOMAX;
+						txtIntegMin.text = pXmlDatos.INTEGMIN;
+						txtIntegMax.text = pXmlDatos.INTEGMAX;
+						txtIntegH.text = pXmlDatos.MAXINTEGHOM;
+						txtVigMin.text = pXmlDatos.VIGMIN;
+						txtVigMax.text = pXmlDatos.VIGMAX;
+						txtEdadMin.text = pXmlDatos.EDADMIN;
+						txtEdadMax.text = pXmlDatos.EDADMAX;
+						txtMoraMin.text = pXmlDatos.MORAMIN;
+						txtMoraMax.text = pXmlDatos.MORAMAX;
+						txtPlazo.text = pXmlDatos.PLAZO;		
+						
+						var j:int;
+						for(j = 0; j < acFMaxIntegHom.length; j++){   
+							if (acFMaxIntegHom[j].codigo.toString() == pXmlDatos.FMAXINTEGHOM){
+								cbxFIntegH.selectedIndex = j;
+								break;
+							}
+						}
+						
+						formateaProductoAsignado();
+						formateaProducto();					
+						
+						var x:int;
+						for(j = 0; j < acProductosAsignados.length; j++){
+							for(x = 0; x < acProductos.length; x++){
+								if (acProductos[x].codigo.toString() == acProductosAsignados[j].codigo.toString()){
+									acProductos.removeItemAt(x);
+								}
+							}
+						}
+						
+						dgProductos.dataProvider = acProductos;
+						destGrid.dataProvider = acProductosAsignados;
+					}
+					else{
+						Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+						
+				});
+				params[0] = vg_codigo;
+				wsCat.getCatalogoGral.send(45, params);
+			});
+			wsCat.getCatalogoGral.send(46, params);
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- DRAG DROP -->
+	<mx:Script>
+		<![CDATA[
+		private function setDragInitator(event:MouseEvent, id:String):void{
+            dropInitiator = id;
+        }
+        
+        private function doDragEnter(event:DragEvent):void {
+        	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+            var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+            var drop:Boolean = true;
+            
+            if(dropInitiator != dropTarget.id){
+            	if (dataInfo != null){
+                	for(var i:int = 0; i < dataInfo.length; i++){
+                    	if(dataInfo[i].nombre == items[0].nombre) 
+                    		drop = false;
+                 	}
+             	}
+				if(drop){
+                    DragManager.showFeedback(DragManager.MOVE);
+                    DragManager.acceptDragDrop(dropTarget);
+                }
+            }
+        }
+		private function doDragDrop(event:DragEvent):void{   
+        	var i:int;     
+            var dropTarget:DataGrid = DataGrid(event.currentTarget);
+           	doDragExit(event);  
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+            var dropLoc:int = dropTarget.calculateDropIndex(event); 
+				
+			indice = dropLoc;
+				
+            for(i = 0; i < items.length; i++){                 
+            	IList(dropTarget.dataProvider).addItemAt(items[i], dropLoc);
+            }
+        }
+        private function doDragExit(event:DragEvent):void{
+            var dropTarget:DataGrid = DataGrid(event.currentTarget);          
+            dropTarget.hideDropFeedback(event);
+        }
+		]]>
+	</mx:Script>
+	
+	<mx:TabNavigator id="tabNav" width="481" height="474" x="6" y="10" creationPolicy="all">
+		<mx:Canvas label="Datos" width="100%" height="100%">
+			<mx:Canvas x="10" y="124" width="140" height="68" styleName="canvasMod">
+				<mx:Label x="12" y="8" text="Mínimos:" id="lblMin1"/>
+				<mx:Label x="7.5" y="38" text="Máximos:" id="lblMax1"/>
+				<mx:TextInput x="62.5" y="6" width="60" id="txtMoraMin" tabIndex="7" restrict="0-9"/>
+				<mx:TextInput x="62.5" y="36" width="60" id="txtMoraMax" tabIndex="8" restrict="0-9"/>
+			</mx:Canvas>
+			<mx:Label x="10" y="105" text="Días de Mora:" id="lblDias"/>
+			<mx:Canvas x="10" y="29" width="140" height="68" styleName="canvasMod">
+				<mx:Label x="17.5" y="8" text="Mínimo:" id="lblMin2"/>
+				<mx:Label x="14.5" y="38" text="Máximo:" id="lblMax2"/>
+				<mx:TextInput x="62.5" y="6" width="60" id="txtMontoMin" tabIndex="1" restrict="0-9"/>
+				<mx:TextInput x="62.5" y="36" width="60" id="txtMontoMax" tabIndex="2" restrict="0-9"/>
+			</mx:Canvas>
+			<mx:Label x="10" y="10" text="Monto:" id="lblMonto"/>
+			<mx:Canvas x="327" y="29" width="140" height="68" styleName="canvasMod">
+				<mx:Label x="12" y="8" text="Mínimos:" id="lblMin3"/>
+				<mx:Label x="7.5" y="38" text="Máximos:" id="lblMax3"/>
+				<mx:TextInput x="62.5" y="6" width="60" id="txtIntegMin" tabIndex="5" restrict="0-9"/>
+				<mx:TextInput x="62.5" y="36" width="60" id="txtIntegMax" tabIndex="6" restrict="0-9"/>
+			</mx:Canvas>
+			<mx:Label x="327" y="10" text="Integrantes:" id="lblIntegrantes"/>
+			<mx:Canvas x="168" y="124" width="140" height="68" styleName="canvasMod">
+				<mx:Label x="14" y="38" text="Máxima:" id="lblMax4"/>
+				<mx:TextInput x="62.5" y="6" width="60" id="txtEdadMin" tabIndex="9" restrict="0-9"/>
+				<mx:TextInput x="62.5" y="36" width="60" id="txtEdadMax" tabIndex="10" restrict="0-9"/>
+				<mx:Label x="18" y="8" text="Mínima:" id="lblMin4"/>
+			</mx:Canvas>
+			<mx:Label x="168" y="105" text="Edad:" id="lblEdad"/>
+			<mx:Canvas x="38" y="219" width="180" height="68" styleName="canvasMod">
+				<mx:Label x="3" y="8" text="Máximos:" id="lblMax6"/>
+				<mx:Label x="6" y="38" text="Formato:" id="lblFormato1"/>
+				<mx:TextInput x="55" y="6" width="114" id="txtIntegH" tabIndex="12" restrict="0-9"/>
+				<mx:ComboBox x="55" y="36" width="116" id="cbxFIntegH" labelField="descripcion" tabIndex="13"></mx:ComboBox>
+			</mx:Canvas>
+			<mx:Label x="38" y="200" text="Participación de Hombres:" id="lblIntegH"/>
+			<mx:Canvas x="261" y="219" width="180" height="68" styleName="canvasMod">
+				<mx:RadioButtonGroup id="rdgPeriodicidad"/>
+				<mx:RadioButton id="rdbSemanal" x="10" y="4" label="Semanal" groupName="rdgPeriodicidad" value="S" tabIndex="14"/>
+				<mx:RadioButton id="rdbQuincenal" x="10" y="36" label="Quincenal" groupName="rdgPeriodicidad" value="Q" tabIndex="15"/>
+				<mx:RadioButton id="rdbCatorcenal" x="97" y="4" label="Bisemanal" groupName="rdgPeriodicidad" value="C" tabIndex="16"/>
+				<mx:RadioButton id="rdbMensual" x="97" y="36" label="Mensual" groupName="rdgPeriodicidad" value="M" tabIndex="17"/>
+			</mx:Canvas>
+			<mx:Label x="261" y="200" text="Periodicidad:" id="lblPeriodicidad"/>
+			<mx:Canvas x="168" y="29" width="140" height="68" styleName="canvasMod">
+				<mx:Label x="18" y="8" text="Mínima:" id="lblMin5"/>
+				<mx:Label x="14" y="38" text="Máxima:" id="lblMax5"/>
+				<mx:TextInput x="62.5" y="6" width="60" id="txtVigMin" tabIndex="3" restrict="0-9"/>
+				<mx:TextInput x="62.5" y="36" width="60" id="txtVigMax" tabIndex="4" restrict="0-9"/>
+			</mx:Canvas>
+			<mx:Label x="168" y="10" text="Vigencia en semanas:" id="lblVigencia"/>
+			<mx:Canvas x="327" y="124" width="140" height="68" styleName="canvasMod">
+				<mx:TextInput x="62.5" y="6" width="60" id="txtPlazo" tabIndex="11" restrict="0-9"/>
+				<mx:Label x="19" y="8" text="Valor:" id="lblPlazo1"/>
+			</mx:Canvas>
+			<mx:Label x="327" y="105" text="Plazo:" id="lblPlazo"/>
+			<mx:Canvas x="10" y="312" width="457" height="117" styleName="canvasMod">
+				<mx:DataGrid id="dgProductos" x="10" y="10" width="215" height="95"
+					sortableColumns="false" allowMultipleSelection="false"  
+				    dragMoveEnabled="true" mouseDown="setDragInitator(event, 'dgProductos')" 
+				    dragEnter="doDragEnter(event);"
+				    dragExit="doDragExit(event);"                    
+				    dragDrop="doDragDrop(event);"        
+				    dragEnabled="true">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PRODUCTOS DISPONIBLES" dataField="nombre" width="70"/>
+					</mx:columns>
+				</mx:DataGrid>
+				<mx:DataGrid id="destGrid" x="230" y="10" height="95" width="215" allowMultipleSelection="true" 
+					sortableColumns="false" dragMoveEnabled="true" mouseDown="setDragInitator(event, 'destGrid')"
+				    dragEnter="doDragEnter(event);" dragExit="doDragExit(event);" dragDrop="doDragDrop(event);" 		    
+				    dragEnabled="true">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PRODUCTOS ASIGNADOS" dataField="nombre" width="70"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:Canvas>
+			<mx:Label x="10" y="293" text="Productos:" id="lblIntegH1"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="442" y="488" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40" tabIndex="18"/>
+	<mx:Button id="btnAceptar" x="394" y="488" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40" tabIndex="19"/>
+</mx:TitleWindow>

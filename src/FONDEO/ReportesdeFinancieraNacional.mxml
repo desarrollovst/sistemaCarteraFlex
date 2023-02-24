@@ -1,0 +1,891 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" xmlns:Administracion="Administracion.*"
+    x="12.5" y="42" creationPolicy="all" creationComplete="init()">
+    <mx:states>
+        <mx:State name="ClientesDescripcion">
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas2">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgClientesDescripcion"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="RFC" dataField="RFC" width="100"/>
+                            <mx:DataGridColumn headerText="No de cliente del acreditado" dataField="CDGCL" width="160"/>
+                            <mx:DataGridColumn headerText="Nombre (s) del acreditado (o Razón Social)" dataField="NOMBRE" width="270"/>
+                            <mx:DataGridColumn headerText="Apellido Paterno" dataField="PRIMAPE" width="120"/>
+                            <mx:DataGridColumn headerText="Apellido Materno" dataField="SEGAPE" width="120"/>
+                            <mx:DataGridColumn headerText="CURP" dataField="CURP" width="160"/>
+                            <mx:DataGridColumn headerText="Tipo de persona" dataField="TIPOPER" width="100"/>
+                            <mx:DataGridColumn headerText="No. de Socios" dataField="NOSOCIOS" width="100"/>
+                            <mx:DataGridColumn headerText="Sexo" dataField="SEXO" width="100"/>
+                            <mx:DataGridColumn headerText="Entidad federativa de nacimiento" dataField="EFNAC" width="190"/>
+                            <mx:DataGridColumn headerText="Fecha de nacimiento" dataField="FECNAC" width="130"/>
+                            <mx:DataGridColumn headerText="Estado" dataField="ESTADO" width="120"/>
+                            <mx:DataGridColumn headerText="Municipio" dataField="MUNICIPIO" width="180"/>
+                            <mx:DataGridColumn headerText="Localidad" dataField="LOCALIDAD" width="180"/>
+                            <mx:DataGridColumn headerText="Teléfono" dataField="TELEFONO" width="100"/>
+                            <mx:DataGridColumn headerText="Celular" dataField="CELULAR" width="80"/>
+                            <mx:DataGridColumn headerText="Correo electrónico" dataField="EMAIL" width="170"/>
+                            <mx:DataGridColumn headerText="Calle" dataField="CALLE" width="200"/>
+                            <mx:DataGridColumn headerText="No. Exterior" dataField="NOEXT" width="80"/>
+                            <mx:DataGridColumn headerText="C.P." dataField="CP" width="80"/>
+                            <mx:DataGridColumn headerText="Crédito formal primera vez" dataField="CREPRI" width="170"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalCD" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarCD" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="CargaCreditos">
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas1">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgCargaCreditos"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="No de disposición" dataField="NO_DISP" width="120"/>
+                            <mx:DataGridColumn headerText="RFC" dataField="RFC" width="100"/>
+                            <mx:DataGridColumn headerText="No de contrato asignado al acreditado final" dataField="NO_CONTRATO" width="240"/>
+                            <mx:DataGridColumn headerText="Fecha de vencimiento del Contrato" dataField="FIN_CONTRATO" width="200"/>
+                            <mx:DataGridColumn headerText="Tipo de crédito" dataField="TIPO_CRED" width="120"/>
+                            <mx:DataGridColumn headerText="Subramas" dataField="SUBRAMAS" width="120"/>
+                            <mx:DataGridColumn headerText="Producto/Cultivo" dataField="PROD_CULT" width="250"/>
+                            <mx:DataGridColumn headerText="Destino del crédito" dataField="DESTINO" width="130"/>
+                            <mx:DataGridColumn headerText="Tipo de unidad" dataField="TIPO_UNIDAD" width="100"/>
+                            <mx:DataGridColumn headerText="Unidades a habilitar" dataField="UNIDADES" width="120"/>
+                            <mx:DataGridColumn headerText="Ciclo agrícola" dataField="CICLO_AGRI" width="110"/>
+                            <mx:DataGridColumn headerText="Riego o temporal" dataField="RIE_TEMP" width="110"/>
+                            <mx:DataGridColumn headerText="Fecha de apertura" dataField="FEC_APERTURA" width="120"/>
+                            <mx:DataGridColumn headerText="Fecha de vencimiento" dataField="FIN_CREDITO" width="130"/>
+                            <mx:DataGridColumn headerText="Monto del crédito (monto del contrato)" dataField="MONTO_CRE" width="220"/>
+                            <mx:DataGridColumn headerText="Monto Total del Proyecto" dataField="MONTO_TOT" width="150"/>
+                            <mx:DataGridColumn headerText="Monto Otorgado Financiera Rural" dataField="MONTO_OTO" width="190"/>
+                            <mx:DataGridColumn headerText="Número de pagares" dataField="NOPAGARE" width="120"/>
+                            <mx:DataGridColumn headerText="Monto de pagares" dataField="MONTO_PAG" width="120"/>
+                            <mx:DataGridColumn headerText="Periodicidad de pagos" dataField="PERIODICIDAD" width="130"/>
+                            <mx:DataGridColumn headerText="Tipo de moneda" dataField="TIPO_MN" width="120"/>
+                            <mx:DataGridColumn headerText="¿Qué destino tendrá la línea?" dataField="DEST_LINEA" width="170"/>
+                            <mx:DataGridColumn headerText="Tipo de tasa" dataField="TIPO_TASA" width="90"/>
+                            <mx:DataGridColumn headerText="Base de referencia" dataField="BASE_REF" width="120"/>
+                            <mx:DataGridColumn headerText="Puntos adicionales a la base" dataField="PTS_ADIC" width="160"/>
+                            <mx:DataGridColumn headerText="Periodicidad de Tasa" dataField="PERIODICIDAD_TASA" width="130"/>
+                            <mx:DataGridColumn headerText="Tasa" dataField="TASA" width="60"/>
+                            <mx:DataGridColumn headerText="Apoyo de otro programa gubernamental" dataField="APOYO_OTRO_PROG" width="220"/>
+                            <mx:DataGridColumn headerText="No. Ministración" dataField="NO_MINISTRACION" width="100"/>
+                            <mx:DataGridColumn headerText="Tipo de garantía" dataField="TIPO_GAR" width="100"/>
+                            <mx:DataGridColumn headerText="Valor garantía prendaria" dataField="VALOR_GAR_PREN" width="140"/>
+                            <mx:DataGridColumn headerText="Valor garantía hipotecaria" dataField="VALOR_GAR_HIPO" width="150"/>
+                            <mx:DataGridColumn headerText="Valor garantía fiduciaria" dataField="VALOR_GAR_FIDU" width="140"/>
+                            <mx:DataGridColumn headerText="Valor garantía natural" dataField="VALOR_GAR_NATU" width="130"/>
+                            <mx:DataGridColumn headerText="Valor garantía líquida" dataField="VALOR_GAR_LIQ" width="130"/>
+                            <mx:DataGridColumn headerText="Valor garantía aval" dataField="VALOR_GAR_AVAL" width="130"/>
+                            <mx:DataGridColumn headerText="Valor garantía cesión de derechos" dataField="VALOR_GAR_CESION" width="190"/>
+                            <mx:DataGridColumn headerText="Valor garantía usufructo parcelario" dataField="VALOR_GAR_USUF" width="200"/>
+                            <mx:DataGridColumn headerText="Valor garantía obligado solidario" dataField="VALOR_GAR_OBLI" width="190"/>
+                            <mx:DataGridColumn headerText="Valor de la garantía" dataField="VALOR_GAR" width="120"/>
+                            <mx:DataGridColumn headerText="Registro Único de Garantías" dataField="REG_UNI_GAR" width="160"/>
+                            <mx:DataGridColumn headerText="Datos de Inscripción" dataField="DATOS_INS" width="130"/>
+                            <mx:DataGridColumn headerText="Nombre Obligado Solidario" dataField="NOM_OBLI_SOL" width="150"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalCC" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarCC" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="RelacionesDescripcion">
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas3">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgRelacionesDescripcion"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="Tipo de relación" dataField="TIPO_REL" width="180"/>
+                            <mx:DataGridColumn headerText="RFC del acreditado" dataField="RFC_ACRED" width="170"/>
+                            <mx:DataGridColumn headerText="RFC del socio del acreditado" dataField="RFC_SOC" width="190"/>
+                            <mx:DataGridColumn headerText="RFC de la persona relacionada" dataField="RFC_PER_REL" width="190"/>
+                            <mx:DataGridColumn headerText="RFC del socio de la persona relacionada" dataField="RFC_SOC_REL" width="230"/>
+                            <mx:DataGridColumn headerText="Número de crédito" dataField="CDGCL" width="140"/>
+                            <mx:DataGridColumn headerText="Relación" dataField="RELACION" width="150"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalRD" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarRD" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="Anexo2">
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas4">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgAnexo2"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="NOMBRE DEL ACREDITADO" dataField="ACRED" width="200"/>
+                            <mx:DataGridColumn headerText="TIPO DE CREDITO" dataField="TIPO_CRED" width="120"/>
+                            <mx:DataGridColumn headerText="No. DE CONTRATO (EN SU CASO)" dataField="NO_CONTRATO" width="200"/>
+                            <mx:DataGridColumn headerText="MONTO DEL CONTRATO" dataField="MONTO_CONT" width="150"/>
+                            <mx:DataGridColumn headerText="No. DE PAGARE" dataField="NO_PAGARE" width="120"/>
+                            <mx:DataGridColumn headerText="MONTO DEL PAGARÉ" dataField="MONTO_PAG" width="130"/>
+                            <mx:DataGridColumn headerText="MONTO OTRAS APORTACIONES" dataField="MONTO_OTRAS" width="190"/>
+                            <mx:DataGridColumn headerText="TOTAL DEL PROYECTO" dataField="TOTAL_PROY" width="140"/>
+                            <mx:DataGridColumn headerText="VENCIMIENTO DEL CONTRATO Y/ O PAGARÉ" dataField="FIN" width="230"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalA2" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarA2" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="AnexoAnexo2">
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas5">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgAnexoAnexo2"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="No." dataField="NO" width="40"/>
+                            <mx:DataGridColumn headerText="NOMBRE DEL ACREDITADO" dataField="ACRED" width="200"/>
+                            <mx:DataGridColumn headerText="TIPO DE CRÉDITO" dataField="TIPO_CRED" width="130"/>
+                            <mx:DataGridColumn headerText="No. DE CONTRATO (EN SU CASO)" dataField="NO_CONTRATO" width="200"/>
+                            <mx:DataGridColumn headerText="MONTO DEL CONTRATO" dataField="MONTO_CONT" width="150"/>
+                            <mx:DataGridColumn headerText="No. DE PAGARE" dataField="NO_PAGARE" width="120"/>
+                            <mx:DataGridColumn headerText="MONTO DEL PAGARÉ" dataField="MONTO_PAG" width="130"/>
+                            <mx:DataGridColumn headerText="RECURSOS FR 80%" dataField="MONTO_RECURSO_FR" width="130"/>
+                            <mx:DataGridColumn headerText="MONTO OTRAS APORTACIONES 20%" dataField="MONTO_OTRAS" width="220"/>
+                            <mx:DataGridColumn headerText="TOTAL DEL PROYECTO" dataField="TOTAL_PROY" width="140"/>
+                            <mx:DataGridColumn headerText="VENCIMIENTO DEL CONTRATO Y/O PAGARÉ" dataField="FIN" width="250"/>
+                            <mx:DataGridColumn headerText="LOCALIDAD" dataField="LOCALIDAD" width="140"/>
+                            <mx:DataGridColumn headerText="MUNICIPIO" dataField="MUNICIPIO" width="140"/>
+                            <mx:DataGridColumn headerText="ESTADO" dataField="ESTADO" width="120"/>
+                            <mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="100"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalAA2" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarAA2" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="Certificado">
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas6">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgCertificado"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="NOMBRE DEL ACREDITADO DE LA MICROFINANCIERA" dataField="ACRED" width="310"/>
+                            <mx:DataGridColumn headerText="DOMICILIO DEL ACREDITADO DE LA MICROFINANCIERA" dataField="DIRECCION" width="320"/>
+                            <mx:DataGridColumn headerText="NÚMERO DE CLIENTE" dataField="CDGCL" width="130"/>
+                            <mx:DataGridColumn headerText="NO. DE CONTRATO (EN SU CASO)" dataField="NO_CONTRATO" width="200"/>
+                            <mx:DataGridColumn headerText="MONTO DEL CONTRATO" dataField="MONTO_CONTRATO" width="150"/>
+                            <mx:DataGridColumn headerText="NO. DE PAGARE" dataField="NO_PAGARE" width="120"/>
+                            <mx:DataGridColumn headerText="MONTO DEL PAGARÉ" dataField="MONTO_PAGARE" width="140"/>
+                            <mx:DataGridColumn headerText="MONTO OTRAS APORTACIONES" dataField="MONTO_OTRAS" width="190"/>
+                            <mx:DataGridColumn headerText="TASA FINAL" dataField="TASA" width="120"/>
+                            <mx:DataGridColumn headerText="FECHA DE INICIO DEL PAGARÉ" dataField="INICIO" width="180"/>
+                            <mx:DataGridColumn headerText="FECHA DEL VENCIMIENTO DEL PAGARÉ" dataField="VENCIMIENTO" width="230"/>
+                            <mx:DataGridColumn headerText="TIPO DE GARANTÍA (EN SU CASO)" dataField="GARANTIA" width="200"/>
+                            <mx:DataGridColumn headerText="VALOR DE LA GARANTÍA" dataField="VALOR_GAR_LIQ" width="170"/>
+                            <mx:DataGridColumn headerText="DATOS DE INSCRIPCIÓN (EN SU CASO)" dataField="DATOS_INS" width="220"/>
+                            <mx:DataGridColumn headerText="NÚMERO DE REFERENCIA DE LA DISPOSICIÓN" dataField="NO_DISPOSICION" width="250"/>
+                            <mx:DataGridColumn headerText="FECHA EN QUE SE MISNITRÓ LA DISPOSICIÓN A LA MICROFINANCIERA" dataField="FEC_DIS" width="300"/>
+                            <mx:DataGridColumn headerText="SITUACIÓN PAGARÉ (LIBERADO O EN ADMINISTRACIÓN)" dataField="SITUACION_PAG" width="300"/>
+                            <mx:DataGridColumn headerText="LIBERADO (MONTO)" dataField="LIBERADO" width="130"/>
+                            <mx:DataGridColumn headerText="ADMINISTRACIÓN (MONTO)" dataField="ADMINISTRACION" width="170"/>
+                            <mx:DataGridColumn headerText="CLIENTE (INICIAL O SUBSECUENTE)" dataField="CREPRI" width="190"/>
+                            <mx:DataGridColumn headerText="OBSERVACIONES" dataField="OBSERVACIONES" width="130"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalCE" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarCE" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="Trimestral">
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:SetProperty target="{cnvCarga}" name="height" value="620"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="320" width="818" height="286" styleName="canvasMod" id="Canvas7">
+                    <mx:DataGrid x="10" y="42" width="796" height="203" id="dgTrimestral"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="NUMERO DE CLIENTE" dataField="NO_CLIENTE" width="140"/>
+                            <mx:DataGridColumn headerText="NOMBRE COMPLETO DEL INTERMEDIARIO" dataField="NOM_CLIENTE" width="140"/>
+                            <mx:DataGridColumn headerText="NOMBRE DEL SOCIO/CLIENTE" dataField="ACRED" width="200"/>
+                            <mx:DataGridColumn headerText="NUMERO DEL SOCIO/CLIENTE" dataField="CDGCL" width="150"/>
+                            <mx:DataGridColumn headerText="SECTOR ECONOMICO" dataField="SEC_ECO" width="150"/>
+                            <mx:DataGridColumn headerText="LINEA APOYADA" dataField="LIN_APOY" width="100"/>
+                            <mx:DataGridColumn headerText="SUBRAMA" dataField="SUBRAMAS" width="100"/>
+                            <mx:DataGridColumn headerText="DESCRIPCION PRODUCTO" dataField="PROD_CULT" width="250"/>
+                            <mx:DataGridColumn headerText="DESCRIPCION DESTINOS" dataField="DESTINO" width="150"/>
+                            <mx:DataGridColumn headerText="ENTIDAD FEDERATIVA DONDE SE UBICA LA UNIDAD PRODUCTIVA" dataField="ENT_FED" width="140"/>
+                            <mx:DataGridColumn headerText="MUNICIPIO DONDE SE UBICA LA UNIDAD PRODUCTIVA" dataField="MUNICIPIO" width="150"/>
+                            <mx:DataGridColumn headerText="LOCALIDAD DONDE SE UBICA LA UNIDAD PRODUCTIVA" dataField="LOCALIDAD" width="150"/>
+                            <mx:DataGridColumn headerText="TIPO DE CREDITO OTROGADO POR EL INTERMEDIARIO" dataField="TIPOCRED" width="150"/>
+                            <mx:DataGridColumn headerText="MONTO OTORGADO" dataField="MONTO_ENT" width="120"/>
+                            <mx:DataGridColumn headerText="TIPO DE MONEDA" dataField="MONEDA" width="120"/>
+                            <mx:DataGridColumn headerText="CICLO PRODUCTIVO" dataField="CICLOPROD" width="150"/>
+                            <mx:DataGridColumn headerText="DESTINO DE LOS RECURSOS" dataField="DESTINO_R" width="150"/>
+                            <mx:DataGridColumn headerText="FECHA DE ENTREGA DE LOS RECURSOS AL SOCIO" dataField="INICIO" width="180"/>
+                            <mx:DataGridColumn headerText="PERIODICIDAD EN LOS PAGOS (CAPITAL)" dataField="PERIODPAG" width="180"/>
+                            <mx:DataGridColumn headerText="FECHA DE VENCIMIENTO DEL CREDITO" dataField="FIN" width="180"/>
+                            <mx:DataGridColumn headerText="CAPITAL VIGENTE" dataField="CAP_VIG" width="150"/>
+                            <mx:DataGridColumn headerText="INTERESES VIGENTES" dataField="INT_VIG" width="150"/>
+                            <mx:DataGridColumn headerText="CAPITAL VENCIDO" dataField="CAP_VEN" width="130"/>
+                            <mx:DataGridColumn headerText="INTERESES VENCIDOS" dataField="INT_VEN" width="120"/>
+                            <mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" width="120"/>
+                            <mx:DataGridColumn headerText="ESTATUS CONTABLE DE CREDITO." dataField="ESTATUS" width="150"/>
+                            <mx:DataGridColumn headerText="NUMERO DE DIAS DE ATRASO (EN SU CASO)" dataField="DIAS_MORA" width="150"/>
+                            <mx:DataGridColumn headerText="SEGMENTO EN EL QUE SE UBICA LA EMPRESA" dataField="SEGMENTO" width="150"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalTR" x="10" y="253" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarTR" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+            <mx:SetProperty target="{dtFecha}" name="showToday" value="true"/>
+            <mx:SetProperty target="{dtFechaInicio}" name="showToday" value="true"/>
+            <mx:SetProperty target="{dtFechaFin}" name="showToday" value="true"/>
+        </mx:State>
+    </mx:states>
+    <mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cnvCarga}"/> 
+				<mx:AddChildAction duration="500" target="{Canvas1}"/>
+				<mx:AddChildAction duration="500" target="{Canvas2}"/>
+				<mx:AddChildAction duration="500" target="{Canvas3}"/>
+				<mx:AddChildAction duration="500" target="{Canvas4}"/>
+				<mx:AddChildAction duration="500" target="{Canvas5}"/>
+				<mx:AddChildAction duration="500" target="{Canvas6}"/>
+				<mx:AddChildAction duration="500" target="{Canvas7}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+    
+    <mx:Script>
+		<![CDATA[
+			import flash.sampler.NewObjectSample;
+			import mx.formatters.DateFormatter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			private var _xmlOF:XML = new XML();
+			private var _xmlDisp:XML = new XML();
+			private var _xmlLC:XML = new XML();
+			
+			private var orgObj:ArrayCollection = new ArrayCollection();
+			private var dispObj:ArrayCollection = new ArrayCollection();
+			private var lineaObj:ArrayCollection = new ArrayCollection();
+		
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public var tipoReporteObj:ArrayCollection = new ArrayCollection();
+			
+			private var acTipoReporte:ArrayCollection = new ArrayCollection();
+			
+			public function cambiaLayoutRep():void{
+				var opcion:String = cbxReporte.selectedItem.id;
+				cboLC.enabled = true;
+				cboDisp.enabled = true;
+				dtFechaInicio.enabled = true;
+				dtFechaFin.enabled = true;
+										
+				switch (opcion) {
+					case "0":
+						currentState = null;
+						break;
+					case "1":
+						currentState = "ClientesDescripcion";
+						lblTotalCD.text = ""; 				 	
+						break;
+					case "2":
+						currentState = "CargaCreditos";
+						lblTotalCC.text = ""; 				 			
+						break;
+					case "3":
+						currentState = "RelacionesDescripcion";
+						lblTotalRD.text = ""; 				 			
+						break;
+					case "4":
+						currentState = "Anexo2";
+						lblTotalA2.text = ""; 				 			
+						break;
+					case "5":
+						currentState = "AnexoAnexo2";
+						lblTotalAA2.text = ""; 				 			
+						break;
+					case "6":
+						currentState = "Certificado";
+						lblTotalCE.text = ""; 				 			
+						break;
+					case "7":
+						currentState = "Trimestral";
+						lblTotalTR.text = "";
+						
+						cboLC.dataProvider = null;
+						cboDisp.dataProvider = null;
+						
+						formateaLC();
+						cboLC.dataProvider = lineaObj;
+						cboLC.selectedIndex = 0;
+							
+						cboLC.enabled = false;
+						cboDisp.enabled = false;
+						
+						dtFechaInicio.enabled = false;
+						dtFechaFin.enabled = false;
+				
+						break;
+				}
+			}
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				
+				if(currentState == "ClientesDescripcion"){
+					dgE.loadDGInExcel(dgClientesDescripcion,null,titulo + " Clientes Descripcion " + dtFecha.text);
+				}
+				else if(currentState == "CargaCreditos"){
+					dgE.loadDGInExcel(dgCargaCreditos,null,titulo + " Carga Créditos " + dtFecha.text);
+				}
+				else if(currentState == "RelacionesDescripcion"){
+					dgE.loadDGInExcel(dgRelacionesDescripcion,null,titulo + " Carga Relaciones Descripción " + dtFecha.text);
+				}
+				else if(currentState == "Anexo2"){
+					dgE.loadDGInExcel(dgAnexo2,null,titulo + " Anexo 02 " + dtFecha.text);
+				}
+				else if(currentState == "AnexoAnexo2"){
+					dgE.loadDGInExcel(dgAnexoAnexo2,null,titulo + " Anexo de Anexo 02 " + dtFecha.text);
+				}
+				else if(currentState == "Certificado"){
+					dgE.loadDGInExcel(dgCertificado,null,titulo + " Certificado " + dtFecha.text);
+				}
+				else if(currentState == "Trimestral"){
+					dgE.loadDGInExcel(dgTrimestral,null,titulo + " Trimestral " + dtFecha.text);
+				}
+			}
+			
+			private function formateaDisp():void{
+				var cont:int = _xmlDisp.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				dispObj.removeAll();
+				dispObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlDisp.Table[i].CODIGO;
+					oItem.desc = _xmlDisp.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				dispObj = new ArrayCollection(item);
+			}
+			
+			private function formateaLC():void{
+				var cont:int = _xmlLC.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				lineaObj.removeAll();
+				lineaObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlLC.Table[i].CODIGO;
+					oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				lineaObj = new ArrayCollection(item);
+			}
+			
+			private function formateaOF():void{
+				var cont:int = _xmlOF.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				orgObj.removeAll();
+				orgObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for (var i:int = 0; i < cont; i++){
+					if(_xmlOF.Table[i].CODIGO == "0004"){
+						oItem = new Object();
+						oItem.nombre = _xmlOF.Table[i].NOMBRE;
+						oItem.codigo = _xmlOF.Table[i].CODIGO;
+						item.push(oItem);
+					}
+				}
+				orgObj = new ArrayCollection(item);
+			}
+			
+			private function formateaTipoReportes():void{
+				var oItem:Object;
+				var item:Array = new Array();
+								
+				oItem = new Object();
+				oItem.id = "0";
+				oItem.nombre = "--Seleccionar--";	
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Carga Clientes Descripción";
+				item.push(oItem);
+												
+				oItem = new Object();
+				oItem.id = "2";	
+				oItem.nombre = "Carga Creditos";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "3";	
+				oItem.nombre = "Carga Relaciones Descripción";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "4";	
+				oItem.nombre = "Anexo 02";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "5";	
+				oItem.nombre = "Anexo de Anexo 02";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "6";	
+				oItem.nombre = "Certificados en títulos de admon";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "7";	
+				oItem.nombre = "Trimestral";
+				item.push(oItem);
+				
+				acTipoReporte = new ArrayCollection(item);
+				cbxReporte.dataProvider = acTipoReporte;
+				cbxReporte.selectedIndex = 0;		
+			}
+			
+			private function generar():void{
+				if(valida()){
+					var cont:int;
+					var opcion:String = "";
+					var organizacion:String = "";
+					var linea:String = "";
+					var disposicion:String = "";
+					var fecha:String = "";
+					var fechaInicio:String = "";
+					var fechaFin:String = "";
+					
+					opcion = cbxReporte.selectedItem.id;
+					organizacion = cboOF.selectedItem.codigo;
+					fecha = dtFecha.text;
+					fechaInicio = dtFechaInicio.text;
+					fechaFin = dtFechaFin.text;
+					
+					if(cbxReporte.selectedItem.id != "7"){ // reporte trimestral
+						linea = cboLC.selectedItem.codigo;
+						disposicion = cboDisp.selectedItem.codigo;
+					}
+					
+					initConexionRep();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						var cont:int = _xmlRep.elements().length();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						switch (opcion) {
+							case "1":
+								if(cont > 0){
+									dgClientesDescripcion.dataProvider = _xmlRep.Table;
+									btnExportarCD.enabled = true;
+									lblTotalCD.text = cont.toString() + " Registro(s)";
+								}	
+								else{
+									dgClientesDescripcion.dataProvider = null;
+									btnExportarCD.enabled = false;
+									lblTotalCD.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								}
+								break;
+							case "2":
+								if(cont > 0){
+									dgCargaCreditos.dataProvider = _xmlRep.Table;
+									btnExportarCC.enabled = true;
+									lblTotalCC.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgCargaCreditos.dataProvider = null;
+									btnExportarCC.enabled = false;
+									lblTotalCC.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								} 				 			
+								break;
+							case "3":
+								if(cont > 0){
+									dgRelacionesDescripcion.dataProvider = _xmlRep.Table;
+									btnExportarRD.enabled = true;
+									lblTotalRD.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgRelacionesDescripcion.dataProvider = null;
+									btnExportarRD.enabled = false;
+									lblTotalRD.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								} 				 			
+								break;
+							case "4":
+								if(cont > 0){
+									dgAnexo2.dataProvider = _xmlRep.Table;
+									btnExportarA2.enabled = true;
+									lblTotalA2.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgAnexo2.dataProvider = null;
+									btnExportarA2.enabled = false;
+									lblTotalA2.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								} 				 			
+								break;
+							case "5":
+								if(cont > 0){
+									dgAnexoAnexo2.dataProvider = _xmlRep.Table;
+									btnExportarAA2.enabled = true;
+									lblTotalAA2.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgAnexoAnexo2.dataProvider = null;
+									btnExportarAA2.enabled = false;
+									lblTotalAA2.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								} 				 			
+								break;
+							case "6":
+								if(cont > 0){
+									dgCertificado.dataProvider = _xmlRep.Table;
+									btnExportarCE.enabled = true;
+									lblTotalCE.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgCertificado.dataProvider = null;
+									btnExportarCE.enabled = false;
+									lblTotalCE.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								}			 			
+								break;
+							case "7":
+								if(cont > 0){
+									dgTrimestral.dataProvider = _xmlRep.Table;
+									btnExportarTR.enabled = true;
+									lblTotalTR.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgTrimestral.dataProvider = null;
+									btnExportarTR.enabled = false;
+									lblTotalTR.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								}
+								break;
+						}
+					});
+					wsMS.getRepMarcadoFN.send(fecha, fechaInicio, fechaFin, organizacion, linea, disposicion, opcion, Application.application.U_ID);
+				}
+			}
+			
+			private function init():void{
+				global = new Globales();  
+				titulo = "Reportes de Financiera Nacional";
+				lblTitulo.text = titulo.toUpperCase();
+				du = new Utils();
+				formateaTipoReportes();
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				dtFecha.selectedDate = new Date();
+				dtFechaInicio.selectedDate = new Date();
+				dtFechaFin.selectedDate = new Date();
+			
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlOF = new XML(evt.result.toString());
+						
+					if(_xmlOF.elements().length() > 0){
+						formateaOF();
+						cboOF.dataProvider = orgObj;
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+				});
+				//Obtiene informacion de las Organizaciones Fondeadoras
+				wsCat.getCatalogoGral.send(29);	
+			}
+			
+			private function initConexionRep():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function limpiar():void{
+				if(currentState == "ClientesDescripcion"){
+					dgClientesDescripcion.dataProvider = null;
+					lblTotalCD.text = "";
+					btnExportarCD.enabled = false;
+				}
+				else if (currentState == "CargaCreditos"){
+					dgCargaCreditos.dataProvider = null;
+					lblTotalCC.text = "";
+					btnExportarCC.enabled = false;	
+				}
+				else if (currentState == "RelacionesDescripcion"){
+					dgRelacionesDescripcion.dataProvider = null;
+					lblTotalRD.text = "";
+					btnExportarRD.enabled = false;	
+				}
+				else if (currentState == "Anexo2"){
+					dgAnexo2.dataProvider = null;
+					lblTotalA2.text = "";
+					btnExportarA2.enabled = false;	
+				}
+				else if (currentState == "AnexoAnexo2"){
+					dgAnexoAnexo2.dataProvider = null;
+					lblTotalAA2.text = "";
+					btnExportarAA2.enabled = false;	
+				}
+				else if (currentState == "Certificado"){
+					dgCertificado.dataProvider = null;
+					lblTotalCE.text = "";
+					btnExportarCE.enabled = false;	
+				}
+				else if (currentState == "Trimestral"){
+					dgTrimestral.dataProvider = null;
+					lblTotalTR.text = "";
+					btnExportarTR.enabled = false;	
+				}
+				
+				currentState = null;
+				formateaTipoReportes();
+				cboDisp.dataProvider = null
+				cboLC.dataProvider = null;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlOF = new XML(evt.result.toString());
+						
+					if(_xmlOF.elements().length() > 0){
+						formateaOF();
+						cboOF.dataProvider = orgObj;
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+				});
+				//Obtiene informacion de las Organizaciones Fondeadoras
+				wsCat.getCatalogoGral.send(29);	
+				
+				dtFecha.text = "";
+			}
+			
+			private function seleccionarLC():void{
+				cboDisp.dataProvider = null;
+				
+				if(cboLC.selectedIndex > 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var orgFond:String = cboOF.selectedItem.codigo;
+					var lineaCred:String = cboLC.selectedItem.codigo;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					_xmlDisp = null;
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlDisp = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if(_xmlDisp.elements().length() > 0){
+							formateaDisp();
+							cboDisp.dataProvider = dispObj;
+							cboDisp.selectedIndex = 0;	
+						}
+					});
+					params[0] = orgFond;
+					params[1] = lineaCred;
+					wsCat.getListado.send(22, params);
+				}
+			}
+			
+			private function seleccionarOF():void{
+				cboLC.dataProvider = null;
+				cboDisp.dataProvider = null;
+				
+				if(cboOF.selectedIndex > 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var orgFond:String = cboOF.selectedItem.codigo;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					_xmlLC = null;
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlLC = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if(_xmlLC.elements().length() > 0){
+							formateaLC();
+							cboLC.dataProvider = lineaObj;
+							cboLC.selectedIndex = 0;
+						}
+					});
+					params[0] = orgFond;
+					wsCat.getListado.send(21, params);
+				}
+			}
+			
+			private function valida():Boolean{
+				if(cbxReporte.selectedIndex == 0){
+				     Alert.show("Seleccione un reporte.",titulo,4,null,null,global.iAlert);
+				     return false;     
+				}
+				
+				if(cboOF.selectedIndex == 0){
+				     Alert.show("Seleccione una organización.",titulo,4,null,null,global.iAlert);
+				     return false;     
+				}
+				
+				if(cbxReporte.selectedItem.id != "7"){ // reporte trimestral
+				     if(cboLC.selectedIndex == 0){
+				           Alert.show("Seleccione una línea de crédito.",titulo,4,null,null,global.iAlert);
+				           return false;     
+				     }
+				     if(cboDisp.selectedIndex == 0){
+				           Alert.show("Seleccione una disposición.",titulo,4,null,null,global.iAlert);
+				           return false;     
+				     }
+				     
+				     if(dtFechaInicio.text == ""){
+				            Alert.show("Seleccione la fecha de inicio",titulo,4,null,null,global.iAlert);
+				           return false;
+				     }
+				     if(dtFechaFin.text == ""){
+				           Alert.show("Seleccione la fecha final",titulo,4,null,null,global.iAlert);
+				           return false;
+				     }
+				     
+				     var inicio:Date = DateField.stringToDate(dtFechaInicio.text, "DD/MM/YYYY");
+				     var fin:Date = DateField.stringToDate(dtFechaFin.text, "DD/MM/YYYY");
+				     
+				     if(inicio >= fin){
+				           Alert.show("La fecha final debe de ser mayor a la fecha inicio.",titulo,4,null,null,global.iAlert);
+				           return false;
+				     }
+				}
+				
+				if(dtFecha.text == ""){
+				     Alert.show("Elija la fecha de saldos a buscar.",titulo,4,null,null,global.iAlert);
+				     return false;     
+				}
+				return true;
+			}
+			
+			public function validaFecha():void{
+				dtFechaInicio.selectedDate = global.validaFecha(dtFechaInicio.selectedDate, dtFechaFin.selectedDate,titulo);
+			}
+		
+		]]>
+	</mx:Script>
+    <mx:Canvas id="cnvCarga" x="0" y="0" width="400" height="322" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
+		<mx:Canvas x="10" y="10" width="380" height="302" styleName="canvasMod">
+			<mx:Label id="lblTitulo" x="10" y="10" width="358" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:Canvas id="cnvFondeo" x="10" y="55" width="358" height="203" styleName="canvasMod">
+				<mx:Label id="lblReporte" x="31" y="106" textAlign="right" text="Reporte:" width="49"/>
+				<mx:ComboBox id="cbxReporte" x="88" y="104" width="258" change="cambiaLayoutRep()" labelField="nombre"></mx:ComboBox>
+				<mx:Label id="lblFecha" x="0" y="136" textAlign="right" text="Fecha Saldo:" width="80"/>
+				<mx:DateField id="dtFecha" x="88" y="134" width="100" showToday="true"></mx:DateField>
+				<mx:Label id="lblOF" x="14" y="16" text="Fondeadora:"/>
+				<mx:ComboBox id="cboOF" x="88" y="14" width="258" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+				<mx:Label id="lblLC" x="9" y="46" text="Línea Crédito:"/>
+				<mx:ComboBox id="cboLC" x="88" y="44" width="258" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+				<mx:Label id="lblDisp" x="17" y="76" text="Disposición:"/>
+				<mx:ComboBox id="cboDisp" x="88" y="74" width="258" labelField="desc"/>
+				<mx:DateField id="dtFechaInicio" x="88" y="164" width="100" change="validaFecha()" showToday="true"></mx:DateField>
+				<mx:DateField id="dtFechaFin" x="246" y="164" width="100" change="validaFecha()" showToday="true"></mx:DateField>
+				<mx:Label id="lblFechaInicio" x="31" y="166" textAlign="right" text=" Inicio:" width="49"/>
+				<mx:Label id="lblFechaFin" x="208" y="166" textAlign="right" text="Fin:" width="30"/>
+			</mx:Canvas>
+			<mx:Label id="lblCriterios" x="10" y="36" text="Criterios de Selección"/>
+			<mx:Button x="114.25" y="266" label="Generar" click="generar()"  id="btnGenerar"/>
+			<mx:Button x="192.75" y="266" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

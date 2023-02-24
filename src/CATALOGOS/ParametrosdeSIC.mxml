@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"  width="100%"  height="100%" 
+	horizontalScrollPolicy="off" creationComplete="initApp()"
+	creationPolicy="all" >
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosConvenio;
+		import Data.EventConvenio;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosConvenio;
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		public var sicObj:ArrayCollection =  new ArrayCollection();
+		
+		private var _xmlSic:XML =  new XML();
+		private var _xmlParamSic:XML =  new XML();
+		private var cdgsic:String = "";
+		private var vigencia:int = 0;
+		private var ciclo:String = "";
+		private var todos:String = "";
+		private var monto:Number = 0;
+
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Parámetros de SIC";
+			lblTitulo.text = titulo.toUpperCase();
+			openEffect.duration = 500;
+			openEffect.play([this]);
+			cargaComboSIC();
+		}
+		
+		public function formateaSIC():void {
+			var cont:int = _xmlSic.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			sicObj.removeAll();
+			sicObj.refresh();
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			oItem.abrev = "";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlSic.Table[i].CODIGO;
+				oItem.nombre = _xmlSic.Table[i].NOMBRE;	
+				oItem.abrev = _xmlSic.Table[i].ABREV;	
+				item.push(oItem);
+			}
+			sicObj = new ArrayCollection(item);
+		}
+		
+		public function cargaComboSIC():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlSic = XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlSic.elements().length() > 0){
+					formateaSIC();
+					cboSIC.dataProvider = sicObj;
+				}
+			});
+			
+			wsCat.getInfoGeneral.send(13, params);
+		}
+		
+		public function cargaDatosSIC():void {
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var totalMonto:Number = 0;
+			var id:String = cboSIC.selectedItem.id;
+			
+			if(id != "" && id != "0"){
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+					_xmlParamSic = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlParamSic.elements().length() > 0){
+						monto = Number(_xmlParamSic.Table[0].MONTO);
+						cdgsic = _xmlParamSic.Table[0].CDGSIC;
+						vigencia = _xmlParamSic.Table[0].VIGENCIA;
+						ciclo = _xmlParamSic.Table[0].CICLO;
+						todos = _xmlParamSic.Table[0].TODOS;
+						
+						txtMonto.text = global.formatoMoneda(monto.toString());
+						txtVigencia.text = vigencia.toString();
+						txtCiclo.text = ciclo;
+						chkTodos.selected= todos=="S"? true: false;							 
+					}		
+					else {
+						Alert.show("No se ha encontrado información:" + id,titulo,4,null,null,global.iAlert);
+					}
+				}); 
+				
+				params[0] = id;
+				wsCat.getInfoGeneral.send(12, params);
+			}
+			else {
+				limpiaFormulario();
+			}
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function limpiaFormulario():void{
+			txtVigencia.text = "";
+			txtMonto.text = "";
+			txtCiclo.text = "";
+			chkTodos.selected = false;
+			
+			vigencia = 0;
+			ciclo = "";
+			todos = "";
+			monto = 0;
+		} 
+		
+		public function guardaParametros():void {
+			var id:String = cboSIC.selectedItem.id;
+			var params:Array = new Array;
+			 
+			ExternalInterface.call("console.log",txtMonto.text.replace(",","").replace("$",""));
+			if(id != "" && id != "0"){
+				if (validaCampos()!=0){
+					var mtoSinFto:String = global.formatoDecimalSinSep(txtMonto.text);
+					params[0] = id;
+					params[1] = mtoSinFto != ""? mtoSinFto: "0.0";
+					params[2] = txtVigencia.text !=""? txtVigencia.text: "0";
+					params[3] = txtCiclo.text;
+					params[4] = chkTodos.selected == true? "S": "N";
+									
+					initConexion();
+					du.sCursor();
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
+															
+						 var resEnv:String = evt.result.toString();
+						 du.closeWs(wsMS);
+						 du.rCursor();
+						 if(resEnv.substr(0,2) != "-1"){
+							Alert.show("Se han actualizado correctamente los parámetros de la Sociedad de Información Crediticia.",titulo,4,null,null,global.iInfo);	
+						 }	
+						 else {
+						   Alert.show(resEnv.substr(2,resEnv.length -1),titulo,4,null,null,global.iError);
+						 }	
+					});
+					wsMS.setModParamsSIC.send(params);
+				}
+			} 	
+			else
+			{
+				Alert.show("No ha seleccionado ninguna Sociedad de Información Crediticia (SIC) ",titulo,4,null,null,global.iAlert);	
+			}
+		}
+		
+		 private function validaCampos():int {
+			 if(txtMonto.text == "" ){
+			  	Alert.show("El campo Monto no debe estar vacío",titulo,4,null,null,global.iAlert);	
+			 	return 0;
+			 }
+			 if(txtVigencia.text == "" ){
+			 	Alert.show("El campo Vigencia no debe estar vacío",titulo,4,null,null,global.iAlert);
+			 	return 0;
+			 }
+			 if(txtCiclo.text =="" ){
+			 	Alert.show("El campo Ciclo no debe estar vacío",titulo,4,null,null,global.iAlert);
+			 	return 0;
+			 }
+			 return 1;	
+		 }
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="380" height="248">
+		<mx:Canvas x="19" y="39" width="338" height="162.29999" styleName="canvasMod">
+			<mx:Label id="lblSic" x="21" y="12" text="Soc. de Inf. Crediticia:"  textAlign="right"/>
+			<mx:Label id="lblVigencia" x="21" y="66.25" text="Vigencia de Consulta:" textAlign="right"/>
+			<mx:Label id="lblVigencia0" x="182" y="66.25" text="días" textAlign="right"/>
+			<mx:Label id="lblMonto" x="94" y="98.25" text="Monto:" textAlign="right"/>
+			<mx:Label id="lblCiclo" x="94" y="130.25" text="Ciclo:"  textAlign="right" width="37"/>
+			<mx:Label id="lblTodos" x="44" y="38.25" text="Consultar Todos:" textAlign="right"/>
+			<mx:ComboBox id="cboSIC" x="139" y="9" change="cargaDatosSIC()"   labelField="nombre" width="187"></mx:ComboBox>
+			<mx:TextInput id="txtVigencia" x="139" y="64.25" width="35"/>
+			<mx:TextInput id="txtMonto" x="139" y="96.25" width="80" change="{global.validaMonto(event)}"  />
+			<mx:TextInput id="txtCiclo" x="139" y="128.25" width="80"/>
+			<mx:CheckBox id="chkTodos"   x="139" y="38.25"/>
+		</mx:Canvas>
+		<mx:Button x="287" y="209.25" click="guardaParametros()" label="Guardar"/>
+	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="19" y="10" width="337.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

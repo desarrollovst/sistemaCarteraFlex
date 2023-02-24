@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="initApp()"
+	 xmlns:control="Controls.*">
+	<mx:states>
+		<mx:State name="General">
+			<mx:SetProperty target="{cvGeneral}" name="height" value="238"/>
+			<mx:SetProperty target="{cvGeneral}" name="width" value="322"/>
+			<mx:SetProperty target="{rdSucursal}" name="y" value="10"/>
+			<mx:SetProperty target="{rdGeneral}" name="y" value="10"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="297" height="135" id="cvGeneralG" styleName="canvasMod">
+					<mx:Canvas x="10" y="28" height="60" width="272" styleName="canvasMod">
+						<mx:DateField id="dtInicioG" x="18.5" y="27" width="111" change="validaFecha()"/>
+						<mx:Label x="18.5" y="10" text="Fecha Inicial" id="label7"/>
+						<mx:DateField id="dtFinG" x="142.5" y="27" width="111" change="validaFecha()"/>
+						<mx:Label x="143" y="10" text="Fecha Final" id="label8"/>
+					</mx:Canvas>
+					<mx:Label x="10" y="10" text="Criterios de Selección" id="label3"/>
+					<mx:Button x="138" y="96" label="Generar" id="btnGenerarG" click="generar('G')"/>
+					<mx:Button id="btnLimpiarG" x="217" y="96" label="Limpiar" enabled="true" click="limpiarG()"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{lblTitulo}" name="width" value="297"/>
+		</mx:State>
+		<mx:State name="Sucursal">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="319"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="349"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="296" height="248" styleName="canvasMod" id="cvGeneralS">
+				<mx:Canvas x="10" y="28" height="175" width="272" styleName="canvasMod">
+					<mx:DateField id="dtInicioS" x="17.5" y="135" width="111" change="validaFecha()"/>
+					<mx:Label x="17.5" y="118" text="Fecha Inicial" id="label0"/>
+					<mx:DateField id="dtFinS" x="141.5" y="135" width="111" change="validaFecha()"/>
+					<mx:Label x="142" y="118" text="Fecha Final" id="label1"/>
+					<control:CtrlFiltroInfoRS id="ctrlFiltro" x="10" y="10"  width="250"/>
+				</mx:Canvas>
+				<mx:Label x="10" y="10" text="Criterios de Selección" id="label2"/>
+				<mx:Button x="137" y="211" label="Generar" id="btnGenerarS" click="generar('S')"/>
+				<mx:Button id="btnLimpiarS" x="216" y="211" label="Limpiar" enabled="true" click="limpiarS()"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cvGeneral}"/> 
+				<mx:AddChildAction duration="500" target="{cvGeneralG}"/>
+				<mx:AddChildAction duration="500" target="{cvGeneralS}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+
+	<mx:Script>
+    <![CDATA[
+    	
+    	import Data.ExcelExportXls;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.containers.TitleWindow;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.easing.Elastic;
+		import mx.formatters.NumberFormatter;		
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.ObjectUtil;
+		import Data.Cookie;
+			
+		private var wsMS:WebService;
+		private var du:Utils;
+		private var titulo:String;
+		private var global:Globales;
+		
+		private var inf:String;
+		
+		private function generar(tipo:String):void{
+			if(valida()){
+				if(inf != "-1"){
+					var consulta:String = global.urlInf;
+					var id:String = "&id=" + inf;
+					var inicio:String;
+					var fin:String;
+					var region:String;
+					var sucursal:String;
+					
+					if(currentState == "General"){
+		    			inicio = "&in=" + dtInicioG.text;
+						fin = "&fi=" + dtFinG.text;
+						region = "&re=" + "000";
+						sucursal = "&su=" + "000";
+		    		}
+		    		else if(currentState == "Sucursal"){
+		    			inicio = "&in=" + dtInicioS.text;
+						fin = "&fi=" + dtFinS.text;
+						region = "&re=" + ctrlFiltro.obtieneRegion();
+						sucursal = "&su=" + ctrlFiltro.obtieneSucursal();
+		    		}
+					
+					consulta = consulta + id + inicio + fin + region + sucursal;
+					
+					var request:URLRequest = new URLRequest(consulta); 
+					navigateToURL(request,"_blank");
+				}
+			}
+		}
+		
+		private function initApp():void{
+    		global = new Globales();
+	    	du = new Utils();
+	    	inf = "16";
+	        titulo = "Informe Metas por Asesor";
+	      	lblTitulo.text = titulo.toUpperCase();
+    	}
+    	
+    	private function limpiarG():void{
+    		var fec:Date = Application.application._Current_Fecha;
+    		dtInicioG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFinG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    	}
+    	
+    	private function limpiarS():void{
+    		ctrlFiltro.init(true);
+    		var fec:Date = Application.application._Current_Fecha;
+    		dtInicioS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFinS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    	}
+    	
+    	private function modificarEstado():void{
+    		var fec:Date = Application.application._Current_Fecha;
+    		
+			if (gnSeleccionar.selectedValue == "G"){
+				currentState = "General";
+				
+				dtInicioG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFinG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+			else if (gnSeleccionar.selectedValue == "S"){
+				currentState = "Sucursal";
+				ctrlFiltro.init(true);
+				
+				dtInicioS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFinS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+    	}
+    	
+    	private function valida():Boolean{
+    		if(currentState == "Sucursal"){
+    			if(ctrlFiltro.cboRegion.selectedIndex == 0){
+    				Alert.show("Seleccione una Región.",titulo,4,null,null,global.iAlert);
+					return false;
+    			}
+    			else if(ctrlFiltro.cboSucursal.selectedIndex == 0){
+    				Alert.show("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
+					return false;
+    			}
+    		}
+    		
+    		return true;
+    	}
+    	
+    	private function validaFecha():void{
+    		if(currentState == "General")
+    			dtInicioG.selectedDate = global.validaFecha(dtInicioG.selectedDate, dtFinG.selectedDate, titulo);
+    		else if(currentState == "Sucursal")
+    			dtInicioS.selectedDate = global.validaFecha(dtInicioS.selectedDate, dtFinS.selectedDate, titulo);
+		}
+	]]>
+  	</mx:Script>
+	<mx:Canvas x="0" y="0" width="243" height="93" id="cvGeneral" backgroundColor="#FFFFFF">
+		<mx:Canvas x="10" y="39" width="218" height="43" styleName="canvasMod" id="cvBusqueda">
+			<mx:RadioButtonGroup id="gnSeleccionar" />
+			<mx:RadioButton  id="rdGeneral" x="36.5" y="10" label="General" groupName="gnSeleccionar" value="G" click="modificarEstado()"/>
+			<mx:RadioButton  id="rdSucursal" x="112.5" y="10" label="Sucursal" groupName="gnSeleccionar" value="S" click="modificarEstado()"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="218" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

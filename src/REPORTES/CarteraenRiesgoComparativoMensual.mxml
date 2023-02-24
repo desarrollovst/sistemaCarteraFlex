@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="334" height="460" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var nivMoraObj:ArrayCollection;
+			
+			private var rep:String;
+			
+			private function formateaDiasMora():void{
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";
+				oItem.desc = "--Todos--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";
+				oItem.desc = "Menor o Igual a 60 días de Mora";
+				item.push(oItem);
+				
+				nivMoraObj = new ArrayCollection(item);	
+			}
+					
+			private function generar():void{
+				if(valida()){
+					if(rep != "-1"){
+						var consulta:String = global.urlInf;
+						var id:String = "&id=" + rep;
+						var fecha:String = "&fe=" + dtFecha.text;
+						var tipo:String = "&ti=" + rdgTipo.selectedValue.toString();
+						var us:String = "&us=" + Application.application.U_ID;
+						var region:String = "&re=" + ctrlFiltro.obtieneRegion();
+						var sucursal:String = "&su=" + ctrlFiltro.obtieneSucursal();
+						var coord:String = "&co=" + ctrlFiltro.obtieneCoord();
+						var asesor:String = "&as=" + ctrlFiltro.obtieneAsesor(); 
+						var opcion:String = "&op=" + cboNivelMora.selectedItem.id;
+						consulta = consulta + id + fecha + tipo + us + region + sucursal + coord + asesor + opcion;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "14";
+				titulo = "Cartera en Riesgo Comparativo Mensual";
+				lblTitulo.text = titulo.toUpperCase();
+				formateaDiasMora();
+				cboNivelMora.dataProvider = nivMoraObj;
+				ctrlFiltro.addEventListener("selecSuc",seleccionaSuc);
+				ctrlFiltro.addEventListener("selecCoord",seleccionaCoord);
+				ctrlFiltro.addEventListener("selecAsesor",seleccionaAsesor);
+				ctrlFiltro.init();
+				limpiar();
+			}		
+				
+			private function valida():Boolean{
+				if(dtFecha.text == ""){
+					Alert.show("Seleccione la fecha de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function limpiar():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				ctrlFiltro.limpiar();
+				cboNivelMora.selectedIndex = 0;
+			}
+			
+			private function seleccionaAsesor(event:Event):void{
+				if(ctrlFiltro.obtieneIndAsesor() > 0){
+					rdgTipo.selectedValue = "General";
+					cnvTipo.enabled = false;
+				}
+				else{
+					rdgTipo.selectedValue = "Coordinacion";
+					cnvTipo.enabled = true;
+				}
+			}
+			
+			private function seleccionaCoord(event:Event):void{
+				if(ctrlFiltro.obtieneIndCoord() > 0){
+					rdgTipo.selectedValue = "Coordinacion";
+					rdSucursal.enabled = false;
+				}
+				else{
+					rdgTipo.selectedValue = "Sucursal";
+					rdSucursal.enabled = true;
+				}
+			}
+			
+			private function seleccionaSuc(event:Event):void{
+				if(ctrlFiltro.obtieneIndSucursal() > 0){
+					rdgTipo.selectedValue = "Sucursal";
+					rdGeneral.enabled = false;
+				}
+				else{
+					rdgTipo.selectedValue = "General";
+					rdGeneral.enabled = true;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="13" y="10" width="307" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="13.45" y="59" width="307.05" height="210.5" styleName="canvasMod">
+		<control:CtrlFiltroInfoRSCA id="ctrlFiltro" x="28.5" y="3" />
+	</mx:Canvas>
+	<mx:Label x="13" y="41" text="Criterios de Selección:"/>
+	<mx:Canvas id="cnvTipo" x="24.45" y="375.5" width="285.05" height="38" styleName="canvasMod">
+		<mx:RadioButtonGroup id="rdgTipo"/>
+		<mx:RadioButton x="10" y="6" label="General" id="rdGeneral" groupName="rdgTipo" value="General" selected="true"/>
+		<mx:RadioButton x="98" y="6" label="Sucursal" id="rdSucursal" groupName="rdgTipo" value="Sucursal"/>
+		<mx:RadioButton x="186.05" y="6" label="Coordinación" id="rdCoordinacion" groupName="rdgTipo" value="Coordinacion"/>
+	</mx:Canvas>
+	<mx:Canvas x="13.45" y="277.5" width="307.05" height="90" styleName="canvasMod">
+		<mx:Label x="73" y="16" text="Fecha:" height="20" id="lblFecha"/>
+		<mx:DateField id="dtFecha" x="123" y="14" width="111"/>
+		<mx:ComboBox id="cboNivelMora" x="73" y="50.5" labelField="desc" width="210" />
+		<mx:Label x="9" y="53.5" text="Días Mora:"/>
+	</mx:Canvas>
+	<mx:Button x="95.5" y="422" label="Generar" click="generar()"/>
+	<mx:Button x="174.5" y="422" label="Limpiar" click="limpiar()"/>
+</mx:Canvas>

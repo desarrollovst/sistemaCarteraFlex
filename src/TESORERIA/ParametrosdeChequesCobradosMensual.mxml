@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all"   
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Parametros para reporte de cheques cobrados mensual-->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import Data.Globales;
+			import Data.Utils;
+			import Data.DatosParamMarcABC;
+			import Data.EventParamMarcABC;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import Data.ExcelExportXls;
+						
+			private var _xmlDatos:XML = new XML();
+			private var dPermisos:XML = new XML();
+			
+			private var acMes:ArrayCollection = new ArrayCollection();
+			private var acAnio:ArrayCollection = new ArrayCollection();
+			
+			private var aAnio:Array;
+			private var aMes:Array;
+			private var aComision:Array;
+			
+			private var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var objMtto:Sprite = new Sprite();
+			
+			private var titulo:String;
+			private var accion:int;
+			private var ind:int;
+			private var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			private var alta:Boolean = new Boolean();
+			private var borrado:Boolean = new Boolean();
+			private var consulta:Boolean = new Boolean();
+			private var edicion:Boolean = new Boolean();
+			
+			private function activarContMod(band:Boolean):void{
+				btnEliminar.enabled = band;
+				btnEditar.enabled = band;
+			}
+			
+			private function actualizar(event:Event):void{
+				buscarLista();
+			}
+			
+			private function buscarLista():void{
+				if(valida()){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					
+					var anio:String;
+					var mes:String;
+					
+					if(cbxAnio.selectedIndex == 0)
+						anio = "0";
+					else
+						anio = cbxAnio.selectedItem.id;
+						
+					if(cbxMes.selectedIndex == 0)
+						mes = "0";
+					else 
+						mes = cbxMes.selectedItem.id;
+						
+					dgDatos.dataProvider = null;
+					activarContMod(false);
+													
+					Application.application.bloquear();
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlDatos = new XML(event.result);
+						
+						if(_xmlDatos.elements().length() >0){
+							dgDatos.dataProvider = _xmlDatos.Table;
+							lblRegistros.text = _xmlDatos.elements().length() + " Registro(s)";
+							btnExportar.enabled = true;
+							
+							if(accion == 2){
+								dgDatos.validateNow();
+								dgDatos.verticalScrollPosition = vScroll;
+								dgDatos.selectedIndex = ind;
+								accion = 0;
+								activarContMod(true);			
+							}
+						}
+						else{
+							btnExportar.enabled = false;
+							lblRegistros.text = "0 Registro(s)"
+						}
+							
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+					});
+					params[0] = "";
+					params[1] = "";
+					params[2] = "";
+					params[3] = anio;
+					params[4] = mes;
+					wsCat.getListado.send(70, params);
+				}	
+			}
+			
+			private function eliminar():void{
+				if(dgDatos.selectedIndex >= 0){
+					if(dgDatos.selectedItem.CDGCO != "")
+						Alert.show("¿Desea eliminar el párametro seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+					else
+						Alert.show("Seleccione el párametro a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			
+			private function exportar():void{
+				var a:DataGridColumn;
+				a = dgDatos.columns[1];
+				a.visible = true;
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgDatos,null,titulo);
+				a.visible = false;		
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Parámetros de Cheques Cobrados Mensual";
+				lblTitulo.text = titulo.toUpperCase();;
+				permisos();
+				cbxMes.dataProvider = global.formateaMes();
+                cbxAnio.dataProvider = global.formateaAnio();
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function iniVar():void{
+				this.ind = -1;
+				this.vScroll = -1;
+			}
+			
+			private function manejadorEliminar(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					aAnio = new Array;
+					aMes = new Array;
+					aComision = new Array;
+					
+					var cdgco:String = dgDatos.selectedItem.CDGCO;
+					var sucursal:String = "";
+					var cdgib:String = dgDatos.selectedItem.CDGIB;
+					var banco:String = "";
+					var cdgcb:String = dgDatos.selectedItem.CDGCB;
+					var cuenta:String = "";
+					var segmento:String = "";
+					var referencia:String = "";
+					
+					aAnio[0] =  dgDatos.selectedItem.ANIO;
+					aMes[0] =  dgDatos.selectedItem.MES;
+					aComision[0] =  dgDatos.selectedItem.COMISION;
+															
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					
+					wsMS.addEventListener(ResultEvent.RESULT, setAccion);
+					wsMS.setAccionParametrosChqCbMn.send( cdgco, sucursal, cdgib, banco, cdgcb, cuenta,
+							segmento, referencia, aAnio, aMes, aComision, 3);
+			    } 
+			}
+			    
+		    private function setAccion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccion);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarLista();
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+			
+			private function mostrarForm(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoParamChqCbMn:MttoParamsChqCbMn = new MttoParamsChqCbMn();
+				if(edicion == true){
+					objMtto = this;	
+					accion = tipo;		
+					switch(tipo){
+						case 1: 
+							comMttoParamChqCbMn = MttoParamsChqCbMn(PopUpManager.createPopUp(objMtto,MttoParamsChqCbMn,true));
+							comMttoParamChqCbMn.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+							PopUpManager.centerPopUp(comMttoParamChqCbMn);							
+							comMttoParamChqCbMn.nuevo();
+							break;
+						case 2:
+							if(dgDatos.selectedIndex >= 0){		
+								comMttoParamChqCbMn = MttoParamsChqCbMn(PopUpManager.createPopUp(objMtto,MttoParamsChqCbMn,true));	
+								comMttoParamChqCbMn.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+								PopUpManager.centerPopUp(comMttoParamChqCbMn);
+								iniVar();
+								ind = dgDatos.selectedIndex;
+								vScroll = dgDatos.verticalScrollPosition;
+								comMttoParamChqCbMn.cargaInfo(_xmlDatos.Table[dgDatos.selectedIndex]);
+						}
+					}
+				}
+			}
+			
+			private function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								borrado = true;
+								alta = true;
+								edicion = true;
+							break;			
+						}
+					}
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			private function selecciona():void{
+				activarContMod(true);
+			}
+			
+			private function valida():Boolean{
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Seleccione el mes.", titulo, 4,null,null,global.iAlert);
+					return false
+				}
+				else if(cbxAnio.selectedIndex == 0){
+					Alert.show("Seleccione el año.", titulo, 4,null,null,global.iAlert);
+					return false
+				}
+				
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="802" height="488">
+		<mx:Canvas x="587" y="69" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarForm(2)"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarForm(1)"/>
+			<mx:Button id="btnEliminar" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminar()" enabled="false" toolTip="Eliminar" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista()" toolTip="Buscar" width="40" />
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="10" y="112" width="782" height="339" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgDatos" x="10" y="10" width="760" height="317" horizontalScrollPolicy="on" 
+				doubleClickEnabled="true" itemDoubleClick="mostrarForm(2)" sortableColumns="false" draggableColumns="false" 
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="selecciona()">										
+				<mx:columns>
+					<mx:DataGridColumn headerText="AÑO" dataField="ANIO" width="50" />
+					<mx:DataGridColumn headerText="MES" dataField="MES" width="80" visible="false" />
+					<mx:DataGridColumn headerText="MES" dataField="MESDESC" width="80" />
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO" width="120" />
+					<mx:DataGridColumn headerText="BANCO" dataField="NOMIB" width="120" />
+					<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="120" />
+					<mx:DataGridColumn headerText="SEGMENTO" dataField="SEGMENTO" width="80" />
+					<mx:DataGridColumn headerText="COMISION" dataField="COMISION" width="80" />
+					<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA" width="80" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label x="10" y="10" text="..." fontWeight="bold" fontSize="12" fontStyle="italic" id="lblTitulo" width="358.75"/>
+		<mx:Canvas x="10" y="39" width="211" height="65" styleName="canvasMod">
+			<mx:Label x="10" y="10" text="Mes" width="81" height="20"/>
+			<mx:ComboBox id="cbxMes" labelField="nombre" x="10" y="28.5" width="111"/>
+			<mx:Label x="129" y="10" text="Año" width="72" height="20"/>
+			<mx:ComboBox id="cbxAnio" labelField="id" x="129" y="29" width="72"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="459" fontWeight="bold" fontSize="12" fontStyle="italic" width="358.75" id="lblRegistros"/>
+		<mx:Button id="btnExportar" x="689" y="458" label="Exportar Excel" click="exportar()" enabled="false"/>
+	</mx:Canvas>
+</mx:Canvas>

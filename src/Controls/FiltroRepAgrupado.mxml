@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="292" height="458" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" xmlns:control="Controls.*">
+	
+<mx:Metadata>
+	[Event(name="enviar", type="enviar")]
+</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;	
+			
+			public var wsMS:WebService;
+			public var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function cargaAsesor(ev:Event):void{
+				habilitaControles(true);
+			}	
+					
+			public function generar():void{
+				if (valida()){					
+					var consulta:String;
+					var id:String = "&id=" + rep;
+					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
+					var niv:String = "&nivel=" + nivel.selectedValue.toString();
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var region:String = "&region=" + ctrlFiltro.obtieneRegion();
+					var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();
+					var coord:String = "&coord=" + ctrlFiltro.obtieneCoord();
+					var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();
+					
+					if(currentState == null)
+						consulta = global.urlPdf + id + fecha + niv + usuario + nomUsuario + region + sucursal + coord + asesor;					
+					Application.application.muestraPdf(consulta);
+				}			
+			}
+			
+			private function habilitaControles(estatus:Boolean):void{
+				btnEnviar.enabled = estatus;
+				btnLimpiar.enabled = estatus;
+			}	
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				global = new Globales();
+				du = new Utils();
+				this.rep = rep;
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;
+				limpiar();
+				//ctrlFiltro.addEventListener("cargaAsesor",cargaAsesor);
+			}		
+						
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				//habilitaControles(false);
+				ctrlFiltro.limpiar();
+				fec = Application.application._Current_Fecha;
+				if(currentState == null)
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				nivel.selectedValue = 3;
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == "" && currentState == null){
+					Alert.show("Seleccione la fecha límite del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				if(nivel.selection == null){
+					Alert.show("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function obtieneAsesor():String{
+				return ctrlFiltro.obtieneAsesor();	
+			}
+			
+			public function obtieneCoord():String{
+				return ctrlFiltro.obtieneCoord();
+			}
+			
+			public function obtieneRegion():String{
+				return ctrlFiltro.obtieneRegion();
+			}
+			
+			public function obtieneSucursal():String{
+				return ctrlFiltro.obtieneSucursal();
+			}
+			
+			public function obtieneFecha():String{
+				return dtfFecha.text;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="14" y="321.5" text="Nivel de detalle" id="label3"/>
+	<mx:Canvas x="14" y="340.5" width="264" height="65" styleName="canvasMod" id="canvas3">
+		<mx:RadioButtonGroup id="nivel"/>
+		<mx:RadioButton id="rdbRegion" x="39" y="5" label="Región" groupName="nivel" value="0" width="87"/>
+		<mx:RadioButton id="rdbSucursal" x="156" y="5" label="Sucursal" groupName="nivel" value="1"/>
+		<mx:RadioButton id="rdbCoord" x="39" y="34" label="Coordinación" groupName="nivel" value="2"/>
+		<mx:RadioButton id="rdbAsesor" x="156" y="34" label="Asesor" groupName="nivel" value="3" width="67"/>	
+	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="12" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="13.95" y="53.5" width="264.05" height="215" styleName="canvasMod" id="canvas2">
+		<control:CtrlFiltroInfo id="ctrlFiltro" x="6" y="5"/>
+	</mx:Canvas>
+	<mx:Canvas x="14" y="276.5" width="264" height="37" styleName="canvasMod" id="canvas1">
+		<mx:DateField id="dtfFecha" x="111.5" y="5" width="111"/>
+		<mx:Label x="39.5" y="6" text="Fecha límite:" id="label1"/>
+	</mx:Canvas>
+	<mx:Button x="71" y="424" label="Generar" click="generar()" id="btnEnviar"/>
+	<mx:Button x="150" y="424" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+</mx:Canvas>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="300" 
+	height="288" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="vCartIni" source="{txtCartInicio}" property="text" 
+	invalid="{txtCartInicio.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCartFin" source="{txtCartFin}" property="text" 
+	invalid="{txtCartFin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcentaje" source="{txtPorcInc}" property="text" 
+	invalid="{txtPorcInc.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML, pTipo:String):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Parámetro Incentivos Cartera";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+						
+			txtCodigo.text = pXmlInfo.CODIGO;
+			txtCartInicio.text = pXmlInfo.CART_INI;
+			txtCartFin.text = pXmlInfo.CART_FIN;
+			txtPorcInc.text = pXmlInfo.PORCENTAJE;
+			
+			if(pTipo == "S"){
+				txtTipo.text = "Sucursal";
+				txtCodigo.maxChars = 3;
+			}
+			else if(pTipo == "R"){
+				txtTipo.text = "Región";
+				txtCodigo.maxChars = 3;
+			}
+				
+			txtCodigo.editable = false;
+			txtCartInicio.editable = false;
+			txtCartFin.editable = false;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mTipo:String = txtTipo.text.substr(0,1);
+				var mCartIni:Number = Number(txtCartInicio.text);
+				var mCartFin:Number = Number(txtCartFin.text);
+				var mPorcInc:Number = Number(txtPorcInc.text);
+				
+				initConexionIncR();
+				du.sCursor();
+				Application.application.bloquear()
+				
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncCart);
+				wsIncR.setAccionParametrosIncCartera.send(mCodigo, mTipo, mCartIni, mCartFin, mPorcInc, tipoAccion);
+			}
+		}
+		
+		private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		public function nuevo(pTipo:String):void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Parámetro Incentivos Cartera";
+			
+			if(pTipo == "S"){
+				txtTipo.text = "Sucursal";
+				txtCodigo.maxChars = 3;
+			}
+			else if(pTipo == "R"){
+				txtTipo.text = "Región";
+				txtCodigo.maxChars = 3;
+			}
+			
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function setAccionParametrosIncCart(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncCart);
+			wsIncR = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaCartIni:Array = Validator.validateAll([vCartIni]);
+			var iaCartFin:Array = Validator.validateAll([vCartFin]);
+			var iaPorcInc:Array = Validator.validateAll([vPorcentaje]);
+		
+			if (iaCartIni.length != 0){
+				Alert.show("Debe capturar el porcentaje de cartera inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaCartFin.length != 0){
+				Alert.show("Debe capturar el porcentaje de cartera fin.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcInc.length != 0){
+				Alert.show("Debe capturar el porcentaje de incentivo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="79" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="59.5" y="12" text="Código:" id="lblCodigo"/>
+		<mx:TextInput id="txtCodigo" x="108.5" y="10" width="110" editable="true" maxChars="6"/>
+		<mx:Label x="72.5" y="45" text="Tipo:" id="lblTipo"/>
+		<mx:TextInput id="txtTipo" x="108.5" y="42" width="110" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="97" width="280" height="108" styleName="canvasMod">
+		<mx:Label x="71" y="12" text="Cartera Inicio:" id="lbCartIni"/>
+		<mx:TextInput id="txtCartInicio" x="150" y="10" width="87" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="81" y="42" text="Cartera Fin:" id="lblCartFin"/>
+		<mx:TextInput id="txtCartFin" x="150" y="40" width="87" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="37" y="72" text="Porcentaje Incentivo:" id="lblPorcInc"/>
+		<mx:TextInput id="txtPorcInc" x="150" y="70" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="215" y="73" text="%" id="lblPorc1" width="26"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="202" y="213" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="250" y="213" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

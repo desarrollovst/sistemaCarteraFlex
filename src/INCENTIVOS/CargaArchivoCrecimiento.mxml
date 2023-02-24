@@ -1,0 +1,470 @@
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	 creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*" x="12.5" y="42">
+	<mx:states>
+		<mx:State name="Region">
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="10" y="157" width="400" height="399" styleName="canvasMod" id="canvas1" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+					<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="145" y="364" click="cargarInfo()"/>
+					<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="251" y="332"/>
+					<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="83" y="332" width="160"/>
+					<mx:DataGrid id="dgRegion" x="10" y="10" width="378" height="282" >
+						<mx:columns>
+							<mx:DataGridColumn headerText="COD. DE REGIÓN" dataField="CDGRG" width="90"/>
+							<mx:DataGridColumn headerText="CRECIMIENTO" dataField="CRECIMIENTO" width="65"/>
+							<mx:DataGridColumn headerText="ESTATUS" dataField="COMENTARIO" width="120"/>
+						</mx:columns>
+					</mx:DataGrid>
+					<mx:Label id="lblResultado" x="10" y="300" width="377.85" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+					<mx:Button label="Exportar" id="btnExportar" visible="false" x="125" y="363" click="exportar()"/>
+					<mx:Button label="Limpiar" id="btnLimpiar" visible="false" x="205" y="363" click="limpiar()"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{cnvCarga}" name="height" value="567"/>
+			<mx:SetProperty target="{cnvCarga}" name="width" value="422"/>
+			<mx:SetProperty target="{cbxAnio}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxAnio}" name="y" value="68"/>
+			<mx:SetProperty target="{cbxMes}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxMes}" name="y" value="38"/>
+			<mx:SetProperty target="{lblAnio}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblAnio}" name="y" value="71"/>
+			<mx:SetProperty target="{lblMes}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblMes}" name="y" value="41"/>
+			<mx:SetProperty target="{cbxTipo}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxTipo}" name="y" value="8"/>
+			<mx:SetProperty target="{lblTipo}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblTipo}" name="y" value="11"/>
+		</mx:State>
+		<mx:State name="Sucursal">
+			<mx:AddChild  position="lastChild">
+				<mx:Canvas x="10" y="157" width="400" height="399" styleName="canvasMod" id="canvas0" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+					<mx:Button label="Cargar Archivo" id="btnCargar0" enabled="false" x="145" y="364" click="cargarInfo()"/>
+					<mx:Button label="Buscar" id="btnBuscar0" enabled="true" click="buscarArchivo()" x="251" y="332"/>
+					<mx:TextInput id="txtArchivo0" editable="false" enabled="true" x="83" y="332" width="160"/>
+					<mx:DataGrid id="dgSucursal" x="10" y="10" width="378" height="282">
+						<mx:columns>
+							<mx:DataGridColumn headerText="COD. DE SUCURSAL" dataField="CDGCO" width="90"/>
+							<mx:DataGridColumn headerText="CRECIMIENTO" dataField="CRECIMIENTO" width="65"/>
+							<mx:DataGridColumn headerText="ESTATUS" dataField="COMENTARIO" width="120"/>
+						</mx:columns>
+					</mx:DataGrid>
+					<mx:Label id="lblResultado0" x="10.15" y="300" width="377.85" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+					<mx:Button label="Exportar" id="btnExportar0" visible="false" x="125" y="364" click="exportar()"/>
+					<mx:Button label="Limpiar" id="btnLimpiar0" visible="false" x="205" y="364" click="limpiar()"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{cnvCarga}" name="width" value="422"/>
+			<mx:SetProperty target="{cnvCarga}" name="height" value="567"/>
+			<mx:SetProperty target="{lblTipo}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblTipo}" name="y" value="11"/>
+			<mx:SetProperty target="{lblMes}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblMes}" name="y" value="41"/>
+			<mx:SetProperty target="{cbxTipo}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxTipo}" name="y" value="8"/>
+			<mx:SetProperty target="{cbxMes}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxMes}" name="y" value="38"/>
+			<mx:SetProperty target="{cbxAnio}" name="x" value="65.5"/>
+			<mx:SetProperty target="{cbxAnio}" name="y" value="68"/>
+			<mx:SetProperty target="{lblAnio}" name="x" value="29.5"/>
+			<mx:SetProperty target="{lblAnio}" name="y" value="71"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cnvCarga}"/> 
+				<mx:AddChildAction duration="500" target="{canvas0}"/>
+				<mx:AddChildAction duration="500" target="{canvas1}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>    
+    <![CDATA[
+    	import mx.messaging.channels.StreamingAMFChannel;
+    	import mx.charts.chartClasses.DataDescription;
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 
+        import mx.events.ListEvent;		
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var wsRep:WebService;
+      	private var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+      	
+      	private var infoObj:ArrayCollection = new ArrayCollection();
+      	
+      	private var aCDGRG:Array;
+      	private var aCDGCO:Array;
+      	private var aCrecimiento:Array;
+      	        	
+		private var _xmlDatos:XML = new XML();
+		private var _xmlInfo:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+                
+        private function cargarInfo():void{
+        	if(valida()){
+	        	if(formateaInfo()){
+	        		var dgInfo:DataGrid = obtenerGrid();
+	        		var mTipo:String = cbxTipo.selectedItem.id;
+	        		var mMes:String = cbxMes.selectedItem.id;
+	        		var mAnio:String = cbxAnio.selectedItem.id;
+
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					//Servicio de registro del estado de cuenta
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+								
+						wsMS.disconnect();
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if(res.substr(0,1) == "1"){
+							if(currentState == "Region"){
+								btnCargar.visible = false;
+								btnBuscar.enabled = false;
+								btnExportar.visible = true;
+								btnLimpiar.visible = true;	
+							}	
+							else if(currentState == "Sucursal"){
+								btnCargar0.visible = false;
+								btnBuscar0.enabled = false;
+								btnExportar0.visible = true;
+								btnLimpiar0.visible = true;	
+							}							
+								
+							initConexionRep();
+							du.sCursor();
+							Application.application.bloquear();
+							
+							du.ejecutaWsMethod(wsRep,function(event:ResultEvent):void{		
+								_xmlInfo = new XML(event.result);
+				
+								du.closeWs(wsRep);
+								du.rCursor();
+								Application.application.desbloquear();
+				
+								if(_xmlInfo.elements().length() > 0){
+									dgInfo.dataProvider = null;
+									dgInfo.dataProvider = _xmlInfo.Table;
+									var cont:int = _xmlInfo.elements().length();
+									
+									if(currentState == "Region")
+										lblResultado.text = cont + " Registro(s) Procesado(s)";	
+									else if(currentState == "Sucursal")
+										lblResultado0.text = cont + " Registro(s) Procesado(s)";
+						
+									Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);	
+								}
+							});
+							if(currentState == "Region")
+								wsRep.getIncentivoCrecimientoRegion.send(Application.application.U_ID);	
+							else if(currentState == "Sucursal")
+								wsRep.getIncentivoCrecimientoSucursal.send(Application.application.U_ID);
+							
+						}
+						else{
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+							Application.application.desbloquear();
+						}				
+					});
+					
+					if(currentState == "Region")
+						wsMS.setAccionIncentivoCrecimientoRegion.send(aCDGRG, mMes, mAnio, aCrecimiento, Application.application.U_ID, 1);	
+					else if(currentState == "Sucursal")
+						wsMS.setAccionIncentivoCrecimientoSucursal.send(aCDGCO, mMes, mAnio, aCrecimiento, Application.application.U_ID, 1);	
+	        	}
+        	}
+        }
+        
+		private function exportar():void{
+			var dgInfo:DataGrid = obtenerGrid();
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+
+        private function formateaInfo():Boolean{
+        	var dgInfo:DataGrid = obtenerGrid();
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+
+        	aCDGRG = new Array;
+        	aCDGCO = new Array;
+      		aCrecimiento = new Array;
+
+			for (var i:int = 0; i < info.length; i++){
+				if(currentState == "Region")
+					aCDGRG[i] = info[i].CDGRG != null ? info[i].CDGRG : "";
+				else if(currentState == "Sucursal")
+					aCDGCO[i] = info[i].CDGCO != null ? info[i].CDGCO : "";
+
+	      		aCrecimiento[i] = info[i].CRECIMIENTO != null ? info[i].CRECIMIENTO : "";
+			}
+			
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        if(currentState == "Region")
+	            txtArchivo.text = fileReference.name;
+			else if(currentState == "Sucursal")
+				txtArchivo0.text = fileReference.name;	        
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function onLoadError():void{
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+            	var dgInfo:DataGrid = obtenerGrid();
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            	            
+	            if(currentState == "Region"){
+	            	btnCargar.enabled = true;
+	            	btnBuscar.enabled = true;	
+	            }
+				else if(currentState == "Sucursal"){
+					btnCargar0.enabled = true;
+	            	btnBuscar0.enabled = true;
+				}
+	            
+	            var fileData:ByteArray = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var cont:int;
+	            var filas:int;
+	            var columnas:int;
+	            var band:Boolean = false;
+	            
+	            if(fileData != null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet != null){
+	                	cont = 0;
+	            	    filas = sheet.rows;
+	                    columnas = sheet.cols;
+	                    for(var i:int = 1; i < filas; i++){
+	                	    var cellObject:Object = {};
+	                        for(var col:int = 0; col < columnas; col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(i, col);
+	                            if(cell != null){
+	                            	cellValue =(cell.value).toString();
+	                            	if(col == 0 && cellValue == ""){
+	                            		band = true;
+	                            		break;
+	                            	}
+	                                else
+	                                	addProperty(cellObject, col, cellValue);
+	                            }
+	                     	}  
+	                        if(!band){
+	                        	infoObj.addItem(cellObject);
+	                        	cont += 1;
+	                        } 
+	                        else 
+	                        	band = false;
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    if(currentState == "Region")
+	                    	lblResultado.text = cont + " Registro(s) Encontrado(s)";
+						else if(currentState == "Sucursal")
+							lblResultado0.text = cont + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            
+	            if(currentState == "Region")
+                	btnCargar.enabled = true;
+				else if(currentState == "Sucursal")
+					btnCargar0.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(currentState == "Region"){
+	            if(index == 0)
+	                cellObject.CDGRG = cellValue;
+	            else if(index == 1)
+	                cellObject.CRECIMIENTO = cellValue;
+	            }
+            else if(currentState == "Sucursal"){
+            	if(index == 0)
+	                cellObject.CDGCO = cellValue;
+	            else if(index == 1)
+	                cellObject.CRECIMIENTO = cellValue;
+            }
+        }
+      
+      	private function initApp():void{
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo de Crecimiento";
+	      	lblTitulo.text = titulo.toUpperCase();
+	      	
+	      	cbxAnio.dataProvider = global.formateaAnio();
+			cbxMes.dataProvider = global.formateaMes();
+	      	
+	      	var oItem:Object;
+			var item:Array = new Array();
+			var acTipo:ArrayCollection;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "1";	
+			oItem.nombre = "Región";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "2";	
+			oItem.nombre = "Sucursal";
+			item.push(oItem);
+							
+			acTipo = new ArrayCollection(item);
+			cbxTipo.dataProvider = acTipo;
+			cbxTipo.selectedIndex = 0;
+	    }    
+	    
+	    private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function initConexionRep():void{				
+			wsRep = new WebService();			
+			wsRep.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsRep.loadWSDL();
+		}	
+		
+		private function limpiar():void{
+			if(currentState != null){
+				var dgInfo:DataGrid = obtenerGrid();
+				dgInfo.dataProvider = null;
+				
+				if(currentState == "Region"){
+					lblResultado.text = "";
+					txtArchivo.text = "";
+					btnCargar.visible = true;
+					btnCargar.enabled = false;
+					btnBuscar.enabled = true;
+					btnExportar.visible = false;
+		            btnLimpiar.visible = false;	
+				}
+				else if(currentState == "Sucursal"){
+					lblResultado0.text = "";
+					txtArchivo0.text = "";
+					btnCargar0.visible = true;
+					btnCargar0.enabled = false;
+					btnBuscar0.enabled = true;
+					btnExportar0.visible = false;
+		            btnLimpiar0.visible = false;
+				}
+				
+			}
+		}
+		
+		private function modificarEstado():void{
+			var id:Number = cbxTipo.selectedItem.id;
+			
+			if(id == 1) //Región
+				currentState = "Region";
+			else if(id == 2) //Sucursal
+				currentState = "Sucursal"
+			else
+				currentState = null;
+		}
+		
+		private function obtenerGrid():DataGrid{
+			if(currentState == "Region")
+				return dgRegion;
+			else if(currentState == "Sucursal")
+				return dgSucursal;
+			return null;
+		}
+		
+		private function valida():Boolean{
+			
+			if(cbxTipo.selectedIndex == 0){
+				Alert.show("Debe seleccionar el tipo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxMes.selectedIndex == 0){
+				Alert.show("Debe seleccionar el mes.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxAnio.selectedIndex == 0){
+				Alert.show("Debe seleccionar el año.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas id="cnvCarga" backgroundColor="#FFFFFF" backgroundAlpha="1.0" width="235" height="160">
+  	  	<mx:Canvas x="10" y="39" width="214" height="102" styleName="canvasMod" id="canvas2">
+	  	  	<mx:Label id="lblAnio" x="29.5" y="71" text="Año:"/>
+	  	  	<mx:Label id="lblTipo" x="29.5" y="11" text="Tipo:"/>
+	  	  	<mx:ComboBox id="cbxTipo" x="65.5" y="8" width="121" labelField="nombre" change="modificarEstado()"/>
+	  	  	<mx:Label id="lblMes" x="29.5" y="41" text="Mes:" textAlign="right"/>
+	  	  	<mx:ComboBox x="65.5" y="68" width="121" id="cbxAnio" labelField="id"></mx:ComboBox>
+	  	  	<mx:ComboBox id="cbxMes" labelField="nombre" x="65.5" y="38" width="121"/>
+	  	</mx:Canvas>
+	  	<mx:Label id="lblTitulo" x="10" y="10" width="220" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+  	</mx:Canvas>
+</mx:Canvas>

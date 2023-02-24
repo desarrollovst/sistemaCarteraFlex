@@ -1,0 +1,82 @@
+8
+
+dir
+23
+http://desarrollo-pc:18080/svn/EMP_ADMIN/trunk/EMP_ADMIN/src/as3xls/xls
+http://desarrollo-pc:18080/svn/EMP_ADMIN
+
+
+
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+
+svn:special svn:externals svn:needs-lock
+
+style
+dir
+
+Cell.as
+file
+
+
+
+
+2010-06-28T21:39:36.000000Z
+4f0169977a7fbe57c5884bf5d01d70bb
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+ExcelFile.as
+file
+
+
+
+
+2010-06-28T21:39:36.000000Z
+ae47f616d84e938492fd241a1c427947
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+Type.as
+file
+
+
+
+
+2010-06-28T21:38:24.000000Z
+a734b691a61e2d3bf9a8edf018b7c03a
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+formula
+dir
+
+Formatter.as
+file
+
+
+
+
+2010-06-28T21:38:24.000000Z
+4134e53a74362c10b940ea4b9a1427ea
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+Sheet.as
+file
+
+
+
+
+2010-06-28T21:39:36.000000Z
+c4d37f50d6008beb1f8cbd02c66e6c00
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+

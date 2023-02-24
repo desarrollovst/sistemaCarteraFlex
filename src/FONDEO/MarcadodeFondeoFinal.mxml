@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="362" height="138" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import flash.sampler.NewObjectSample;
+			import flash.sampler.getMemberNames;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+					
+			private var acMes:ArrayCollection = new ArrayCollection();
+			private var acAnio:ArrayCollection = new ArrayCollection();
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function cargaComboAnio():void{									
+				acAnio = global.formateaAnio();
+				cbxAnio.dataProvider = acAnio;
+				
+				var Fecha:Date = new Date();
+				var anio:String = Fecha.getFullYear().toString();
+				
+				for(var i:int = 0; i < acAnio.length; i++){
+					if(acAnio[i].id == anio){
+						cbxAnio.selectedIndex = i;
+						return;	
+					}
+				}
+			}
+			
+			private function cargaComboMes():void{
+				acMes = global.formateaMes();
+				cbxMes.dataProvider = acMes;
+				
+				var Fecha:Date = new Date();
+				var mes:String = (Fecha.getMonth() + 1).toString();
+				
+				for(var i:int = 0; i < acMes.length; i++){
+					if(acMes[i].id == mes){
+						cbxMes.selectedIndex = i;
+						return;	
+					}
+				}
+			}
+			
+			private function generar():void{
+				if(valida() == true){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					
+					var usuario:String = Application.application.U_ID;	
+					var mes:String = cbxMes.selectedItem.id;
+					var anio:String = cbxAnio.selectedItem.id;
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
+						var res:String = evt.result.toString();
+						
+						du.closeWs(wsMS);			
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if(res.substr(0,1) == "1"){
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
+						}
+						else	
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					});
+					
+					wsMS.setMarcadoFondeoFinal.send(usuario, mes, anio);
+				}
+			}
+				
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Marcado de Fondeo Final";
+				lblTitulo.text = titulo.toUpperCase();
+				
+				cargaComboMes();
+				cargaComboAnio();
+			}		
+				
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+		
+			private function limpiar():void{
+				var i:int;
+				var Fecha:Date = new Date();
+				var mes:String = (Fecha.getMonth() + 1).toString();
+				var anio:String = Fecha.getFullYear().toString();
+				
+				for(i = 0; i < acMes.length; i++){
+					if(acMes[i].id == mes){
+						cbxMes.selectedIndex = i;
+						return;	
+					}
+				}
+				for(i = 0; i < acAnio.length; i++){
+					if(acAnio[i].id == anio){
+						cbxAnio.selectedIndex = i;
+						return;	
+					}
+				}
+			}
+				
+			private function valida():Boolean{
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Seleccione el mes del proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxAnio.selectedIndex == 0){
+					Alert.show("Seleccione el año del proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="326.95" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53" width="327" height="40.5" styleName="canvasMod">
+		<mx:Label x="5" y="9" text="Mes:" width="34" height="20" textAlign="right" id="lblMes"/>
+		<mx:ComboBox x="43" y="7" width="131" id="cbxMes" labelField="nombre"></mx:ComboBox>
+		<mx:Label x="179" y="9" text="Año:" width="34" height="20" textAlign="right"/>
+		<mx:ComboBox x="217" y="7" width="90" id="cbxAnio" labelField="id"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Button x="106" y="103.5" label="Generar" click="generar()"/>
+	<mx:Button x="185" y="104" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+</mx:Canvas>

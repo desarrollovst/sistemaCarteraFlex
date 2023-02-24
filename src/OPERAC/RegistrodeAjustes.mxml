@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="destino">
+			<mx:SetProperty target="{canvas1}" name="height" value="510"/>
+			<mx:SetProperty target="{cnvDetalle}" name="height" value="378"/>
+			<mx:SetProperty target="{hrule1}" name="y" value="302"/>
+			<mx:SetProperty target="{lblENvoSdoCap}" name="y" value="316"/>
+			<mx:SetProperty target="{lblNvoSdoCap}" name="y" value="316"/>
+			<mx:SetProperty target="{lblENvoSdoInt}" name="y" value="318"/>
+			<mx:SetProperty target="{lblNvoSdoInt}" name="y" value="318"/>
+			<mx:SetProperty target="{lblNvoSdoTotal}" name="y" value="348"/>
+			<mx:SetProperty target="{lblENvoSdoTotal}" name="y" value="348"/>
+			<mx:SetProperty target="{lblObs}" name="y" value="212"/>
+			<mx:AddChild relativeTo="{cnvDetalle}" position="lastChild">
+				<mx:Label id="lblCodDest" x="37.8" y="182" text="Destino (Código):" textAlign="right"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDetalle}" position="lastChild">
+				<mx:Label id="lblCicloDest" x="227.3" y="182" text="Ciclo:" textAlign="right"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDetalle}" position="lastChild">
+				<mx:TextInput id="txtCodDest" x="133.8" y="181" width="68" maxChars="6" restrict="0-9"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDetalle}" position="lastChild">
+				<mx:TextInput id="txtCicloDest" x="266.3" y="181" width="50" maxChars="6" restrict="0-9"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtObs}" name="y" value="211"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="478"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition toState="*">		
+			<mx:Sequence>
+				<mx:Blur duration="500" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+	</mx:transitions>
+	
+	<!--Componente de Registro de Ajustes-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;			
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ArrayUtil;  
+			          
+			public var _xmlGrupo:XML = new XML();
+			public var _xmlJust:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var grupo:String;
+			public var ciclo:String;
+			public var saldoCap:Number;
+			public var saldoInt:Number;
+			public var total:Number;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+		
+			public var justObj:ArrayCollection = new ArrayCollection();
+
+			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodGrupo.text != "" && txtCiclo.text != ""){
+					grupo = txtCodGrupo.text;
+					ciclo = txtCiclo.text;
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlGrupo = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+				
+						if (_xmlGrupo.elements().length() > 0){
+							saldoCap = Number(_xmlGrupo.Table[0].CAPITAL);
+							saldoInt = Number(_xmlGrupo.Table[0].INTERES);
+							total = saldoCap + saldoInt;
+							lblSdoCapital.text = global.formatoMoneda(saldoCap.toString());
+							lblSdoInteres.text = global.formatoMoneda(saldoInt.toString());
+							lblSdoTotal.text = global.formatoMoneda(total.toString());
+							calculaNuevoSaldo();
+						}		
+						else
+							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					}); 
+					params[0] = grupo;
+					params[1] = ciclo;
+					wsCat.getInfoGrupo.send(15, params);
+				}	
+				else
+					Alert.show("Debe capturar el código de grupo y ciclo.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function calculaNuevoSaldo():void{
+				var nvoCap:Number;
+				var nvoInt:Number;
+				var nvoTotal:Number;
+				nvoCap = saldoCap + Number((txtCapital.text == "" ? "0": txtCapital.text));
+				nvoInt = saldoInt + Number((txtInteres.text == "" ? "0": txtInteres.text));
+				nvoTotal = nvoCap + nvoInt; 
+				lblNvoSdoCap.text = global.formatoMoneda(nvoCap.toString());
+				lblNvoSdoInt.text = global.formatoMoneda(nvoInt.toString());
+				lblNvoSdoTotal.text = global.formatoMoneda(nvoTotal.toString());
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					var capital:Number;
+					var interes:Number;
+					var fecha:String;
+					var justifica:String;
+					var observaciones:String;
+					var codigoDest:String;
+					var cicloDest:String;
+					
+					capital = Number((txtCapital.text == "" ? "0": txtCapital.text));
+					interes = Number((txtInteres.text == "" ? "0": txtInteres.text));
+					fecha = dtfFecha.text;
+					justifica = cboJustifica.selectedItem.id;
+					observaciones = txtObs.text;
+					if(currentState == "destino"){
+						codigoDest = txtCodDest.text;
+						cicloDest = txtCicloDest.text;
+					}
+					else{
+						codigoDest = "";
+						cicloDest = "";
+					}
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					wsMS.setRegistroAjuste.send(grupo, ciclo, fecha, capital, interes, justifica, observaciones,  
+												codigoDest, cicloDest, Application.application.U_ID);
+				}
+			}
+			
+			private function formateaJustifica():void{
+				var cont:int = _xmlJust.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				justObj.removeAll();
+				justObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				oItem.destino = "N";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlJust.Table[i].CODIGO;
+					oItem.descripcion = _xmlJust.Table[i].DESCRIPCION;
+					oItem.destino = _xmlJust.Table[i].DESTINO;		
+					item.push(oItem);
+				}
+				justObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de Ajustes";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlJust = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlJust.elements().length() > 0){
+						formateaJustifica();
+						cboJustifica.dataProvider = justObj;
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsCat.getCatalogoGral.send(21, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiar():void{
+				saldoCap = 0;
+				saldoInt = 0;
+				txtCodGrupo.text = "";
+				txtCiclo.text = "";
+				lblSdoCapital.text = "";
+				lblSdoInteres.text = "";
+				lblSdoTotal.text = "";
+				lblNvoSdoCap.text = "";
+				lblNvoSdoInt.text = "";
+				lblNvoSdoTotal.text = "";
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				cboJustifica.selectedIndex = 0;
+				txtCapital.text = "";
+				txtInteres.text = "";
+				txtObs.text = "";
+				
+				if(currentState == "destino"){
+					txtCodDest.text = "";
+					txtCicloDest.text = "";
+				}
+			}
+			
+			private function modificaEstado():void{
+				if(cboJustifica.selectedItem.destino == "S")
+					currentState = "destino";
+				else
+					currentState = null;
+			}
+			
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Debe capturar la fecha del ajuste.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if((txtCapital.text == "" || txtCapital.text == "-" || Number(txtCapital.text) == 0) &&
+				   (txtInteres.text == "" || txtInteres.text == "-" || Number(txtInteres.text) == 0)){
+					Alert.show("Debe capturar información válida al menos en alguno de los campos correspondientes.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboJustifica.selectedIndex <= 0){
+					Alert.show("Debe seleccionar alguna opción de justificación de los registros.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaMonto(event:Event):void{
+				if(TextInput(event.currentTarget).text != "-"){
+					numVal.source = TextInput(event.currentTarget);
+					vResult = numVal.validate();
+			
+					if(vResult.type!=ValidationResultEvent.VALID)
+			           	TextInput(event.currentTarget).text = "";
+			    }
+			}	
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" allowNegative="true"   
+		 decimalSeparator="." thousandsSeparator="," domain="real" required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="490" height="480" id="canvas1">
+		<mx:Canvas id="cnvDetalle" x="10" y="92" width="470" height="348" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblFecha" x="87.8" y="90" text="Fecha:" textAlign="right"/>
+			<mx:Label id="lblCapital" x="85.8" y="120" text="Capital:" textAlign="right"/>
+			<mx:Label id="lblInteres" x="300.3" y="120" text="Interes:" textAlign="right"/>
+			<mx:Label id="lblDevolucion" x="57.8" y="152" text="Justificación:" textAlign="right"/>
+			<mx:Label id="lblSdoInteres" x="349.3" y="16" width="100"/>
+			<mx:Label id="lblSdoCapital" x="133.8" y="17" width="90"/>
+			<mx:Label id="lblESdoCapital" x="50.8" y="17" text="Saldo Capital:" width="75" textAlign="right"/>
+			<mx:Label id="lblESdoInteres" x="266.3" y="16" text="Saldo Interes:" width="75" textAlign="right"/>
+			<mx:Label id="lblSdoTotal" x="133.8" y="49" width="90"/>
+			<mx:Label id="lblESdoTotal" x="64.8" y="49" text="Saldo Total:" textAlign="right"/>
+			<mx:HRule x="10" y="79" width="448"/>
+			<mx:Label id="lblNvoSdoInt" x="349.3" y="284" width="100"/>
+			<mx:Label id="lblNvoSdoCap" x="133.2" y="282" width="90"/>
+			<mx:Label id="lblENvoSdoCap" x="21.2" y="282" text="Nuevo Saldo Capital:" textAlign="right"/>
+			<mx:Label id="lblENvoSdoInt" x="236.3" y="284" text="Nuevo Saldo Interes:" textAlign="right"/>
+			<mx:Label id="lblNvoSdoTotal" x="133.2" y="314" width="90"/>
+			<mx:Label id="lblENvoSdoTotal" x="30.2" y="314" text="Nuevo Saldo Total:" textAlign="right"/>
+			<mx:HRule x="10" y="268" width="448" id="hrule1"/>
+			<mx:Label id="lblObs" x="43.8" y="182" text="Observaciones:" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="133.8" y="89" width="100"/>
+			<mx:TextInput id="txtCapital" x="133.8" y="119" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
+			<mx:TextInput id="txtInteres" x="349.3" y="119" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
+			<mx:ComboBox id="cboJustifica" labelField="descripcion" x="133.8" y="149" width="315.5" change="modificaEstado()"/>
+			<mx:TextArea id="txtObs" x="133.8" y="181" width="315.5" height="79" maxChars="256"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvEncabezado" x="28" y="39" width="434" height="45" styleName="canvasMod">
+			<mx:Label id="lblCodGrupo" x="60.7" y="11" text="Código:" textAlign="right"/>
+			<mx:Label id="lblCiclo" x="200.45" y="10" text="Ciclo:" textAlign="right"/>
+			<mx:TextInput id="txtCodGrupo" x="109.7" y="10" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="238.7" y="10" width="50" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:Button id="btnBuscar" x="318.25" y="10" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarGrupo()" toolTip="Buscar Grupo" />
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="400" y="448" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="456" 
+	height="574" creationPolicy="all" xmlns:Data="Data.*">
+	
+	<mx:Validator id="vGrupo" source="{txtGrupo}" property="text" 
+	invalid="{txtGrupo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCiclo" source="{txtCiclo}" property="text" 
+	invalid="{txtCiclo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		import mx.controls.CheckBox;
+		
+		private var _xmlBusqueda:XML = new XML();
+		private var _xmlPagos:XML = new XML();
+		
+		private var acBusqueda:ArrayCollection = new ArrayCollection();
+		private var acPagos:ArrayCollection = new ArrayCollection();
+		
+		private var aPeriodo:Array;
+      	private var aSecuencia:Array;
+      	private var aCantidad:Array;
+      	private var aFecha:Array;
+      	private var aInteres:Array;
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var wsMS:WebService = new WebService();
+		private var titulo:String;	
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		
+		private var tipoAccion:int;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function buscarLista():void{
+			if(validaBuscar()){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				_xmlBusqueda = null
+				acBusqueda = null;
+				
+				_xmlPagos = null;
+				acPagos = null;
+				
+				dgInfo.dataProvider = null;
+				dgInfo.invalidateList();
+								
+				var mFecha:String = "01/" + zeroPad(cbxMes.selectedItem.id, 2) + "/" + cbxAnio.selectedItem.id;
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlBusqueda = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();
+						
+					if(_xmlBusqueda.elements().length() > 0){
+						formateaListaBusqueda();
+						dgInfo.dataProvider = acBusqueda;
+						
+						txtGrupo.editable = false;
+						txtCiclo.editable = false;
+						cbxMes.enabled = false;
+						cbxAnio.enabled = false;
+					}
+					else
+						Alert.show("No se encontraron resultados para la búsqueda.",titulo,4,null,null,global.iAlert);
+				});
+				wsMS.getPagos.send(txtGrupo.text, txtCiclo.text, mFecha);
+			}
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Aplicación Pagos Extra";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtGrupo.text = pXmlInfo.CDGCLNS;
+			txtCiclo.text = pXmlInfo.CICLO;
+			txtObservaciones.text = pXmlInfo.OBSERVACION;
+			
+			var acMes:ArrayCollection = global.formateaMes();
+			cbxMes.dataProvider = acMes;
+			for(var i:int = 0; i < acMes.length; i++){   
+				if (acMes[i].id.toString() == pXmlInfo.MES){
+					cbxMes.selectedIndex = i;
+					break;
+				}
+			}
+			
+			var acAnio:ArrayCollection = global.formateaAnio();
+			cbxAnio.dataProvider = acAnio;
+			for(var j:int = 0; j < acAnio.length; j++){   
+				if (acAnio[j].id.toString() == pXmlInfo.ANIO){
+					cbxAnio.selectedIndex = j;
+					break;
+				}
+			}
+			
+			txtGrupo.editable = false;
+			txtCiclo.editable = false;
+			cbxMes.enabled = false;
+			cbxAnio.enabled = false;
+			btnLimpiar.visible = false;
+			
+			initConexionRep();
+			du.sCursor();
+			Application.application.bloquear();
+			
+			acBusqueda = null;
+			acPagos = null;
+			dgInfo.dataProvider = null;
+			dgInfo.invalidateList();
+							
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlPagos = new XML(evt.result.toString());
+				
+				if(_xmlPagos.elements().length() > 0){
+					var mFecha:String = "01/" + zeroPad(pXmlInfo.MES, 2) + "/" + pXmlInfo.ANIO;
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlBusqueda = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);	
+						Application.application.desbloquear();
+							
+						if(_xmlBusqueda.elements().length() > 0){
+							formateaListaBusqueda();
+							formateaListaPagos();
+							
+							var mCdgBusqueda:String = "";
+							var mCdgPago:String = "";
+							
+							for (var j:int = 0; j < acBusqueda.length; j ++){
+								mCdgBusqueda = acBusqueda[j].PERIODO + acBusqueda[j].SECUENCIA + acBusqueda[j].CANTIDAD + acBusqueda[j].FREALDEP + acBusqueda[j].PAGADOINT;
+								for (i = 0; i < acPagos.length; i++){
+									mCdgPago = acPagos[i].PERIODO + acPagos[i].SECUENCIA + acPagos[i].CANTIDAD + acPagos[i].FREALDEP + acPagos[i].PAGADOINT;
+									if(mCdgBusqueda == mCdgPago)
+										acBusqueda[j].REGISTRO = true;
+								}
+							}
+							
+							dgInfo.dataProvider = acBusqueda;
+						}
+						else
+							Alert.show("No se encontraron resultados para la búsqueda.",titulo,4,null,null,global.iAlert);					
+					});
+					wsMS.getPagos.send(pXmlInfo.CDGCLNS, pXmlInfo.CICLO, mFecha);
+				}
+				else
+					Alert.show("No se encontraron resultados para la búsqueda.",titulo,4,null,null,global.iAlert);
+			});
+			wsMS.getAplPagosExtras.send(pXmlInfo.CDGCLNS, pXmlInfo.CICLO, pXmlInfo.MES, pXmlInfo.ANIO);
+		}
+		
+		private function enviar():void{
+			if(validaEnviar()){
+				var mGrupo:String = txtGrupo.text;
+				var mCiclo:String = txtCiclo.text;
+				var mClns:String = "G";
+				var mMes:String = cbxMes.selectedItem.id;
+				var mAnio:String = cbxAnio.selectedItem.id;
+				var mObservacion:String = txtObservaciones.text;
+				var mUsuario:String = Application.application.U_ID;
+				var n:int = 0;
+				
+				aPeriodo = new Array;
+				aSecuencia = new Array;
+				aCantidad = new Array;
+				aFecha = new Array;
+				aInteres = new Array;
+				
+				for (var i:int = 0; i < acBusqueda.length; i ++){
+					if(acBusqueda[i].REGISTRO){
+						aPeriodo[n] = acBusqueda[i].PERIODO;
+						aSecuencia[n] = acBusqueda[i].SECUENCIA;
+						aCantidad[n] = acBusqueda[i].CANTIDAD;
+						aFecha[n] = acBusqueda[i].FREALDEP;
+						aInteres[n] = acBusqueda[i].PAGADOINT;
+						n++;
+					}
+				}
+				
+		    	initConexion();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
+				
+				wsMS.setAccionAplPagosExtras.send(mGrupo, mCiclo, mClns, aPeriodo, aSecuencia, aCantidad, aFecha, aInteres, mMes, mAnio, mObservacion, mUsuario, tipoAccion);
+			}
+		}
+		
+		private function formateaListaBusqueda():void{
+			var cont:int = _xmlBusqueda.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			acBusqueda = null;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.REGISTRO = false;
+				oItem.PERIODO = _xmlBusqueda.Table[i].PERIODO;
+				oItem.SECUENCIA = _xmlBusqueda.Table[i].SECUENCIA;
+				oItem.CANTIDAD = _xmlBusqueda.Table[i].CANTIDAD;
+				oItem.FREALDEP = _xmlBusqueda.Table[i].FREALDEP;
+				oItem.PAGADOINT = _xmlBusqueda.Table[i].PAGADOINT;
+				item.push(oItem);
+			}
+			acBusqueda = new ArrayCollection(item);
+		}
+		
+		private function formateaListaPagos():void{
+			var cont:int = _xmlPagos.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			acPagos = null;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.PERIODO = _xmlPagos.Table[i].PERIODO;
+				oItem.SECUENCIA = _xmlPagos.Table[i].SECUENCIA;
+				oItem.CANTIDAD = _xmlPagos.Table[i].CANTIDAD;
+				oItem.FREALDEP = _xmlPagos.Table[i].FREALDEP;
+				oItem.PAGADOINT = _xmlPagos.Table[i].PAGADOINT;
+				item.push(oItem);
+			}
+			acPagos = new ArrayCollection(item);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function limpiar():void{
+			txtGrupo.text = "";
+			txtCiclo.text = "";
+			txtGrupo.editable = true;
+			txtCiclo.editable = true;
+			
+			cbxMes.selectedIndex = 0;
+			cbxAnio.selectedIndex = 0;
+			cbxMes.enabled = true;
+			cbxAnio.enabled = true;
+			
+			acBusqueda = null;
+			_xmlBusqueda = null;
+			
+			acPagos = null;
+			_xmlPagos = null;
+			
+			dgInfo.dataProvider = null;
+			
+			txtObservaciones.text = "";
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Aplicación de Pagos Extras";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			cbxAnio.dataProvider = global.formateaAnio();
+			cbxMes.dataProvider = global.formateaMes();
+		}
+		
+		public function seleccionaPago(event:Event):void{
+			var ind:int = dgInfo.selectedIndex;
+			acBusqueda[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+		}
+		
+		private function setAccionAplPagosExtras(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
+			wsMS = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaBuscar():Boolean{
+			var iaGrupo:Array = Validator.validateAll([vGrupo]);
+			var iaCiclo:Array = Validator.validateAll([vCiclo]);
+			
+			if (iaGrupo.length != 0){
+				Alert.show("Debe capturar el grupo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(iaCiclo.length != 0){
+				Alert.show("Debe capturar el ciclo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMes.selectedIndex == 0){
+				Alert.show("Mes invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxAnio.selectedIndex == 0){
+				Alert.show("Año invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+							
+			return true;
+		}
+		
+		private function validaEnviar():Boolean{
+			var iaGrupo:Array = Validator.validateAll([vGrupo]);
+			var iaCiclo:Array = Validator.validateAll([vCiclo]);
+			
+			if (iaGrupo.length != 0){
+				Alert.show("Debe capturar el grupo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(iaCiclo.length != 0){
+				Alert.show("Debe capturar el ciclo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMes.selectedIndex == 0){
+				Alert.show("Mes invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxAnio.selectedIndex == 0){
+				Alert.show("Año invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(txtObservaciones.text == ""){
+				Alert.show("Debe escribir la observación.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var cont:int;
+			for(var i:int = 0; i < acBusqueda.length; i++){
+				if(acBusqueda[i].REGISTRO == true){
+					cont++;
+				}
+			}
+			if(cont == 0){
+				Alert.show("Seleccione un pago para asignar.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			return true;
+		}
+		
+		private function zeroPad(number:int, width:int):String {
+		   var ret:String = "" + number;
+		   while(ret.length < width )
+		       ret = "0" + ret;
+		   return ret;
+		}
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="435" height="79" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="65" y="13" text="Grupo:" id="lblGrupo"/>
+		<mx:TextInput x="114" y="11" width="79" id="txtGrupo" maxChars="6" restrict="0-9"/>
+		<mx:Label x="245" y="13" text="Ciclo:" id="lblCiclo"/>
+		<mx:TextInput x="288" y="11" width="79" id="txtCiclo" maxChars="2" restrict="0-9"/>
+		<mx:Label x="74.95" y="45" text="Mes:" width="35" height="20" id="lblMes"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="113.95" y="42" width="118.05"/>
+		<mx:Label x="250" y="45" text="Año:" width="31" height="20" id="lblAnio"/>
+		<mx:ComboBox x="288" y="42" width="80" id="cbxAnio" labelField="id"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="97" width="435" height="398" styleName="canvasMod">
+		<mx:Label x="10" y="248" text="Observaciones:" id="lblObservacion"/>
+		<mx:RadioButtonGroup id="rdgTipo"/>
+		<mx:RadioButtonGroup id="rdgEstatus"/>
+		<mx:Canvas x="12.25" y="40" width="410" height="200" styleName="canvasMod">
+			<Data:RowColorDataGrid id="dgInfo" x="10" y="10" width="388" height="178"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:CheckBox change="outerDocument.seleccionaPago(event)" width="25" fontSize="10" verticalCenter="0"/>
+							</mx:Component> 
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="80"/>
+					<mx:DataGridColumn headerText="INTERÉS" dataField="PAGADOINT" width="80"/>
+					<mx:DataGridColumn headerText="FECHA" dataField="FREALDEP" width="80"/>
+					<mx:DataGridColumn headerText="PERIODO" dataField="PERIODO" width="80"/>
+					<mx:DataGridColumn headerText="SECUENCIA" dataField="SECUENCIA" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="10.75" y="19" text="Pagos:" id="lblPagos"/>
+		<mx:Canvas x="10" y="269" width="413" height="117" styleName="canvasMod">
+			<mx:TextInput id="txtObservaciones" x="10" y="10" width="391" editable="true" height="95"/>
+		</mx:Canvas>
+		<mx:Button id="btnBuscar" x="372.25" y="10" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista()" toolTip="Buscar" width="50"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="357" y="503" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="405" y="503" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnLimpiar" x="10" y="502" label="Limpiar" click="limpiar()" enabled="true"/>
+</mx:TitleWindow>

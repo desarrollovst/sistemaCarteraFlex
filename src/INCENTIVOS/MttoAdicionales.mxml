@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" 
+	height="402" creationPolicy="all">
+	
+	<mx:Validator id="vNomina" source="{txtNomina}" property="text" 
+	invalid="{txtNomina.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vMonto" source="{txtMonto}" property="text" 
+	invalid="{txtMonto.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var _xmlInfo:XML = new XML();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var wsMS:WebService = new WebService();
+		private var titulo:String;	
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		
+		private var tipoAccion:int;
+				
+		private function buscaPersonal():void{
+			if(txtNomina.text != ""){
+				initConexionRep();
+				du.sCursor();
+				
+				txtNombre.text = "";
+				
+				var vCodigo:String = "";
+				var vNombre:String = "";
+				var vNomina:String = txtNomina.text;
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();
+						
+					var cont:int = _xmlInfo.elements().length();
+					
+					if(cont > 0){	
+						txtNombre.text = _xmlInfo.Table[0].NOMBRE;
+					}					
+				});
+				wsMS.getPersonal.send(vCodigo, vNombre, vNomina);	
+			}
+		}
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Adicional";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtNomina.text = pXmlInfo.NOMINA;
+			txtNombre.text = pXmlInfo.NOMBRE;
+			txtMonto.text = pXmlInfo.MONTO;
+			rdgEstatus.selectedValue = pXmlInfo.ESTATUS;
+			txtObservaciones.text = pXmlInfo.OBSERVACION;
+			
+			var acMes:ArrayCollection = global.formateaMes();
+			cbxMes.dataProvider = acMes;
+			for(var i:int = 0; i < acMes.length; i++){   
+				if (acMes[i].id.toString() == pXmlInfo.MES){
+					cbxMes.selectedIndex = i;
+					break;
+				}
+			}
+			
+			var acAnio:ArrayCollection = global.formateaAnio();
+			cbxAnio.dataProvider = acAnio;
+			for(var j:int = 0; j < acAnio.length; j++){   
+				if (acAnio[j].id.toString() == pXmlInfo.ANIO){
+					cbxAnio.selectedIndex = j;
+					break;
+				}
+			}
+			
+			txtNomina.editable = false;
+			cbxMes.enabled = false;
+			cbxAnio.enabled = false;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var occursMonto:int = txtMonto.text.split(",").length - 1;
+				var montoStr:String;
+				var i:int;
+				
+				montoStr = txtMonto.text;
+				
+				for(i = 0; i<= occursMonto; i++){
+					montoStr = montoStr.replace(',','');
+				}
+				
+				var mNomina:String = txtNomina.text;
+				var mMes:String = cbxMes.selectedItem.id;
+				var mAnio:String = cbxAnio.selectedItem.id;
+				var mMonto:Number = Number(montoStr);
+				var mObservacion:String = txtObservaciones.text;
+				var mEstatus:String = rdgEstatus.selectedValue.toString();
+				var mUsuario:String = Application.application.U_ID;
+				
+		    	initConexion();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionAdicionales);
+				
+				wsMS.setAccionAdicionales.send(mNomina, mMes, mAnio, mMonto, mObservacion, mEstatus, mUsuario, tipoAccion);
+			}
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Adicional";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			cbxAnio.dataProvider = global.formateaAnio();
+			cbxMes.dataProvider = global.formateaMes();
+		}
+		
+		private function QuitaMontoFormato():void{
+			var occurs:int = txtMonto.text.split(",").length - 1;
+			
+			for(var i:int = 0; i<= occurs; i++){
+				txtMonto.text = txtMonto.text.replace(',','');
+			}
+		}
+		
+		private function setAccionAdicionales(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionAdicionales);
+			wsMS = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaNomina:Array = Validator.validateAll([vNomina]);
+			var iaMonto:Array = Validator.validateAll([vMonto]);
+			
+			if (iaNomina.length != 0){
+				Alert.show("Debe capturar el número de nómina.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(txtNombre.text == ""){
+				Alert.show("Número de nómina invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMes.selectedIndex == 0){
+				Alert.show("Mes invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxAnio.selectedIndex == 0){
+				Alert.show("Año invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaMonto.length != 0){
+				Alert.show("Debe capturar el monto del adicional.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(!rdgEstatus.selection){
+				Alert.show("Debe seleccionar el estatus del adicional.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(tipoAccion == 2){
+				if(txtObservaciones.text == ""){
+					Alert.show("Debe escribir la observación de la actualización.",titulo,4,null,null,global.iAlert);
+					return false;
+				}	
+			}
+				
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			var mValor:String = TextInput(event.currentTarget).text;
+			
+			if(mValor == "-" && mValor.length == 1) 
+				return;
+				
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		private function validaMontoFormato():void{
+			txtMonto.text = global.formatoDecimal(Number(txtMonto.text).toString());
+		}
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="337" height="108" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="10" y="13" text="Nómina:" id="lblNomina"/>
+		<mx:TextInput id="txtNomina" x="59" y="10" width="69" editable="true" enter="buscaPersonal()" focusOut="buscaPersonal()"/>
+		<mx:Label x="8" y="43" text="Nombre:" id="lblNombre"/>
+		<mx:TextInput id="txtNombre" x="59" y="40" width="268" editable="false"/>
+		<mx:Label x="20.95" y="75" text="Mes:" width="30" height="20" id="lblMes"/>
+		<mx:ComboBox x="254" y="72" width="72" id="cbxAnio" labelField="id"></mx:ComboBox>
+		<mx:Label x="214" y="75" text="Año:" width="31" height="20" id="lblAnio"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="57.95" y="72" width="139.05"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="126" width="338" height="199" styleName="canvasMod">
+		<mx:Label x="82.5" y="13" text="Monto:" id="lblMonto"/>
+		<mx:TextInput id="txtMonto" x="127.5" y="11" width="93" editable="true" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)"/>
+		<mx:Label x="75.5" y="44" text="Estatus:" id="lblEstatus"/>
+		<mx:Label x="10" y="72" text="Observaciones:" id="lblObservacion"/>
+		<mx:RadioButtonGroup id="rdgTipo"/>
+		<mx:RadioButtonGroup id="rdgEstatus"/>
+		<mx:RadioButton x="127.5" y="42" label="Activo" id="rdActivo" groupName="rdgEstatus" value="A"/>
+		<mx:RadioButton x="199.5" y="42" label="Inactivo" id="rdInactivo" groupName="rdgEstatus" value="I"/>
+		<mx:TextInput id="txtObservaciones" x="10" y="91" width="316" editable="true" height="95"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="333" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="333" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

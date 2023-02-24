@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="796" height="502" title="Defunción" fontWeight="normal">
+	
+	<mx:Validator id="causaMuerte" source="{txtCausaMuerte}" property="text" 
+	invalid="{txtCausaMuerte.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="saldoDeudor" source="{txtSaldoDeudor}" property="text" 
+	invalid="{txtSaldoDeudor.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="fechaDef" source="{dtFechaDefun}" property="text" 
+	invalid="{dtFechaDefun.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="fechaNac" source="{dtFechaNac}" property="text" 
+	invalid="{dtFechaNac.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="primape" source="{txtPrimape}" property="text" 
+	invalid="{txtPrimape.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="nombre1" source="{txtNombre1}" property="text" 
+	invalid="{txtNombre1.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="cdgcl" source="{txtCdgcl}" property="text" 
+	invalid="{txtCdgcl.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:DateValidator id="valFec" property="text" inputFormat="dd/mm/yyyy" allowedFormatChars="/" 
+	formatError="Formato de Fecha Incorrecto"/>
+	
+	<!--Componente que permite observar el seguimiento de las defunciones-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosDefuncion;
+		import Data.EventDefuncion;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		[Bindable]
+		private var info:DatosDefuncion;
+		
+		private var _xmlAcred:XML = new XML();
+		private var _xmlMicro:XML = new XML();
+		private var _xmlDefu:XML = new XML();
+		private var _xmlTDefun:XML = new XML();
+		private var _xmlParentesco:XML = new XML();
+		
+		private var tipoDefunObj:ArrayCollection = new ArrayCollection();
+		private var tipoParenObj:ArrayCollection = new ArrayCollection();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		private var vg_cdgDefun:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+				
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de defunciones";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function calculaEdad():void{
+			if(dtFechaNac.text != ""){
+				if(dtFechaDefun.text != ""){
+					txtEdad.text = (global.calculaEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"))).toString();
+					return;
+				}
+			}
+			txtEdad.text = "0";
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		public function registraInfoDefuncion(pXmlMicro:XML):void{
+			if(pXmlMicro.elements().length() > 0){
+				tipoAccion = 1; //INSERTAR
+				_xmlMicro = pXmlMicro;
+				vg_cdgDefun = "";
+					
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.title = "Nueva Defunción";
+				info = null;
+				
+				init();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlAcred = new XML(event.result);
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+						_xmlTDefun = new XML(event.result);
+						
+						if (_xmlTDefun.elements().length() > 0){
+							formateaTipoDefuncion();
+						 	cbTDefun.dataProvider = tipoDefunObj;
+							cbTDefun.selectedIndex = 0;
+						}
+						
+						du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+							_xmlParentesco = new XML(event.result);
+							
+							if (_xmlParentesco.elements().length() > 0){
+								formateaParentesco();
+							 	cbCdgParen.dataProvider = tipoParenObj;	
+								cbCdgParen.selectedIndex = 0;
+							}
+							
+							du.closeWs(wsCat);
+							du.rCursor();
+							Application.application.desbloquear();						
+							
+							txtCdgcl.text = _xmlMicro.CDGCL;
+							txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
+										_xmlAcred.Table[0].PRIMAPE + " " + _xmlAcred.Table[0].SEGAPE;
+						});			
+						wsCat.getListado.send(57, params);
+					});
+					wsCat.getListado.send(56, params);				
+				});
+				params[0] = _xmlMicro.CDGCL;
+				wsCat.getInfoAcred.send(1, params);
+			}
+			else
+				btnAceptar.enabled = false;
+		}
+		
+		private function limpiar():void{
+			txtNombre1.text = "";
+			txtNombre2.text = "";
+			txtPrimape.text = "";
+			txtSegape.text = "";
+			dtFechaNac.text = "";
+			dtFechaDefun.text = "";
+			txtEdad.text = "";
+			cbTDefun.selectedIndex = 0;
+			cbCdgParen.selectedIndex = 0;
+			cbCdgParen.enabled = true;
+			txtSaldoDeudor.text = "";
+			rdgSexo.selectedValue = null;
+			rdgDocOri.selectedValue = null;
+			rdgPagado.selectedValue = null;
+			txtCausaMuerte.text = "";
+			txtObservaciones.text = "";
+			rdDocOriN.selected = false;
+			rdDocOriS.selected = false;
+			rdPagadoN.selected = false;
+			rdPagadoS.selected = false;
+			rdFemenino.selected = false;
+			rdMasculino.selected = false;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- CARGA COMBOBOX -->
+	<mx:Script>
+		<![CDATA[
+		
+		private function cargaTipoDefuncion():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+						
+			du.initWsCat(wsCat);
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+				_xmlTDefun = new XML(event.result);
+						
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+				if (_xmlTDefun.elements().length() > 0){
+					formateaTipoDefuncion();
+				 	cbTDefun.dataProvider = tipoDefunObj;
+					cbTDefun.selectedIndex = 0;
+				}	
+			});
+		
+			wsCat.getListado.send(56, params);
+		}
+		
+		private function formateaTipoDefuncion():void{
+			var cont:int = _xmlTDefun.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlTDefun.Table[i].CODIGO;	
+				oItem.descripcion = _xmlTDefun.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			
+			tipoDefunObj = new ArrayCollection(item);
+		}
+		
+		private function cargaParentesco():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			du.initWsCat(wsCat);
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+				_xmlParentesco = new XML(event.result);
+						
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+				if (_xmlParentesco.elements().length() > 0){
+					formateaParentesco();
+				 	cbCdgParen.dataProvider = tipoParenObj;	
+					cbCdgParen.selectedIndex = 0;
+				}	
+			});
+		
+			wsCat.getListado.send(57, params);
+		}
+		
+		private function formateaParentesco():void{
+			var cont:int = _xmlParentesco.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				if(_xmlParentesco.Table[i].DEFUNCION == "S"){
+					oItem = new Object();
+					oItem.id = _xmlParentesco.Table[i].CODIGO;	
+					oItem.descripcion = _xmlParentesco.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+			}
+			
+			tipoParenObj = new ArrayCollection(item);
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosDefuncion();
+				info.codigo = vg_cdgDefun;
+				info.cdgcl = txtCdgcl.text;
+				info.nombre1 = txtNombre1.text;
+				info.nombre2 = txtNombre2.text;
+				info.primape = txtPrimape.text;
+				info.segape = txtSegape.text;
+				info.sexo = rdgSexo.selectedValue.toString();
+				info.nacimiento = dtFechaNac.text;
+				info.defuncion = dtFechaDefun.text;
+				info.cdgtdef = cbTDefun.selectedItem.id;
+				info.saldodeudor = Number(txtSaldoDeudor.text);
+				info.docorig = rdgDocOri.selectedValue != null? rdgDocOri.selectedValue.toString(): "";
+				info.pagado = rdgPagado.selectedValue != null? rdgPagado.selectedValue.toString(): "";
+				info.causamuerte = txtCausaMuerte.text;
+				info.observaciones = txtObservaciones.text;
+				info.cdgpms = _xmlMicro.CDGPMS;
+				info.iniciopms = _xmlMicro.INICIO;
+				info.edad = global.calculaEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"));
+				info.cdgco = _xmlMicro.CDGCO;
+				info.cdgclns = _xmlMicro.CDGCLNS;
+				info.ciclo = _xmlMicro.CICLO;
+				info.clns = _xmlMicro.CLNS;
+				info.fregistro = "";
+				info.cdgpe = Application.application.U_ID;
+				info.factualiza = "";
+				info.actualizape = Application.application.U_ID;
+				if(chbAcreditado.selected) info.misdatcl = "S"; else info.misdatcl = "N"; 
+				if(cbCdgParen.selectedIndex != 0) info.cdgparen = cbCdgParen.selectedItem.id; else info.cdgparen = "";
+				
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1")
+						cerrar();
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionDefuncion.send( info.codigo, info.nombre1, info.nombre2, info.primape, info.segape 
+											, info.sexo, info.nacimiento, info.defuncion, info.edad
+											, info.causamuerte, info.cdgtdef, info.saldodeudor, info.docorig
+											, info.pagado, info.cdgparen, info.observaciones, info.cdgcl
+											, info.cdgpms, info.iniciopms, info.misdatcl, info.cdgco
+											, info.cdgclns, info.ciclo, info.clns, info.fregistro, info.cdgpe
+											, info.factualiza, info.actualizape, tipoAccion);					
+			}
+		}
+		
+		private function valida():Boolean{
+			var invalidArrayCAUSAMUERTE:Array = Validator.validateAll([causaMuerte]);
+			var invalidArrayDEFUNCION:Array = Validator.validateAll([fechaDef]);
+			var invalidArrayNACIMIENTO:Array = Validator.validateAll([fechaNac]);
+			var invalidArrayPRIMAPE:Array = Validator.validateAll([primape]);
+			var invalidArrayNOMBRE1:Array = Validator.validateAll([nombre1]);
+			var invalidArrayCDGCL:Array = Validator.validateAll([cdgcl]);	
+			
+			if(invalidArrayCDGCL.length > 0){
+				Alert.show("Debe capturar el código de cliente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(txtNombreAcre.text == ""){
+				Alert.show("Debe capturar el código de cliente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(invalidArrayNOMBRE1.length > 0){
+				Alert.show("Debe capturar el nombre.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(invalidArrayPRIMAPE.length > 0){
+				Alert.show("Debe capturar el apellido paterno.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(invalidArrayNACIMIENTO.length > 0){
+				Alert.show("Debe capturar la fecha de nacimiento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(invalidArrayDEFUNCION.length > 0){
+				Alert.show("Debe capturar la fecha de defunción.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbTDefun.selectedIndex == 0){
+				Alert.show("Seleccione un tipo de defunción.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbCdgParen.enabled){
+				if(cbCdgParen.selectedIndex == 0){
+					Alert.show("Seleccione el parentesco.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+			}
+			if(!rdMasculino.selected && !rdFemenino.selected){
+				Alert.show("Debe capturar el campo sexo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(invalidArrayCAUSAMUERTE.length > 0){
+				Alert.show("Debe capturar la causa de muerte.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			var nacimiento:Date = DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY");
+			var defuncion:Date = DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY");
+			var hoy:Date = new Date();
+			
+			if(defuncion <= nacimiento){
+				Alert.show("La fecha de defunción no puede ser menor o igual a la fecha de nacimiento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(defuncion > hoy){
+				Alert.show("La fecha de defunción no puede ser mayor a la fecha actual.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var fin:Date = DateField.stringToDate(_xmlMicro.FIN, "DD/MM/YYYY");
+			
+			if(defuncion > fin){
+				Alert.show("La fecha del microseguro no puede cubrir la fecha de la defunción.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+		]]>
+	</mx:Script>
+
+	<!-- CARGA INFO ACREDITADO -->
+	<mx:Script>
+		<![CDATA[
+		private function cargarAcred():void{
+			if(chbAcreditado.selected){
+				if(txtNombreAcre.text != ""){
+					limpiar();
+					txtNombre1.text = _xmlAcred.Table[0].NOMBRE1;
+					txtNombre2.text = _xmlAcred.Table[0].NOMBRE2;
+					txtPrimape.text = _xmlAcred.Table[0].PRIMAPE;
+					txtSegape.text = _xmlAcred.Table[0].SEGAPE;
+					dtFechaNac.selectedDate = DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY");
+					txtEdad.text = "0";
+					rdgSexo.selectedValue = _xmlAcred.Table[0].SEXO;
+					cbCdgParen.selectedIndex = 0;
+					cbCdgParen.enabled = false;
+				}
+				else{
+					chbAcreditado.selected = false;
+					cbCdgParen.enabled = false;
+				}
+			}
+			else
+				limpiar();
+		}
+		]]>
+	</mx:Script>
+		
+	<!-- CARGA INFO DEFUNCION -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfoDefuncion(pXmlDefun:XML, pXmlMicro:XML):void{
+			tipoAccion = 2; //ACTUALIZAR
+			_xmlMicro = pXmlMicro;
+			_xmlDefu = pXmlDefun;
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			this.title = "Edición de Defunción";
+			info = null;
+			
+			init();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			Application.application.bloquear();
+				
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlAcred = new XML(event.result);
+					
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+					_xmlTDefun = new XML(event.result);
+					
+					if (_xmlTDefun.elements().length() > 0){
+						formateaTipoDefuncion();
+					 	cbTDefun.dataProvider = tipoDefunObj;
+						cbTDefun.selectedIndex = 0;
+					}
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+						_xmlParentesco = new XML(event.result);
+								
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlParentesco.elements().length() > 0){
+							formateaParentesco();
+						 	cbCdgParen.dataProvider = tipoParenObj;	
+							cbCdgParen.selectedIndex = 0;
+						}
+						
+						var j:int;
+				
+						txtNombre1.text = _xmlDefu.NOMBRE1;
+						txtNombre2.text = _xmlDefu.NOMBRE2;
+						txtPrimape.text = _xmlDefu.PRIMAPE;
+						txtSegape.text = _xmlDefu.SEGAPE;
+						dtFechaNac.selectedDate = DateField.stringToDate(_xmlDefu.NACIMIENTO,"DD/MM/YYYY");
+						dtFechaDefun.selectedDate = DateField.stringToDate(_xmlDefu.DEFUNCION,"DD/MM/YYYY");
+						txtEdad.text = _xmlDefu.EDAD;
+						txtSaldoDeudor.text = _xmlDefu.SALDODEUDOR;
+						rdgSexo.selectedValue = _xmlDefu.SEXO;
+						rdgDocOri.selectedValue = _xmlDefu.DOCORIG;
+						rdgPagado.selectedValue = _xmlDefu.PAGADO;
+						txtCausaMuerte.text = _xmlDefu.CAUSAMUERTE;
+						txtObservaciones.text = _xmlDefu.OBSERVACIONES;
+						
+						if(_xmlDefu.MISDATCL == "S"){
+							chbAcreditado.selected = true;
+							cbCdgParen.selectedIndex = 0;
+							cbCdgParen.enabled = false;	
+						}  
+						else
+							chbAcreditado.selected = false;
+						
+						for(j = 0; j < tipoDefunObj.length; j++){   
+							if (tipoDefunObj[j].id.toString() == pXmlDefun.CDGTDEF){
+								cbTDefun.selectedIndex = j;
+								break;
+							}
+						} 
+					
+						for(j = 0; j < tipoParenObj.length; j++){   
+							if (tipoParenObj[j].id.toString() == pXmlDefun.CDGPAREN){
+								cbCdgParen.selectedIndex = j;
+								break;
+							}
+						} 
+						
+						vg_cdgDefun = _xmlDefu.CODIGO;					
+						txtCdgcl.text = _xmlDefu.CDGCL;
+						txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
+									_xmlAcred.Table[0].PRIMAPE + " " + _xmlAcred.Table[0].SEGAPE;
+					});			
+					wsCat.getListado.send(57, params);
+				});
+				wsCat.getListado.send(56, params);				
+			});
+			params[0] = _xmlMicro.CDGCL;
+			wsCat.getInfoAcred.send(1, params);
+		}
+		
+		private function validaFecha():void{
+			if(dtFechaNac.text != ""){
+				vResult = valFec.validate(dtFechaNac.text);
+	            if (vResult.type != ValidationResultEvent.VALID){
+	            	dtFechaNac.text = "";
+	            	dtFechaNac.setFocus();
+	            }
+   			}
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Button id="btnAceptar" x="650" y="432" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="23"/>
+	<mx:Button id="btnCancelar" x="722" y="432" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="24"/>
+		<mx:RadioButtonGroup id="rdgDocOri"/>
+		<mx:RadioButtonGroup id="rdgPagado"/>
+		<mx:RadioButtonGroup id="rdgSexo"/>
+		<mx:Canvas x="10" y="98" width="358" height="326" styleName="canvasMod">
+				<mx:Label id="lblPrimape" x="15.5" y="45" text="Apellido Paterno:"/>
+				<mx:TextInput id="txtPrimape" x="111.5" y="43" width="110" maxChars="30" tabIndex="7"/>
+				<mx:Label id="lblNombres" x="52.5" y="10" text="Nombres:"/>
+				<mx:Label id="lblSegape" x="15.5" y="80" text="Apellido Materno:"/>
+				<mx:TextInput id="txtNombre1" x="111.5" y="10" width="110" maxChars="30" tabIndex="5"/>
+				<mx:TextInput id="txtSegape" x="111.5" y="78" width="110" maxChars="30" tabIndex="8"/>
+				<mx:TextInput id="txtNombre2" x="229.5" y="10" width="110" maxChars="30" tabIndex="6"/>
+				<mx:Label id="lblSaldo" x="23" y="290" text="Saldo Deudor:"/>
+				<mx:TextInput id="txtSaldoDeudor" x="111" y="288" width="93" maxChars="10" editable="true" change="validaMonto(event)" tabIndex="14"/>
+				<mx:TextInput id="txtEdad" x="111" y="183" width="58.75" editable="false" tabIndex="11" restrict="0-9"/>
+				<mx:Label id="lblFechaDefun" x="10.25" y="150" text="Fecha Defunción:"/>
+				<mx:Label text="(DD/MM/AAAA)" x="229.5" y="150"/>
+				<mx:Label id="lblEdad" x="71" y="185" text="Edad:"/>
+				<mx:DateField x="111" y="148" id="dtFechaDefun" showToday="true" width="110.5" change="calculaEdad()" tabIndex="10" focusOut="validaFecha()" yearNavigationEnabled="true" editable="true" restrict="0-9;/"/>
+				<mx:Label id="lblTipoDef" x="23" y="220" text="Tipo Defunción:"/>
+				<mx:ComboBox x="111" y="217" id="cbTDefun" width="136.5" labelField="descripcion" tabIndex="12"></mx:ComboBox>
+				<mx:Label id="lblFechaNac" x="10" y="115" text="Fecha Nacimiento:"/>
+				<mx:DateField x="111" y="113" id="dtFechaNac" showToday="true" width="110" change="calculaEdad()" focusOut="validaFecha()" tabIndex="9" yearNavigationEnabled="true" editable="true" restrict="0-9;/"/>
+				<mx:Label text="(DD/MM/AAAA)" x="229" y="115"/>
+				<mx:Label id="lblCdgParen" x="40" y="255" text="Parentesco:"/>
+				<mx:ComboBox x="111" y="252" id="cbCdgParen" width="136.5" labelField="descripcion" tabIndex="13"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Canvas x="376" y="98" width="410" height="326" styleName="canvasMod">
+				<mx:Label id="lblDocOri" x="143" y="10" text="Documentos Originales:"/>
+				<mx:Label id="lblPagado" x="276" y="10" text="Pagado:"/>
+				<mx:Label id="lblSexo" x="10" y="10" text="Sexo:"/>
+				<mx:Canvas x="143" y="30" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Si" id="rdDocOriS" groupName="rdgDocOri" value="S" tabIndex="17"/>
+						<mx:RadioButton x="10" y="33" label="No" id="rdDocOriN" groupName="rdgDocOri" value="N" tabIndex="18"/>
+				</mx:Canvas>
+				<mx:Canvas x="276" y="30" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="8" label="Si" id="rdPagadoS" groupName="rdgPagado" value="S" tabIndex="19"/>
+						<mx:RadioButton x="10" y="33" label="No" id="rdPagadoN" groupName="rdgPagado" value="N" tabIndex="20"/>
+				</mx:Canvas>
+				<mx:Label id="lblCausaMuerte" x="10" y="103" text="Causa Muerte:"/>
+				<mx:TextInput id="txtCausaMuerte" x="10" y="122" width="385" maxChars="200" editable="true" height="45" tabIndex="21"/>
+				<mx:TextInput id="txtObservaciones" x="10" y="194" width="385" editable="true" height="111" tabIndex="22"/>
+				<mx:Label id="lblObservaciones" x="10" y="175" text="Observaciones:"/>
+				<mx:Canvas x="10" y="30" width="119" height="65" styleName="canvasMod">
+						<mx:RadioButton x="10" y="10" label="Femenino" id="rdFemenino" groupName="rdgSexo" value="F" tabIndex="15"/>
+						<mx:RadioButton x="10" y="35" label="Masculino" id="rdMasculino" groupName="rdgSexo" value="M" tabIndex="16"/>
+				</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas x="10" y="29" width="776" height="41" cornerRadius="10" borderStyle="solid" styleName="canvasMod">
+				<mx:TextInput id="txtCdgcl" x="144.5" y="8" width="60" maxChars="6" restrict="0-9" tabIndex="1" editable="false"/>
+				<mx:Label id="lblCdgcl" x="95.5" y="10" text="Código:"/>
+				<mx:Label id="lblNombres0" x="217" y="10" text="Nombre:"/>
+				<mx:TextInput id="txtNombreAcre" x="265" y="8" width="250" tabIndex="3" editable="false"/>
+				<mx:CheckBox x="530.5" y="8" label="mismos datos acreditado" id="chbAcreditado" click="cargarAcred()" enabled="true"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosAcre" x="10" y="79" text="Datos de Defunción:" width="140" fontSize="11" fontWeight="normal"/>
+		<mx:Label id="lblDatosAcre0" x="10" y="10" text="Datos de Acreditado:" width="140" fontSize="11" fontWeight="normal"/>
+</mx:TitleWindow>

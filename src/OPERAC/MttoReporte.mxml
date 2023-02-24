@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute" width="574" height="442" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+
+	<!--Componente que permite registrar la informacion del reporte individual de analisis de credito-->
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;		
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+
+			private var titulo:String;
+			private var indice:int;
+			private var Arr:ArrayCollection;
+			
+			private function enviar():void{
+				Arr[indice].reporte = txtReporte.text;
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function init(Arr:ArrayCollection, indice:int):void{
+				limpiar();
+				titulo = "Descripción de Reporte"
+				this.title = titulo; 
+				this.Arr = Arr;
+				this.indice = indice;
+				txtReporte.text = Arr[indice].reporte;
+			}
+			
+			private function limpiar():void{
+				txtReporte.text = "";
+			}	
+					
+		]]>
+	</mx:Script>
+	<mx:Button id="btnAceptar" x="495" y="368" label="Aceptar" click="enviar()"/>
+	<mx:Canvas x="12.5" y="10" width="551.5" height="350" styleName="canvasMod">
+		<mx:TextArea id="txtReporte" x="10" y="10" height="328" width="529.5" maxChars="4000"/>
+	</mx:Canvas>
+</mx:TitleWindow>

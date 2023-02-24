@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="395" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:local="*" creationComplete="initApp()">
+	
+	<mx:StringValidator id="formDocV" source="{formDoc}" property="selectedValue" required="true"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import COMPONENTES.CtrlTipoProd;
+		import Data.Globales;
+		import Data.PdfExport;
+		import Data.Utils;
+		import flash.net.navigateToURL;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.events.EffectEvent; 
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var clns:String;
+		public var tipoProd:String;
+		public var listData:Array;
+		private var du:Utils;
+		private var global:Globales;
+		private var vResult:ValidationResultEvent;
+		
+		private var _xmlImpSegMs:XML = new XML();
+			
+		private function imprimir():void{
+			var i:int;
+			var j:int
+			var grupo:String = txtGrupo.text;
+			var ciclo:String = txtCiclo.text;
+		    var anexo:int = Number(chkAnexo.selected); 
+			var pagos:int = Number(chkPagos.selected);
+			var garantia:int = Number(chkGarantia.selected);
+			var contrato:int = Number(chkContrato.selected);
+			var pagares:int = Number(chkPagare.selected); 
+			
+			//Modificaciòn de pantalla (Se agrega la opcion de consentimiento y certificados
+			var certificado:int = Number(chkCertificado.selected);
+			var consentimiento:int = Number(chkConsentimiento.selected);
+			
+			initConexion();
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				var res:String = evt.result.toString(); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+				
+				if (res.substr(0,1) == "1"){
+					var consulta:String;
+					var id:String;
+					var codGrupo:String;
+					var infoCiclo:String;
+					var infoClns:String;
+					var infoFormato:String;
+                             
+					var cdgpms:String;
+					var formato:String;
+					var tipoDoc:String;
+
+					var usuario:String;
+					var infoTipoProd:String;
+					var tipo:int;
+					var valor:int;
+
+					codGrupo = "&grupo=" + grupo;
+					infoCiclo = "&ciclo=" + ciclo;
+					infoClns = "&clns=" + clns;
+					usuario = "&usuario=" + Application.application.U_ID;	
+					tipoDoc = "&tipoDoc=" + formDoc.selectedValue;
+					
+					i = 0;	
+					listData = new Array();	 	
+ 							
+ 					if(anexo == 1 && tipoProd == ""){
+						//Impresion de Anexo 1
+						id = "&id=33";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;
+						i += 1;
+						
+						//Impresion de Anexo 3
+						id = "&id=37";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;
+						i += 1;
+					}	
+					if(pagos == 1 && tipoProd == ""){
+						//Impresion de Carta de Pagos
+						id = "&id=35";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;	
+						i += 1;
+					}	
+					if(garantia == 1){
+						//Impresion de Carta de Garantia
+						id = "&id=36";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;
+						i += 1;
+					}	
+					if(contrato == 1 && tipoProd == ""){
+						//Impresion de Contrato
+						id = "&id=29";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;	
+						i += 1;	
+					}
+					if(pagares == 1 && tipoProd == ""){
+						//Impresion de Pagares
+						id = "&id=28";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;
+						i += 1;	
+					}
+					if(consentimiento == 1 && tipoProd == ""){
+				       	for(j = 0; j < _xmlImpSegMs.elements().length() ; j++){
+				            cdgpms = _xmlImpSegMs.Table[j].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
+				            formato = _xmlImpSegMs.Table[j].CONSENTIMIENTO; // FORMATO QUE SE DEBE DE IMPRIMIR
+					             
+				            if(cdgpms != ""){
+								infoTipoProd = "&tipo=" + cdgpms;
+							   	infoFormato = "&formato=" + formato;
+							   
+							   	//Impresion de Consentimiento
+							   	id = "&id=41";
+							   	consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + infoClns + infoTipoProd + infoFormato + tipoDoc;
+							 
+							   	listData[i] = consulta;
+							   	i += 1;           
+					    	}
+						}
+					}
+					if(certificado == 1 && tipoProd == ""){
+				    	for(j = 0; j < _xmlImpSegMs.elements().length() ; j++){
+				     		cdgpms = _xmlImpSegMs.Table[j].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
+				     		formato = _xmlImpSegMs.Table[j].CERTIFICADO; // FORMATO QUE SE DEBE DE IMPRIMIR
+				     
+				            if(cdgpms != ""){
+   								infoTipoProd = "&tipo=" + cdgpms;
+   								infoFormato = "&formato=" + formato;
+   
+							   	//Impresion de Certificado de Seguro
+							   	id = "&id=42";
+							   	consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + infoClns + infoTipoProd + infoFormato + tipoDoc;
+							   	listData[i] = consulta;
+							   	i += 1;
+					        }
+						}
+					}
+					callLater(iniciar);
+				} 	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+			});
+			wsMS.setEmisionDocumentos.send(grupo, ciclo, clns, anexo, pagos, garantia, contrato, pagares, 
+										   tipoProd, Application.application.U_ID, consentimiento, certificado);
+		}	
+			
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			clns = "G";
+			titulo = "Emisión de Documentos";
+			lblTitulo.text = titulo.toUpperCase();	
+			txtGrupo.setFocus();			
+		}	
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+			
+		private function iniciar():void{
+			openWindows(0);
+		}	
+			
+		private function openWindows(n:Number):void{
+			var t:Timer = new Timer(500, 1);
+			
+			t.addEventListener(TimerEvent.TIMER_COMPLETE, function(event:TimerEvent):void{
+				if (n < listData.length){
+					navigateToURL(new URLRequest(listData[n]), "_blank");
+				 	callLater(callLater, [openWindows, [n+1]]);
+				}
+			});
+			t.start();
+ 		}	
+			
+		private function validarSituacion():void{ 
+			if(valida()){
+				tipoProd = "";
+				var grupo:String = txtGrupo.text;
+				var ciclo:String = txtCiclo.text;
+				var garantia:int = Number(chkGarantia.selected);
+				var obj:Sprite = Application.application as Sprite;
+				
+				initConexion();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {                                                              
+					var info:String = evt.result.toString();
+					du.closeWs(wsMS);
+	 
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+
+					du.initWsCat(wsCat);
+ 
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{       
+						_xmlImpSegMs = new XML(event.result);
+   
+   						du.closeWs(wsCat);
+   						du.rCursor();
+
+   						if(info.substr(0,1) != "0"){
+ 							if(garantia == 1 && info.substr(0,1) == "1"){
+   								var comp:CtrlTipoProd = new CtrlTipoProd();
+   								comp = CtrlTipoProd(PopUpManager.createPopUp(obj,CtrlTipoProd,true));
+   								comp.init();
+   								PopUpManager.centerPopUp(comp);
+   								comp.addEventListener("enviar", function(ev:Event):void{
+ 								var resp:CtrlTipoProd = ev.currentTarget as CtrlTipoProd;
+ 								tipoProd = resp.cboProd.selectedItem.id;
+ 								imprimir(); 
+   								});
+ 							}
+ 							else
+   								imprimir();
+   							}
+   						else
+ 							Alert.show(info.substr(2,info.length - 1),titulo,4,null,null,global.iAlert);
+					});
+ 					params[0] = grupo;
+ 					params[1] = ciclo;
+ 					params[2] = clns;
+ 					wsCat.getListado.send(67, params);
+				});
+				wsMS.getSituacionGrupo.send(grupo);
+		  	}
+        }
+
+		private function valida():Boolean{
+			var invalidArray:Array = Validator.validateAll([formDocV]);
+			
+			if(txtGrupo.text == ""){
+				Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtCiclo.text == ""){
+				Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(chkAnexo.selected == false  && chkPagos.selected == false && 
+			   chkGarantia.selected == false && chkContrato.selected == false &&
+			   chkPagare.selected == false && chkConsentimiento.selected == false &&
+			   chkCertificado.selected == false){
+				Alert.show("Debe seleccionar al menos un tipo de documento.",titulo,4,null,null,global.iAlert);
+				return false;	
+			}
+			if(invalidArray.length > 0){	
+				Alert.show("Debe seleccionar el formato del documento.",titulo,4,null,null,global.iAlert);
+				return false;	
+			}
+			return true;
+		}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="15.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="16.95" y="53.5" width="247.54999" height="71.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCiclo" x="138.75" y="10" text="Ciclo" height="20"/>
+		<mx:Label id="lblGrupo" x="25.75" y="10" text="Grupo" height="20"/>
+		<mx:TextInput id="txtGrupo" x="25.75" y="28.5" maxChars="6" restrict="0-9" enter="validarSituacion()"/>
+		<mx:TextInput id="txtCiclo" x="138.75" y="28.5" width="45" maxChars="2" restrict="0-9" enter="validarSituacion()"/>
+	</mx:Canvas>
+	<mx:Label x="16.95" y="34" text="Criterios de Selección"/>
+	<mx:Canvas x="16.95" y="146.5" width="247.55" height="139.5" styleName="canvasMod" id="canvas0">
+		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato"/>
+		<mx:CheckBox id="chkPagos" x="126.75" y="10" label="Carta Inst. Pagos"/>
+		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contratos"/>
+		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía"/>
+		<mx:CheckBox id="chkConsentimiento" x="126.75" y="74" label="Consentimiento"/>
+		<mx:CheckBox id="chkPagare" x="11.75" y="74" label="Pagaré"/>
+		<mx:CheckBox id="chkCertificado" x="11.75" y="106" label="Certificados"/>
+	</mx:Canvas>
+	<mx:Label x="16.95" y="129" text="Documentos" width="124.25"/>
+	<mx:Button x="186.75" y="360.5" label="Imprimir" click="validarSituacion()"/>
+	<mx:Canvas x="16.2" y="311.5" width="247.55" height="41" styleName="canvasMod" id="canvas2">
+		<mx:RadioButtonGroup id="formDoc"/>
+		<mx:RadioButton id="rdbPDF" x="10" y="8" label="Formato PDF" groupName="formDoc" value="PDF"/>
+		<mx:RadioButton id="rdbDOC" x="137.55" y="8" label="Formato DOC" groupName="formDoc" value="DOC"/>
+	</mx:Canvas>
+	<mx:Label x="16.95" y="294" text="Formato"/>
+</mx:Canvas>

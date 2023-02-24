@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="391" height="425" title="ASEGURADORAS" fontWeight="normal" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="rfcV" source="{txtRFC}" property="text" 
+	invalid="{txtRFC.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de las aseguradoras-->
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosDir;
+		import Data.DatosAseguradora;
+		import Data.EventAseguradora;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+	    import mx.formatters.NumberBaseRoundType;
+	
+		[Bindable]
+		private var infoDir:DatosDir;
+		[Bindable]
+		private var info:DatosAseguradora;
+
+		private var _xmlPais:XML = new XML();
+		private var _xmlEntidad:XML = new XML();
+		private var _xmlMunicipio:XML = new XML();
+		private var _xmlLocalidad:XML = new XML();
+		private var _xmlColonia:XML = new XML();
+		
+		private var paisObj:ArrayCollection = new ArrayCollection();
+		private var entidadObj:ArrayCollection = new ArrayCollection();
+		private var municipioObj:ArrayCollection = new ArrayCollection();
+		private var localidadObj:ArrayCollection = new ArrayCollection();
+		private var coloniaObj:ArrayCollection = new ArrayCollection();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		private var vgCodigo:String;
+
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+	        closeEffect.duration = 500;
+	        closeEffect.play([this], playReverse);
+	        closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function enviar():void{
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			infoDir = new DatosDir();
+			formDatosAseguradoras.enviarDatosDir(infoDir);
+			
+			if(valida()){
+				info = new DatosAseguradora();
+				info.codigo = vgCodigo;
+				info.rfc = txtRFC.text;
+				info.nombre = formDatosAseguradoras.v_nombre;
+				info.calle = infoDir.calle;
+				info.entidad = infoDir.cdgEntFed;
+				info.municipio = infoDir.cdgMun;
+				info.localidad = infoDir.cdgLoc;
+				info.colonia = infoDir.cdgCol;
+				info.telefono = infoDir.telefono;
+				info.estatus = formDatosAseguradoras.v_estatus;
+	
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionAseguradoras.send( info.codigo, info.rfc, info.nombre, info.calle, info.entidad, info.municipio
+				, info.localidad, info.colonia, info.telefono, info.estatus, tipoAccion);
+			}
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function init(pTipo:int, pxmlInfo:XML):void{
+			tipoAccion = pTipo;
+			du = new Utils(); 
+			global = new Globales();
+			titulo = "Mantenimiento de Aseguradoras";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		
+			if(tipoAccion == 1){ //NUEVO REGISTRO
+				title = "Nueva Aseguradora";
+				vgCodigo = "";
+				infoDir = null;
+				formDatosAseguradoras.init(infoDir);
+			}
+			else if (tipoAccion == 2){ // EDICIÓN DE REGISTRO	
+				title = "Edición de Aseguradora";
+				
+				infoDir = new DatosDir();
+				vgCodigo = pxmlInfo.CODIGO;
+				txtCodigo.text = vgCodigo;
+				txtRFC.text = pxmlInfo.RFC;
+				formDatosAseguradoras.v_nombre = pxmlInfo.NOMBRE;
+				infoDir.calle = pxmlInfo.CALLE;
+				infoDir.cdgEntFed = pxmlInfo.CDGEF;
+				infoDir.entFed = pxmlInfo.ENTIDAD; 
+				infoDir.cdgMun = pxmlInfo.CDGMU;
+				infoDir.municipio = pxmlInfo.MUNICIPIO;
+				infoDir.cdgLoc = pxmlInfo.CDGLO;
+				infoDir.localidad = pxmlInfo.LOCALIDAD;
+				infoDir.cdgCol = pxmlInfo.CDGCOL;
+				infoDir.colonia = pxmlInfo.COLONIA;
+				infoDir.telefono = pxmlInfo.TELEFONO;
+				formDatosAseguradoras.v_estatus = pxmlInfo.ESTATUS;
+				
+				formDatosAseguradoras.init(infoDir);
+			}
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+						
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function valida():Boolean{
+			var invalidArray:Array = Validator.validateAll([rfcV]);	
+		
+			if (infoDir.guarda == true && invalidArray.length == 0)
+				return true;
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+						
+			return false;
+		}
+	]]>
+	</mx:Script>
+		       
+	<mx:Button id="btnAceptar" x="245" y="353" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="317" y="353" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
+	<mx:Canvas x="10" y="70" width="371" height="275" styleName="canvasMod">
+				<mx:RadioButtonGroup id="rdgEstatus"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosAseguradora" x="11" y="10" text="Datos Aseguradora:" width="177" fontSize="11" fontWeight="normal"/>
+		<mx:Canvas x="10" y="31" width="371" height="35" styleName="canvasMod">
+				<mx:Label id="lblRFC" x="161" y="6" text="RFC:"/>
+				<mx:Label id="lblCodigo" x="40" y="5" text="Código:"/>
+				<mx:TextInput x="89" y="4" width="58" id="txtCodigo" editable="false"/>
+				<mx:TextInput x="194" y="4" width="121" id="txtRFC"/>
+		</mx:Canvas>
+		<Forms:FormDatosAseguradoras id="formDatosAseguradoras" x="14" height="269" y="73" width="363" tabIndex="4"/>
+</mx:TitleWindow>

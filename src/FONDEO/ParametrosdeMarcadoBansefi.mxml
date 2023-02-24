@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite administrar los parametros para el marcado de Bansefi-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[			
+			private var _xmlDatos:XML = new XML();
+			private var _xmlProductos:XML = new XML();
+			private var _xmlPeriodicidad:XML = new XML();
+			private var dPermisos:XML = new XML();
+			
+			private var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var objMtto:Sprite = new Sprite();
+			
+			private var titulo:String;
+			private var accion:int;
+			private var ind:int;
+			private var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			private var alta:Boolean = new Boolean();
+			private var borrado:Boolean = new Boolean();
+			private var consulta:Boolean = new Boolean();
+			private var edicion:Boolean = new Boolean();
+		]]>
+	</mx:Script>
+			
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+			private function activarContMod(band:Boolean):void{
+				btnEliminar.enabled = band;
+				btnEditar.enabled = band;
+				btnDatosProd.enabled = band;
+				btnDatosPerio.enabled = band;
+			}
+			private function actualizar(event:Event):void{
+				buscarLista();
+			}
+			private function iniVar():void{
+				this.ind = -1;
+				this.vScroll = -1;
+			}
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Parámetros de Marcado Bansefi";
+				lblTitulo.text = titulo.toUpperCase();
+				permisos();
+			}
+			private function permisos():void{
+				borrado = true;
+				alta = true;
+				edicion = true;	
+			}
+			private function selecciona():void{
+				activarContMod(true);
+				dgProducto.dataProvider = null;
+				dgPeriodicidad.dataProvider = null;
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- BUSCAR LISTAS -->
+	<mx:Script>
+		<![CDATA[
+			private function buscarLista():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				dgDatos.dataProvider = null;
+				dgProducto.dataProvider = null;
+				dgPeriodicidad.dataProvider = null;
+				activarContMod(false);
+												
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlDatos = new XML(event.result);
+					
+					if(_xmlDatos.elements().length() >0){
+						dgDatos.dataProvider = _xmlDatos.Table;
+						
+						if(accion == 2){
+							dgDatos.validateNow();
+							dgDatos.verticalScrollPosition = vScroll;
+							dgDatos.selectedIndex = ind;
+							accion = 0;
+							activarContMod(true);			
+						}
+					}
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+				});
+				params[0] = "1";
+				params[1] = "";
+				params[2] = "";
+				wsCat.getCatalogoGral.send(60, params);
+			}
+			private function buscarListaProductos():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (dgDatos.selectedIndex >= 0){
+					dgProducto.dataProvider = null;
+													
+					Application.application.bloquear();
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlProductos = new XML(event.result);
+						
+						if(_xmlProductos.elements().length() >0){
+							dgProducto.dataProvider = _xmlProductos.Table;
+						}
+						else
+							Alert.show("No se encontraron productos relacionados.", titulo, 4,null,null,global.iAlert);
+							
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+					});
+					params[0] = "2";
+					params[1] = dgDatos.selectedItem.CODIGO;
+					params[2] = "PROD";
+					wsCat.getCatalogoGral.send(60, params);
+				}
+			}
+			private function buscarListaPeriodicidad():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (dgDatos.selectedIndex >= 0){
+					dgPeriodicidad.dataProvider = null;
+													
+					Application.application.bloquear();
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlPeriodicidad = new XML(event.result);
+						
+						if(_xmlPeriodicidad.elements().length() >0){
+							dgPeriodicidad.dataProvider = _xmlPeriodicidad.Table;
+						}
+						else
+							Alert.show("No se encontraron datos sobre la periodicidad relacionados.", titulo, 4,null,null,global.iAlert);
+							
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+					});
+					params[0] = "2";
+					params[1] = dgDatos.selectedItem.CODIGO;
+					params[2] = "PERI";
+					wsCat.getCatalogoGral.send(60, params);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- MUESTRA FORMULARIOS -->
+	<mx:Script>
+		<![CDATA[
+			private function mostrarForm(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoParamMarcBansefi:MttoParamMarcBansefi = new MttoParamMarcBansefi(); 
+				if(edicion == true){
+					objMtto = this;	
+					accion = tipo;		
+					switch(tipo){
+						case 1: 
+							comMttoParamMarcBansefi = MttoParamMarcBansefi(PopUpManager.createPopUp(objMtto,MttoParamMarcBansefi,true));
+							comMttoParamMarcBansefi.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+							PopUpManager.centerPopUp(comMttoParamMarcBansefi);
+							comMttoParamMarcBansefi.nuevo();
+							break;
+						case 2:
+							if(dgDatos.selectedIndex >= 0){		
+								comMttoParamMarcBansefi = MttoParamMarcBansefi(PopUpManager.createPopUp(objMtto,MttoParamMarcBansefi,true));	
+								comMttoParamMarcBansefi.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+								PopUpManager.centerPopUp(comMttoParamMarcBansefi);
+								iniVar();
+								ind = dgDatos.selectedIndex;
+								vScroll = dgDatos.verticalScrollPosition;
+								comMttoParamMarcBansefi.cargarInfo(_xmlDatos.Table[dgDatos.selectedIndex]);
+							}
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- ELIMINAR -->
+	<mx:Script>
+		<![CDATA[
+			private function eliminar():void{
+				if(dgDatos.selectedIndex >= 0){
+					if(dgDatos.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el párametro de marcado seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+					else
+						Alert.show("Seleccione el párametro de marcado a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			private function manejadorEliminar(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var vCodigo:String = dgDatos.selectedItem.CODIGO;
+					var vLocalidades:Number = 0;
+					var vPeriodicidad:String = "";
+					var vDias_atraso:Number = 0;
+					var aCdgTPC:Array = new Array;
+					var aMontoMax:Array = new Array;
+					var aPeriodicidad:Array = new Array;
+					var aDiasAtraso:Array = new Array;
+					
+					aCdgTPC[0] = "";
+					aMontoMax[0] = "";
+					aPeriodicidad[0] = "";
+					aDiasAtraso[0] = "";
+										
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					
+					wsMS.addEventListener(ResultEvent.RESULT, setAccion);
+					wsMS.setAccionParametrosBansefi.send(vCodigo, aCdgTPC, aMontoMax, aPeriodicidad, aDiasAtraso, 3);
+			    } 
+			}
+			private function setAccion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccion);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarLista();
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="422" height="594">
+		<mx:Canvas x="199.95" y="34" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarForm(2)"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarForm(1)"/>
+			<mx:Button id="btnEliminar" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminar()" enabled="false" toolTip="Eliminar" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista()" toolTip="Buscar" width="40" />
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="21.2" y="76" width="383.75" height="111" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgDatos" x="10" y="10" width="361.75" height="89" itemClick="selecciona()"
+				doubleClickEnabled="true" itemDoubleClick="mostrarForm(2)" sortableColumns="false" draggableColumns="false"
+				resizableColumns="false" verticalScrollPolicy="on">
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="80" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="6" text="..." fontWeight="bold" fontSize="12" fontStyle="italic" id="lblTitulo" width="390"/>
+		<mx:Canvas x="340.95" y="194" width="64" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosProd" x="12" y="4" icon="@Embed(source='assets/images/folder.png')" click="buscarListaProductos()" toolTip="Productos" width="40"  enabled="false"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle1" x="17.05" y="237" width="387.90002" height="149" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgProducto" x="10" y="10" width="365.9" height="128" horizontalScrollPolicy="on"
+				sortableColumns="false" resizableColumns="false">
+				<mx:columns>
+					<mx:DataGridColumn headerText="PRODUCTO" dataField="NOMBRE" width="200"/>
+					<mx:DataGridColumn headerText="MONTO MÁXIMO" dataField="MONTO_MAXIMO" width="100"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="340.95" y="394" width="64" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosPerio" x="12" y="4" icon="@Embed(source='assets/images/folder.png')" click="buscarListaPeriodicidad()" toolTip="Periodicidad" width="40"  enabled="false"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle2" x="17.05" y="436" width="387.90002" height="149" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgPeriodicidad" x="10" y="10" width="365.9" height="128" horizontalScrollPolicy="on"
+				sortableColumns="false" resizableColumns="false">
+				<mx:columns>
+					<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDADSTR" width="200"/>
+					<mx:DataGridColumn headerText="DIAS DE ATRASO" dataField="DIAS_ATRASO" width="100"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

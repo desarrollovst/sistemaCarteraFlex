@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="291" height="145" creationPolicy="all" xmlns:Data="Data.*">
+<mx:DataGrid id="dgEntidad" x="113" y="0" width="169" height="80" visible="false" showHeaders="false" itemClick="selecEntidad()" keyDown="presDGEntidad(event)" tabIndex="4">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>	
+</mx:DataGrid>
+<mx:DataGrid id="dgMunicipio" x="113" y="32" width="171" height="80" visible="false" showHeaders="false" itemClick="selecMunic()" keyDown="presDGMunicipio(event)" tabIndex="6">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>	
+</mx:DataGrid>
+<mx:DataGrid id="dgLocalidad" x="113" y="64" width="171" height="80" visible="false" showHeaders="false" itemClick="selecLocalidad()" keyDown="presDGLocalidad(event)" tabIndex="8">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>	
+</mx:DataGrid>
+
+	<mx:Metadata>
+		[Event(name="enviarDatosDir", type="Data.EventDir")]
+	</mx:Metadata>
+	
+	<mx:Validator id="entFedV" source="{txtEntFed}" property="text" 
+	invalid="{txtEntFed.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Entidad Federativa Requerido"/>
+	
+	<mx:Validator id="municipioV" source="{txtMunicipio}" property="text" 
+	invalid="{txtMunicipio.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Municipio Requerido"/>
+	
+	<mx:Validator id="localidadV" source="{txtLocalidad}" property="text" 
+	invalid="{txtLocalidad.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Localidad Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosDir;
+			import Data.EventDir;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlDir:XML =  new XML();
+			[Bindable]
+			private var _xmlColonia:XML =  new XML();
+			[Bindable]
+			private var _xmlEntidad:XML =  new XML();
+			[Bindable]
+			private var _xmlMunicipio:XML =  new XML();
+			[Bindable]
+			private var _xmlLocalidad:XML =  new XML();
+		
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var entObj:ArrayCollection = new ArrayCollection();
+			public var munObj:ArrayCollection = new ArrayCollection();
+			public var locObj:ArrayCollection = new ArrayCollection();
+			public var colObj:ArrayCollection = new ArrayCollection();
+						
+			public var coord:Array = new Array();
+			
+			public var datos:DatosDir = new DatosDir();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
+			public var texto:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function buscaEntidad():void{
+				if(txtEntFed.text != ''){	
+					dgEntidad.selectedIndex = -1;
+					texto = txtEntFed.text;					
+					entObj.filterFunction = filtraEntidad;
+					entObj.refresh();
+					if(entObj.length > 0){
+						dgEntidad.validateNow();
+						dgEntidad.scrollToIndex(0);
+						dgEntidad.selectedIndex = 0;
+						dgEntidad.visible = true;
+						this.setChildIndex(dgEntidad,this.numChildren - 1);
+					}	
+					else
+						dgEntidad.visible = false;								
+				}
+				else{
+					entObj.filterFunction = null;
+					entObj.refresh();
+					dgEntidad.visible = false;
+				}
+			}
+			
+			public function buscaLocalidad():void{
+				if(txtLocalidad.text != ''){	
+					dgLocalidad.selectedIndex = -1;
+					texto = txtLocalidad.text;					
+					locObj.filterFunction = filtraLocalidad;
+					locObj.refresh();
+					if(locObj.length > 0){
+						dgLocalidad.validateNow();
+						dgLocalidad.scrollToIndex(0);
+						dgLocalidad.selectedIndex = 0;
+						dgLocalidad.visible = true;
+						this.setChildIndex(dgLocalidad,this.numChildren - 1);	
+					}	
+					else
+						dgLocalidad.visible = false;							
+				}
+				else{
+					locObj.filterFunction = null;
+					locObj.refresh();
+					dgLocalidad.visible = false;
+				}
+			}
+			
+			public function buscaMunicipio():void{
+				if(txtMunicipio.text != ''){	
+					dgMunicipio.selectedIndex = -1;
+					texto = txtMunicipio.text;					
+					munObj.filterFunction = filtraMunicipio;
+					munObj.refresh();
+					if(munObj.length > 0){
+						dgMunicipio.validateNow();
+						dgMunicipio.scrollToIndex(0);
+						dgMunicipio.selectedIndex = 0;
+						dgMunicipio.visible = true;
+						
+						this.setChildIndex(dgMunicipio,this.numChildren - 1);		
+					}	
+					else
+						dgMunicipio.visible = false;								
+				}
+				else{
+					munObj.filterFunction = null;
+					munObj.refresh();
+					dgMunicipio.visible = false;
+				}
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function enviarDatosDir(formData:DatosDir):void{
+				var invalidArray:Array = Validator.validateAll([entFedV, municipioV, localidadV]);
+				if(invalidArray.length == 0){
+					formData.cdgEntFed = datos.cdgEntFed;
+					formData.cdgMun = datos.cdgMun;
+					formData.cdgLoc = datos.cdgLoc;
+					formData.guarda = true;
+				}
+				else{
+					formData.guarda = false;
+				}
+				var event:EventDir = new EventDir("enviarDatosDir", formData);
+				dispatchEvent(event);
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function filtraColonia(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function filtraEntidad(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function filtraLocalidad(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function filtraMunicipio(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function formateaColonia():void{
+				var cont:int = _xmlColonia.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				colObj.filterFunction = null;
+				colObj.refresh();
+				colObj.removeAll();
+				colObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlColonia.Table[i].NOMBRE;
+					oItem.codigo = _xmlColonia.Table[i].CODIGO;
+					oItem.codPostal = _xmlColonia.Table[i].CDGPOSTAL;
+					item.push(oItem);
+				}
+				colObj = new ArrayCollection(item);
+			}
+			
+			public function formateaEntidad():void{
+				var cont:int = _xmlEntidad.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				entObj.filterFunction = null;
+				entObj.refresh();
+				entObj.removeAll();
+				entObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlEntidad.Table[i].NOMBRE;
+					oItem.codigo = _xmlEntidad.Table[i].CODIGO;
+					item.push(oItem);
+				}
+				entObj = new ArrayCollection(item);
+			}
+			
+			public function formateaLocalidad():void{
+				var cont:int = _xmlLocalidad.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				locObj.filterFunction = null;
+				locObj.refresh();
+				locObj.removeAll();
+				locObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlLocalidad.Table[i].NOMBRE;
+					oItem.codigo = _xmlLocalidad.Table[i].CODIGO;
+					item.push(oItem);
+				}
+				locObj = new ArrayCollection(item);
+			}
+			
+			public function formateaMunicipio():void{
+				var cont:int = _xmlMunicipio.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				munObj.filterFunction = null;
+				munObj.refresh();
+				munObj.removeAll();
+				munObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlMunicipio.Table[i].NOMBRE;
+					oItem.codigo = _xmlMunicipio.Table[i].CODIGO;
+					item.push(oItem);
+				}
+				munObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosDir):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlEntidad = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlEntidad = new XML(evt.result.toString());
+					
+					if(_xmlEntidad.elements().length() > 0){
+						formateaEntidad();
+						dgEntidad.dataProvider = entObj;
+					}
+					 
+				 	du.rCursor();
+					du.closeWs(wsCat);
+				 						
+					if (info != null){
+						txtEntFed.text = info.entFed;
+						txtMunicipio.text = info.municipio;
+						txtLocalidad.text = info.localidad;
+						
+						datos.cdgEntFed = info.cdgEntFed;		
+						datos.cdgMun = info.cdgMun;
+						datos.cdgLoc = info.cdgLoc;
+						datos.cdgCol = info.cdgCol;	
+						
+						obtieneMunicipio();
+						obtieneLocalidad();
+					}	
+					txtEntFed.addEventListener(KeyboardEvent.KEY_DOWN, presEntidad);
+				});
+				wsCat.getCatalogoGral.send(2);
+			}
+			
+			public function limpiaDatosDir():void{
+				txtEntFed.text = "";
+				txtMunicipio.text = "";
+				txtLocalidad.text = "";
+
+				datos.cdgEntFed = "";		
+				datos.cdgMun = "";
+				datos.cdgLoc = "";
+			}
+			
+			public function obtieneLocalidad():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				locObj.removeAll();
+				locObj.refresh();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLocalidad = new XML(evt.result.toString());
+					
+					if(_xmlLocalidad.elements().length() > 0){
+						formateaLocalidad();
+						dgLocalidad.dataProvider = null;
+						dgLocalidad.dataProvider = locObj;
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+				});
+				params[0] = datos.cdgEntFed;
+				params[1] = datos.cdgMun;
+				params[2] = "";
+				wsCat.getCatalogoGral.send(4, params);
+			}
+			
+			public function obtieneMunicipio():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				munObj.removeAll();
+				munObj.refresh();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMunicipio = new XML(evt.result.toString());
+					
+					if(_xmlMunicipio.elements().length() > 0){
+						formateaMunicipio();
+						dgMunicipio.dataProvider = null;
+						dgMunicipio.dataProvider = munObj;
+					}
+					
+					du.rCursor();
+					du.closeWs(wsCat);	
+				});
+				params[0] = datos.cdgEntFed;
+				params[1] = "";
+				//Otiene informacion de Municipio
+				wsCat.getCatalogoGral.send(3, params);
+			}
+					
+			private function presEntidad(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgEntidad.setFocus();
+				}				
+			}
+			
+			private function presDGEntidad(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					selecEntidad();
+					txtEntFed.setFocus();
+				}					
+			}
+			
+			private function presLocalidad(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgLocalidad.setFocus();
+				}				
+			}
+			
+			private function presDGLocalidad(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					selecLocalidad();
+					txtLocalidad.setFocus();
+				}					
+			}
+			
+			private function presMunicipio(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgMunicipio.setFocus();
+				}				
+			}
+			
+			private function presDGMunicipio(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					selecMunic();
+					txtMunicipio.setFocus();
+				}					
+			}
+			
+			public function selecEntidad():void{
+				if(dgEntidad.selectedIndex >= 0){
+					var indice:int = dgEntidad.selectedIndex;
+					
+					if (datos.cdgEntFed != entObj[indice].codigo){			
+						txtEntFed.text = entObj[indice].nombre;
+						datos.cdgEntFed = entObj[indice].codigo;
+						
+						txtMunicipio.text = "";
+						txtLocalidad.text = "";
+						datos.cdgMun = "";
+						datos.cdgLoc = "";
+						
+						obtieneMunicipio();
+					}
+					else
+						txtEntFed.text = entObj[indice].nombre;
+					dgEntidad.visible = false;
+				}
+			}
+			
+			public function selecLocalidad():void{
+				if(dgLocalidad.selectedIndex >= 0){
+					var indice:int = dgLocalidad.selectedIndex;
+				
+					if (datos.cdgLoc != locObj[indice].codigo){
+						txtLocalidad.text = locObj[indice].nombre;
+						datos.cdgLoc = locObj[indice].codigo;
+					}
+					else
+						txtLocalidad.text = locObj[indice].nombre;
+					dgLocalidad.visible = false;
+				}
+			}
+			
+			public function selecMunic():void{
+				if(dgMunicipio.selectedIndex >= 0){
+					var indice:int = dgMunicipio.selectedIndex;
+					if (datos.cdgMun != munObj[indice].codigo){
+						txtMunicipio.text = munObj[indice].nombre;
+						datos.cdgMun = munObj[indice].codigo;
+	
+						txtLocalidad.text = "";
+						datos.cdgLoc = "";
+					
+						obtieneLocalidad();
+					}
+					else
+						txtMunicipio.text = munObj[indice].nombre;
+					dgMunicipio.visible = false;
+				}
+			}		
+			
+			public function verificaEntidad():void{
+				if (dgEntidad.selectedIndex < 0){
+					dgEntidad.visible = false;
+					texto = txtEntFed.text;
+					entObj.filterFunction = filtraCaptura;
+					entObj.refresh();
+					if (entObj.length == 0){
+						txtEntFed.text = "";
+						datos.cdgEntFed = "";
+					}
+					entObj.filterFunction = null;
+					entObj.refresh();
+				}
+			}
+			
+			public function verificaLocalidad():void{
+				if (dgLocalidad.selectedIndex < 0){
+					dgLocalidad.visible = false;
+					texto = txtLocalidad.text;
+					locObj.filterFunction = filtraCaptura;
+					locObj.refresh();
+					if (locObj.length == 0){
+						txtLocalidad.text = "";
+						datos.cdgLoc = "";
+					}
+					locObj.filterFunction = null;
+					locObj.refresh();
+				}
+			}
+			
+			public function verificaMunicipio():void{
+				if (dgMunicipio.selectedIndex < 0){
+					dgMunicipio.visible = false;
+					texto = txtMunicipio.text;
+					munObj.filterFunction = filtraCaptura;
+					munObj.refresh();
+					if (munObj.length == 0){
+						txtMunicipio.text = "";
+						datos.cdgMun = "";
+					}
+					munObj.filterFunction = null;
+					munObj.refresh();
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Entidad Federativa:" id="EntFed" visible="true" x="0" y="0" width="290">
+		<mx:TextInput id="txtEntFed" width="170" change="buscaEntidad()" enter="selecEntidad()" focusOut="verificaEntidad()" 
+			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presEntidad(event)" tabIndex="18"/>
+	</mx:FormItem>
+	<mx:FormItem label="Municipio:" id="municipio" visible="true" x="45" y="32" width="246">
+		<mx:TextInput id="txtMunicipio" width="170" change="buscaMunicipio()" enter="selecMunic()" focusOut="verificaMunicipio()" 
+			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presMunicipio(event)" tabIndex="19"/>
+	</mx:FormItem>
+	<mx:FormItem label="Localidad:" id="localidad" visible="true" x="45" y="64" width="247">
+		<mx:TextInput id="txtLocalidad" width="170" change="buscaLocalidad()" enter="selecLocalidad()" focusOut="verificaLocalidad()" 
+			restrict="0-9;A-Z;a-z;Ñ;ñ; " keyDown="presLocalidad(event)" tabIndex="20"/>
+	</mx:FormItem>
+</mx:Canvas>

@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="860" height="510" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" backgroundAlpha="1.0"
+	backgroundColor="#FFFFFF">
+	
+	<!--Componente que permite registrar la lista negra de acreditados-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlAcred:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();	
+			
+			public var wsMS:WebService;	
+			private var du:Utils;
+			private var global:Globales;
+			public var titulo:String;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionAcred:int;
+			public var indAcred:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContAcred(band:Boolean):void{
+				txtCodAcred.editable = band;
+				txtCURP.editable = band;
+				btnBuscar.enabled = band;
+				if(alta == true)
+					btnAgregar.enabled = band;
+				//btnDatosAcred.enabled = band;
+			}
+			
+			public function activarContModAcred(band:Boolean):void{
+				if(borrado == true)
+					btnBaja.enabled = band;
+				if(edicion == true)	
+					btnEditar.enabled = band;
+			}
+			
+			public function actualizarCausaBaja(event:Event):void{
+				var causa:String;
+				var curp:String = dgAcred.selectedItem.CURP;
+				var comMttoLista:MttoListaNegra = event.currentTarget as MttoListaNegra; 
+				causa = comMttoLista.cboCausa.selectedItem.id;	
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionListaNegra);
+				wsMS.setAccionListaNegra.send(3, curp, causa, Application.application.U_ID);
+			} 
+			
+			public function actualizarLista(event:Event):void{
+				buscarAcred();
+			}
+			
+			private function bajaAcred():void{
+				Alert.show("¿Desea dar de baja el registro seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorBajaAcred,global.iQuest);
+			}
+			
+			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
+			//DE BUSQUEDA SELECCIONADOS
+			public function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodAcred.text != "" || txtCURP.text != ""){
+					btnBuscar.setFocus();
+					dgAcred.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{																				
+						_xmlAcred = new XML(evt.result);
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();	
+						
+						if(_xmlAcred.elements().length() > 0)
+							dgAcred.dataProvider = _xmlAcred.Table;
+						seleccionaAcred();
+					});
+					params[0] = txtCodAcred.text;
+					params[1] = txtCURP.text;
+					//Obtiene Informacion del acreditado que se encuentra en lista negra
+					wsCat.getInfoAcred.send(10, params);
+				}
+			}
+			
+			public function cargaArchivo():void{
+				var comCargaArchivo:CargaArchivo = new CargaArchivo();
+				comCargaArchivo = CargaArchivo(PopUpManager.createPopUp(this,CargaArchivo,true));
+				PopUpManager.centerPopUp(comCargaArchivo);
+			}
+			
+			public function iniVar():void{
+				this.indAcred = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Lista Negra de Acreditados";
+				alta = true;
+				borrado = true;
+				consulta = true;
+				edicion = true;
+				//permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiarContAcred():void{
+				txtCodAcred.text = "";
+				txtCURP.text = "";
+			}
+			
+			public function manejadorBajaAcred(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var tipo:int;
+					var comMttoLista:MttoListaNegra = new MttoListaNegra();
+					comMttoLista = MttoListaNegra(PopUpManager.createPopUp(this,MttoListaNegra,true)); 
+					PopUpManager.centerPopUp(comMttoLista);
+					//DATO FIJO 4 DEBIDO A QUE EL CONTROL DEBE MOSTRAR SOLO CAUSAS DE BAJA
+					comMttoLista.init(4);
+					comMttoLista.addEventListener("enviar", actualizarCausaBaja);
+				}
+			}
+			
+			public function mostrarFormListaNegra(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var comMttoListaNegra:MttoListaNegra = new MttoListaNegra();
+					switch(tipo){
+						case 1: 
+							comMttoListaNegra = MttoListaNegra(PopUpManager.createPopUp(this,MttoListaNegra,true)); 
+							PopUpManager.centerPopUp(comMttoListaNegra);
+							comMttoListaNegra.addEventListener(Event.REMOVED_FROM_STAGE, actualizarLista);
+							comMttoListaNegra.init(tipo);
+							break;
+						case 2: 
+							if (dgAcred.selectedIndex >= 0){
+								accionAcred = tipo;
+								comMttoListaNegra = MttoListaNegra(PopUpManager.createPopUp(this,MttoListaNegra,true)); 
+								PopUpManager.centerPopUp(comMttoListaNegra);
+								var indice:int = dgAcred.selectedIndex;
+								iniVar();
+								this.indAcred = indice;
+								this.vScroll = dgAcred.verticalScrollPosition;
+								var curp:String = dgAcred.selectedItem.CURP;
+								var causa:String = dgAcred.selectedItem.CAUSA;
+								comMttoListaNegra.addEventListener(Event.REMOVED_FROM_STAGE, actualizarLista);
+								comMttoListaNegra.init(tipo, curp, causa);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Acreditado",titulo,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosModAcredInd(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+//					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaAcred():void{
+				if (dgAcred.selectedIndex >= 0){
+					activarContModAcred(true);
+				}
+				else{
+					activarContModAcred(false);
+				}
+			}
+			
+			private function setAccionListaNegra(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionListaNegra);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1"){
+					Alert.show("Operación realizada exitosamente.", titulo,4,null,null,global.iInfo);
+					buscarAcred();
+				}
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="820.5" height="400" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="798.5" height="378"
+			sortableColumns="true" verticalScrollPolicy="on" click="seleccionaAcred()"  
+			doubleClickEnabled="true" itemDoubleClick="mostrarFormListaNegra(2)" horizontalScrollPolicy="auto"> 
+			<Data:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="60"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE" width="250"/>
+				<mx:DataGridColumn headerText="CURP" dataField="CURP" width="200"/>
+				<mx:DataGridColumn headerText="CAUSA" dataField="DESCCAUSA" width="200"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="110"/>
+				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="70"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+	</mx:Canvas>
+	<mx:Label x="18" y="10" text="LISTA NEGRA DE ACREDITADOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="511.75" y="39" width="255" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAcred()" toolTip="Buscar Registro" width="40"/>
+		<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormListaNegra(1)" toolTip="Registrar" width="40"/>
+		<mx:Button id="btnBaja" x="153" y="3" icon="@Embed(source='assets/images/baja.png')" click="bajaAcred()" enabled="false" toolTip="Baja Registro" width="40"/>
+		<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormListaNegra(2)" toolTip="Editar Registro" width="40"/>
+		<mx:Button id="btnAlta" x="201" y="3" icon="@Embed(source='assets/images/alta.png')" click="cargaArchivo()" toolTip="Subir Archivo" width="40"/>
+	</mx:Canvas>
+	<mx:Canvas x="143.25" y="39" width="360.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Label id="lblCodAcred" x="10" y="8" text="Código:"/>
+		<mx:Label id="lblCURP" x="139" y="8" text="CURP:" textAlign="right"/>
+		<mx:TextInput id="txtCURP" x="183" y="5" width="160" enter="buscarAcred()" maxChars="50"/>
+		<mx:TextInput id="txtCodAcred" x="62" y="5" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+	</mx:Canvas>
+</mx:Canvas>

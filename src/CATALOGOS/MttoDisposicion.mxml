@@ -1,0 +1,644 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="450" height="604" creationPolicy="all"
+	creationComplete="initApp()">
+	
+	<mx:Validator id="dispV" source="{txtCodDisp}" property="text" 
+	invalid="{txtCodDisp.setFocus()}" triggerEvent="" requiredFieldError="Disposición Requerida"/>
+	
+	<mx:Validator id="descV" source="{txtDesc}" property="text" 
+	invalid="{txtDesc.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:Validator id="cantV" source="{txtCantidad}" property="text" 
+	invalid="{txtCantidad.setFocus()}" triggerEvent="" requiredFieldError="Cantidad Requerida"/>
+	
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Plazo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosDisposicion;
+		import Data.EventDisposicion;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.collections.IList;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.core.DragSource;
+		import mx.effects.*;
+		import mx.events.DragEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.DragManager;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		
+		[Bindable]
+		private var info:DatosDisposicion;
+		[Bindable]
+		private var _xmlDisp:XML =  new XML();
+		[Bindable]
+		private var _xmlEntFed:XML =  new XML();
+		[Bindable]
+		private var _xmlMun:XML =  new XML();
+		private var _xmlAsig:XML =  new XML();
+		
+		public var asigObj:ArrayCollection = new ArrayCollection();
+		public var munObj:ArrayCollection = new ArrayCollection();
+		public var entFedObj:ArrayCollection = new ArrayCollection();
+		public var pagoObj:ArrayCollection = new ArrayCollection();
+		public var faforoObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var indice:int;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		private var dropInitiator:String;
+		private var arrEnt:Array;
+		private var arrMun:Array;
+		
+		public function cargaInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Disposicion
+			info.cdgOF = codOF;
+			info.cdgLC = codLC;
+			info.cdgDisp = codDisp;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlDisp = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlDisp.elements().length() > 0){
+					llenaRegistros();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+			
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlAsig = new XML(evt.result.toString()); 
+					
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						dgAsig.dataProvider = null;
+						if (_xmlAsig.elements().length() > 0){
+							formateaAsig();
+							dgAsig.dataProvider = asigObj;
+						}
+					});
+					params[0] = codOF;
+					params[1] = codLC;
+					params[2] = codDisp;
+					wsCat.getInfoRegistro.send(24, params);
+				} 	
+			});
+			params[0] = codOF;
+			params[1] = codLC;
+			params[2] = codDisp;
+			params[3] = "";
+			wsCat.getInfoRegistro.send(13, params);
+		}
+		
+		private function cargaMunic():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var codEnt:String;
+			var entFed:String; 
+			
+			if(cboEntFed.selectedIndex > 0){
+				codEnt = cboEntFed.selectedItem.id;
+				entFed = cboEntFed.selectedItem.nombre;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMun = new XML(evt.result.toString()); 
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if (_xmlMun.elements().length() > 0){
+						formateaMunicipio(codEnt, entFed);
+						dgDisp.dataProvider = null;
+						dgDisp.dataProvider = munObj;
+					} 	
+				});
+				params[0] = codEnt;
+				params[1] = "";
+				//obtiene informacion del municipio
+				wsCat.getCatalogoGral.send(3, params);
+			}
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function doDragDrop(event:DragEvent):void{        
+            var dropTarget:DataGrid = DataGrid(event.currentTarget);
+           	doDragExit(event);  
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+            var dropLoc:int = dropTarget.calculateDropIndex(event); 
+				
+			indice = dropLoc;
+				
+            for(var i:int = 0; i < items.length; i++){                 
+            	IList(dropTarget.dataProvider).addItemAt(items[i], dropLoc);
+            }
+        }
+        
+         private function doDragEnter(event:DragEvent):void{
+        	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+            var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+               
+            var drop:Boolean = true;
+            
+            if(dropInitiator == dropTarget.id){
+            	DragManager.showFeedback(DragManager.MOVE);
+                DragManager.acceptDragDrop(dropTarget);
+            } 
+            else {
+            	if (dataInfo != null){
+                	for(var i:int = 0; i < dataInfo.length; i++)
+                    	if(dataInfo[i].codigo == items[0].codigo && 
+                    	   dataInfo[i].codEnt == items[0].codEnt) 
+                    		drop = false;
+             	}
+             	else
+             		drop = false;
+				if(drop){
+                    DragManager.showFeedback(DragManager.MOVE);
+                    DragManager.acceptDragDrop(dropTarget);
+                }
+            }
+        }
+        
+         private function doDragExit(event:DragEvent):void{
+        	var dropTarget:DataGrid = DataGrid(event.currentTarget);   
+            dropTarget.hideDropFeedback(event);
+        }
+        
+        public function eliminaAsignado():void{
+			if (dgAsig.selectedIndex >= 0){
+				var ind:int = dgAsig.selectedIndex;
+				var dataInfo:ArrayCollection = dgAsig.dataProvider as ArrayCollection;
+				dataInfo.removeItemAt(ind);
+				dgAsig.dataProvider = dataInfo;
+			}
+			else
+				Alert.show("Debe seleccionar un registro de Acreditado", "Alta Acreditados", 4,null,null,global.iAlert);		
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([dispV, descV, cantV, plazoV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgDisp = txtCodDisp.text;
+				info.contrato = txtContrato.text;
+				info.descripcion = txtDesc.text;
+				info.fecDisp = txtDisp.text;
+				info.cantidad = Number(txtCantidad.text);
+				info.plazo = Number(txtPlazo.text);
+				info.pagoCap = cboPagoCap.selectedItem.codigo;
+				info.pagoInt = cboPagoInt.selectedItem.codigo;
+				info.graciaCap = Number(txtGraciaCap.text);
+				info.graciaInt = Number(txtGraciaInt.text);
+				info.aforo = Number(txtAforo.text);
+				info.faforo = cboFAforo.selectedItem.codigo;
+				info.pagare = txtPagare.text;
+				info.fecTermino = dtFin.text;
+				registraMunic();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function formateaAsig():void{
+			var i:int;
+			var cont:int = _xmlAsig.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codEnt = _xmlAsig.Table[i].CDGEF.toString();
+				oItem.entFed = _xmlAsig.Table[i].NOMEF.toString();
+				oItem.codigo = _xmlAsig.Table[i].CDGMU.toString();
+				oItem.nombre = _xmlAsig.Table[i].NOMMU.toString();
+				item.push(oItem);
+			}
+			asigObj = new ArrayCollection(item);
+		}
+		
+		public function formateaEntFed():void{
+			var i:int;
+			var cont:int = _xmlEntFed.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlEntFed.Table[i].CODIGO;	
+				oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			entFedObj = new ArrayCollection(item);
+		}
+		
+		private function formateaFaforo():void{
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "P";	
+			oItem.descripcion = "PORCENTAJE";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "E";	
+			oItem.descripcion = "ENTERO";
+			item.push(oItem);
+			
+			faforoObj = new ArrayCollection(item);
+		}
+		
+		public function formateaMunicipio(codEnt:String, entFed:String):void{
+			var i:int;
+			var cont:int = _xmlMun.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			munObj.filterFunction = null;
+			munObj.refresh();
+			munObj.removeAll();
+			munObj.refresh();
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codEnt = codEnt;
+				oItem.entFed = entFed;
+				oItem.codigo = _xmlMun.Table[i].CODIGO.toString();
+				oItem.nombre = _xmlMun.Table[i].NOMBRE.toString();
+				item.push(oItem);
+			}
+			munObj = new ArrayCollection(item);
+		}
+		
+		public function formateaPago():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+				
+			oItem = new Object();
+			oItem.codigo = "M";	
+			oItem.nombre = "Mensual";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "B";	
+			oItem.nombre = "Bimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "T";	
+			oItem.nombre = "Trimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "C";	
+			oItem.nombre = "Cuatrimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "S";	
+			oItem.nombre = "Semestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "A";	
+			oItem.nombre = "Anual";
+			item.push(oItem);
+			
+			pagoObj = new ArrayCollection(item);
+		}
+		
+		public function guardaDisposicion():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
+			wsMS.setAccionDisposicion.send(tipoAccion, info.cdgOF, info.cdgLC, info.cdgDisp, info.contrato, 
+									       info.descripcion, info.fecDisp, info.cantidad, info.plazo, 
+									       info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
+									       arrEnt, arrMun, Application.application.U_ID, info.aforo, info.faforo, info.pagare, 
+									       info.fecTermino);	
+		}
+	
+		public function init(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosDisposicion();
+			titulo = "Mantenimiento de Disposición";
+			txtCodOF.text = codOF;
+			txtOF.text = orgFond;
+			txtCodLC.text = codLC;
+			txtLC.text = lineaCred;
+			txtDisp.selectedDate = Application.application._Current_Fecha;
+			dtFin.selectedDate = Application.application._Current_Fecha;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			formateaPago();
+			cboPagoCap.dataProvider = pagoObj;
+			cboPagoInt.dataProvider = pagoObj;
+			dgAsig.dataProvider = new ArrayCollection([]);
+			formateaFaforo();
+			cboFAforo.dataProvider = faforoObj;
+			cboFAforo.selectedIndex = 0;
+			
+			if(tipo == 1)
+				registraInfoDisp(tipo, codOF, orgFond, codLC, lineaCred);
+			else if(tipo == 2)
+				cargaInfoDisp(tipo, codOF, orgFond, codLC, lineaCred, codDisp);
+		}
+		
+		private function initApp():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlEntFed = new XML(evt.result.toString());
+												
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlEntFed.elements().length() > 0){
+					formateaEntFed();
+					cboEntFed.dataProvider = entFedObj;
+				}
+			});
+			wsCat.getCatalogoGral.send(2);	
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtCodDisp.setFocus();
+			
+			txtCodDisp.text = info.cdgDisp;
+			txtContrato.text = _xmlDisp.Table[0].CONTRATO;
+			txtDesc.text = _xmlDisp.Table[0].DESCRIPCION;
+			txtDisp.text = _xmlDisp.Table[0].FDISP;
+			dtFin.text = _xmlDisp.Table[0].FFTERMINO;
+			txtCantidad.text = _xmlDisp.Table[0].CANTIDAD;
+			txtPlazo.text = _xmlDisp.Table[0].PLAZO;
+			txtAforo.text = _xmlDisp.Table[0].AFORO;
+			for(i = 0; i < pagoObj.length; i++){
+				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOCAP.toString())
+					cboPagoCap.selectedIndex = i;
+				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOINT.toString())
+					cboPagoInt.selectedIndex = i		
+			}
+			for(i = 0; i < faforoObj.length; i++){
+				if(faforoObj[i].codigo == _xmlDisp.Table[0].FAFORO.toString())
+					cboFAforo.selectedIndex = i;
+				if(faforoObj[i].codigo == _xmlDisp.Table[0].FAFORO.toString())
+					cboFAforo.selectedIndex = i		
+			}
+			txtPagare.text = _xmlDisp.Table[0].PAGARE;
+			txtGraciaCap.text = _xmlDisp.Table[0].GRACIACAP;
+			txtGraciaInt.text = _xmlDisp.Table[0].GRACIAINT;
+		}
+			
+		public function registraInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var i:int;
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgOF = codOF;
+			info.cdgLC = codLC;
+			
+			txtCodDisp.setFocus();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodDisp.text = _xmlCod.Table[0].CDGDISP;
+					txtPlazo.text = _xmlCod.Table[0].PLAZO;
+					for(i = 0; i < pagoObj.length; i++){
+						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOCAP.toString())
+							cboPagoCap.selectedIndex = i;
+						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOINT.toString())
+							cboPagoInt.selectedIndex = i;		
+					}
+					txtGraciaCap.text = _xmlCod.Table[0].GRACIACAP;
+					txtGraciaInt.text = _xmlCod.Table[0].GRACIAINT;
+				}
+			});
+			params[0] = codOF;
+			params[1] = codLC;
+			//Obtiene el codigo siguiente de la Dispocision
+			wsCat.getInfoRegistro.send(19, params);
+		}
+		
+		private function registraMunic():void{
+			var i:int;
+			var cont:int;
+			var listaMun:ArrayCollection;
+			arrEnt = new Array;
+			arrMun = new Array;
+			
+			listaMun = dgAsig.dataProvider as ArrayCollection;
+			cont = listaMun.length;
+			
+			if(listaMun.length > 0){
+				for(i = 0; i < cont; i++){
+					arrEnt[i] = listaMun[i].codEnt;
+					arrMun[i] = listaMun[i].codigo;
+				}
+			}
+			else{
+				arrEnt[0] = "000";
+				arrMun[0] = "";
+			}
+		}
+		
+		private function setAccionDisposicion(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function setDragInitator(event:MouseEvent, id:String):void{
+        	dropInitiator = id;
+       	}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosDisp(event:EventDisposicion):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			var inicio:Date = DateField.stringToDate(txtDisp.text, "DD/MM/YYYY");
+			var fin:Date = DateField.stringToDate(dtFin.text, "DD/MM/YYYY");
+			
+			if(inicio > fin){
+				Alert.show("La fecha fin no puede ser menor a la fecha de la disposición.",titulo,4,null,null,global.iAlert);
+			}
+			else{
+				if (info.guarda == true)
+					guardaDisposicion();
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="37.5" y="5" width="375" height="70" styleName="canvasMod">
+		<mx:Label id="lblOF" x="14.5" y="9" text="Fondeadora:"/>
+		<mx:Label id="lblOF0" x="6.5" y="39" text="Línea Crédito:"/>
+		<mx:TextInput id="txtCodOF" x="85.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtOF" x="143.5" y="7" width="221" editable="false"/>
+		<mx:TextInput id="txtCodLC" x="85.5" y="37" width="50" editable="false"/>
+		<mx:TextInput id="txtLC" x="143.5" y="37" width="221" editable="false"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="152" y="532" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="234" y="532" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
+	<mx:TabNavigator id="tabNav" x="15.5" y="79" width="419" height="446">
+		<mx:Canvas label="General" width="100%" height="100%">
+			<mx:Canvas x="21" y="8" width="375" height="395" styleName="canvasMod">
+				<mx:Label id="lblCantidad" x="64.25" y="136" text="Cantidad:"/>
+				<mx:Label id="lblDesc" x="50.5" y="72" text="Descripción:"/>
+				<mx:Label id="lblOtor" x="19.5" y="104" text="Fecha Disposición:"/>
+				<mx:Label id="lblcodDisp" x="52.5" y="8" text="Disposición:"/>
+				<mx:Label id="lblContrato" x="66.5" y="40" text="Contrato:"/>
+				<mx:Label id="lblPlazo" x="80.25" y="168" text="Plazo:"/>
+				<mx:TextInput id="txtCodDisp" x="123.5" y="6" width="50" maxChars="3" editable="false"/>
+				<mx:TextInput id="txtContrato" x="123.5" y="38" width="109" maxChars="150"/>
+				<mx:TextInput id="txtDesc" x="123.5" y="70" width="230" maxChars="150"/>
+				<mx:DateField id="txtDisp" width="90" x="123.5" y="102"/>
+				<mx:TextInput id="txtCantidad" x="122.25" y="134" width="110.25"/>
+				<mx:TextInput id="txtPlazo" x="122.25" y="166" width="50.5" maxChars="3" restrict="0-9"/>
+				<mx:Label id="lblPagoCap" x="48.5" y="233" text="Pago Capital:"/>
+				<mx:ComboBox id="cboPagoCap" x="123.5" y="231" width="230" labelField="nombre"/>
+				<mx:Label id="lblPagoInt" x="47.5" y="265" text="Pago Interés:"/>
+				<mx:ComboBox id="cboPagoInt" x="123.5" y="263" width="230" labelField="nombre" height="23"/>
+				<mx:Label id="lblGraciaCap" x="41.75" y="297" text="Gracia Capital:"/>
+				<mx:TextInput id="txtGraciaInt" x="124.75" y="327" width="50.5" maxChars="13" change="validaMonto(event)"/>
+				<mx:Label id="lblMesesGC" x="183.25" y="297" text="meses"/>
+				<mx:TextInput id="txtGraciaCap" x="124.75" y="295" width="50.5" maxChars="13" change="validaMonto(event)"/>
+				<mx:Label id="lblGraciaInt" x="40.75" y="329" text="Gracia Interés:"/>
+				<mx:Label id="lblMesesGI" x="183.25" y="329" text="meses"/>
+				<mx:Label id="lblAforo" x="80.5" y="361" text="Aforo:"/>
+				<mx:TextInput id="txtAforo" x="124.75" y="359" width="50.5" maxChars="13" restrict="0-9"/>
+				<mx:ComboBox id="cboFAforo" x="183.25" y="359" width="132" labelField="descripcion"/>
+				<mx:Label id="lblCantidad0" x="70.5" y="201" text="Pagaré:" width="43.75"/>
+				<mx:TextInput id="txtPagare" x="122.25" y="199" width="110.25"/>
+				<mx:Label id="lblFFin" x="233.5" y="104" text="Fin:"/>
+				<mx:DateField id="dtFin" width="90" x="263.5" y="102"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas label="Ubicación" width="100%" height="100%">
+			<mx:Canvas x="10" y="2" width="397" height="348" styleName="canvasMod">
+				<mx:ComboBox id="cboEntFed" x="18.5" y="24" width="174" labelField="nombre" change="cargaMunic()"></mx:ComboBox>
+				<mx:DataGrid id="dgDisp" x="18.5" y="75" width="358" height="105" dragMoveEnabled="true" 
+					mouseDown="setDragInitator(event, &apos;dropList&apos;)" dragEnabled="true">
+					<mx:columns>
+						<mx:DataGridColumn headerText="ENTIDAD" dataField="entFed" width="125"/>
+						<mx:DataGridColumn headerText="MUNICIPIO" dataField="nombre"/>	
+					</mx:columns>
+				</mx:DataGrid>
+				<mx:DataGrid id="dgAsig" x="18.5" y="222" width="358" height="114" dragMoveEnabled="true" 
+					mouseDown="setDragInitator(event, &apos;destGrid&apos;)" dragEnter="doDragEnter(event)" 
+					dragDrop="doDragDrop(event)" dragEnabled="false">
+					<mx:columns>
+						<mx:DataGridColumn headerText="ENTIDAD" dataField="entFed" width="125"/>
+						<mx:DataGridColumn headerText="MUNICIPIO" dataField="nombre"/>	
+					</mx:columns>
+				</mx:DataGrid>
+				<mx:Label id="lblEntFed" x="18.5" y="5" text="Entidad:"/>
+				<mx:Label id="lblMunDisp" x="18.5" y="56" text="Municipios Disponibles:"/>
+				<mx:Label id="lblMunAsig" x="18.5" y="203" text="Municipios Asignados:"/>
+				<mx:Button id="btnEliminarSolic" x="336.5" y="189" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminaAsignado()"
+					toolTip="Quitar Asignado" width="40"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+</mx:TitleWindow>

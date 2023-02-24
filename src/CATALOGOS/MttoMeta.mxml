@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" height="360">
+	
+	<mx:Validator id="codAseV" source="{txtAsesor}" property="text" 
+	invalid="{txtAsesor.setFocus()}" triggerEvent="" requiredFieldError="Código de Asesor Requerido"/>
+	<mx:Validator id="mesV" source="{txtMes}" property="text" 
+	invalid="{txtMes.setFocus()}" triggerEvent="" requiredFieldError="Mes Requerido"/>
+	<mx:Validator id="anioV" source="{txtAnio}" property="text" 
+	invalid="{txtAnio.setFocus()}" triggerEvent="" requiredFieldError="Año Requerido"/>
+	<mx:Validator id="metaV" source="{txtMeta}" property="text" 
+	invalid="{txtMeta.setFocus()}" triggerEvent="" requiredFieldError="Meta Requerida"/>
+	<mx:Validator id="pondColV" source="{txtPondCol}" property="text" 
+	invalid="{txtPondCol.setFocus()}" triggerEvent="" requiredFieldError="Ponderación de Colocación Requerida"/>
+	<mx:Validator id="pondCtesV" source="{txtPondCtes}" property="text" 
+	invalid="{txtPondCtes.setFocus()}" triggerEvent="" requiredFieldError="Ponderación de Cientes Requerida"/>
+	<mx:Validator id="pondDesV" source="{txtPondDes}" property="text" 
+	invalid="{txtPondDes.setFocus()}" triggerEvent="" requiredFieldError="Ponderación de Deserción Requerida"/>
+	<mx:Validator id="pondMoraV" source="{txtPondMora}" property="text" 
+	invalid="{txtPondMora.setFocus()}" triggerEvent="" requiredFieldError="Ponderación de Mora Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosMeta;
+		import Data.EventMeta;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosMeta;
+		
+	 	private var global:Globales;
+	 	private var du:Utils;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+
+		public function cargaInfoMeta(cdgAse:String,mes:int,anio:int,meta:Number,pondCol:Number,pondCtes:Number,
+								      pondDes:Number, pondMora:Number):void{
+			init();
+			tipoAccion = 2; 
+			
+			info = new DatosMeta();
+			//Datos de la Meta de Asesor
+			info.cdgAse = cdgAse;
+			info.mes = mes;
+			info.anio = anio;
+			info.meta = meta;
+			info.pondCol = pondCol;
+			info.pondCtes = pondCtes;
+			info.pondDes = pondDes;
+			info.pondMora = pondMora;
+			
+			llenaRegistros();
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosMeta();
+				
+			var invalidArray:Array = Validator.validateAll([codAseV, mesV, anioV, metaV, pondColV, pondCtesV, pondDesV, pondMoraV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgAse = txtAsesor.text;
+				info.mes = Number(txtMes.text);
+				info.anio = Number(txtAnio.text);
+				info.meta = Number(txtMeta.text);
+				info.pondCol = Number(txtPondCol.text);
+				info.pondCtes = Number(txtPondCtes.text);
+				info.pondDes = Number(txtPondDes.text);
+				info.pondMora = Number(txtPondMora.text)
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function guardaMeta():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionMeta);
+			wsMS.setAccionMeta.send(tipoAccion, info.cdgAse, info.mes, info.anio, info.meta,
+									info.pondCol, info.pondCtes, info.pondDes, info.pondMora);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			this.title = "Tipo de Asesor";
+			titulo = "Mantenimiento de Tipo de Asesor";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 500;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			txtAsesor.editable = false;
+			txtMes.editable = false;
+			txtAnio.editable = false;
+			
+			txtAsesor.text = info.cdgAse;
+			txtMes.text = info.mes.toString();
+			txtAnio.text = info.anio.toString();
+			txtMeta.text = info.meta.toString();
+			txtPondCol.text = info.pondCol.toString();
+			txtPondCtes.text = info.pondCtes.toString();
+			txtPondDes.text = info.pondDes.toString();
+			txtPondMora.text = info.pondMora.toString();
+		}
+			
+		public function registraInfoMeta():void{
+			init();
+			tipoAccion = 1;
+			
+			info = null;
+			
+			txtAsesor.setFocus();
+			txtAsesor.editable = true;
+			txtMes.editable = true;
+			txtAnio.editable = true;
+		}
+		
+		private function setAccionMeta(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionMeta);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaDatosMeta(event:EventMeta):void{
+			info = event.customProp;
+		}
+		
+		private function validaFinal():void{
+			if (info.guarda == true)
+				guardaMeta();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="338" height="270" styleName="canvasMod">
+		<mx:Label id="lblCodAse" x="84" y="12" text="Nómina Asesor:"/>
+		<mx:TextInput id="txtAsesor" x="174" y="10" width="80" maxChars="2"/>
+		<mx:Label id="lblMes" x="138" y="44" text="Mes:"/>
+		<mx:TextInput id="txtMes" x="174" y="42" width="40"/>
+		<mx:Label id="lblAnio" x="138" y="76" text="Año:"/>
+		<mx:TextInput id="txtAnio" x="174" y="74" width="60"/>
+		<mx:Label id="lblMeta" x="135" y="108" text="Meta:"/>
+		<mx:TextInput id="txtMeta" x="174" y="106" width="80"/>
+		<mx:Label id="lblPondCol" x="42" y="140" text="Ponderación Colocación:"/>
+		<mx:TextInput id="txtPondCol" x="174" y="138" width="40"/>
+		<mx:Label id="lblPondCtes" x="57" y="172" text="Ponderación Clientes:"/>
+		<mx:TextInput id="txtPondCtes" x="174" y="170" width="40"/>
+		<mx:Label id="lblPondDes" x="46" y="204" text="Ponderación Deserción:"/>
+		<mx:TextInput id="txtPondDes" x="174" y="202" width="40"/>
+		<mx:Label id="lblPondMora" x="71" y="236" text="Ponderación Mora:"/>
+		<mx:TextInput id="txtPondMora" x="174" y="234" width="40"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="288" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="288" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

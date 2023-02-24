@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="780" height="380" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*" 
+	xmlns:control="Controls.*">
+	
+	<!--Componente de Reporte de saldos diarios-->
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+
+			private var _xmlRep:XML =  new XML();
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var fecha:String;
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecha);		
+			}			
+						
+			public function generar(event:Event):void{
+				if(comFiltroFecha.valida()){
+					fecha = comFiltroFecha.dtfFecha.text;
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+																				
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							lblTotal.text = _xmlRep.elements().length() + " Registro(s)";
+							btnExportar.enabled = true; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepSaldosDiarios.send(fecha);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de saldos diarios";
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(Application.application._Current_Fecha));
+				comFiltroFecha.addEventListener("enviar",generar);
+				comFiltroFecha.addEventListener("limpiar",limpiar);
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpiar(event:Event):void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+		]]>
+	</mx:Script>
+	
+	<control:FiltroFecha id="comFiltroFecha" x="10"/>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="18.45" y="155" width="740.05" 
+		visible="true" height="186" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+		<Data:columns>
+			<mx:DataGridColumn headerText="FECHA SALDO" dataField="FEDOCTA" width="110"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="120"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="120"/>
+			<mx:DataGridColumn headerText="DEPOSITOS" dataField="DEPOSITOS" width="100"/>
+			<mx:DataGridColumn headerText="RETIROS" dataField="RETIROS" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUES COBRADOS" dataField="CHEQUES_COB" width="140"/>
+			<mx:DataGridColumn headerText="SALDO" dataField="SALDO" width="100"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="btnExportar" x="655.5" y="123" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="349" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

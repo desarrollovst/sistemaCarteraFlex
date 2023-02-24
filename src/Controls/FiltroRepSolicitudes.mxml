@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" horizontalScrollPolicy="off" 
+	backgroundAlpha="1.0" backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:control="Controls.*">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.validators.Validator;		
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			public var wsMS:WebService;
+			public var rep:String;
+			private var titulo:String; 
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}			
+			
+			public function generar():void{
+				if (valida() == true){	
+					if (rep == "-1")
+						enviar();
+					else if(rep != "-1"){				
+						var consulta:String;
+						var id:String = "&id=" + rep;
+						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var region:String = "&region=" + ctrlFiltro.obtieneRegion();
+						var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
+						var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();
+					}
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				this.rep = rep;
+				this.titulo = titulo;
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;
+				limpiar();
+			}		
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				ctrlFiltro.limpiar();	
+				fec = Application.application._Current_Fecha;
+				dtfSolDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfSolHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfIniDesde.selectedDate = null;
+				dtfIniHasta.selectedDate = null;
+				chkSolic.selected = true;
+				chkSitCart.selected = false;
+				chkRechazado.selected = false;
+				prestamos.selectedValue = 0;
+			}
+			
+			public function obtieneAsesor():String{
+				return ctrlFiltro.obtieneAsesor();
+			}
+			
+			public function obtieneFecIniDesde():String{
+				return dtfIniDesde.text;
+			}
+			
+			public function obtieneFecIniHasta():String{
+				return dtfIniHasta.text;
+			}
+			
+			public function obtieneFecSolDesde():String{
+				return dtfSolDesde.text;
+			}
+			
+			public function obtieneFecSolHasta():String{
+				return dtfSolHasta.text;
+			}
+			
+			public function obtienePrestamo():Number{
+				return Number(prestamos.selectedValue);
+			}
+			
+			public function obtieneRegion():String{
+				return ctrlFiltro.obtieneRegion();	
+			}
+			
+			public function obtieneSitAut():Number{ 
+				return Number(chkSitCart.selected);
+			}
+			
+			public function obtieneSitSol():Number{ 
+				return Number(chkSolic.selected);
+			}
+			
+			public function obtieneSitRec():Number{ 
+				return Number(chkRechazado.selected);
+			}
+			
+			public function obtieneSucursal():String{
+				return ctrlFiltro.obtieneSucursal();
+			}
+				
+			public function valida():Boolean{
+				return true;
+			}
+			
+			private function validaFechaIni():void{
+				if(dtfIniDesde.selectedDate != null && dtfIniHasta.selectedDate != null){
+					if(dtfIniDesde.selectedDate > dtfIniHasta.selectedDate){
+						Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+						dtfIniDesde.selectedDate = dtfIniHasta.selectedDate;
+					}
+				}
+			}
+			
+			private function validaFechaSol():void{
+				if(dtfSolDesde.selectedDate > dtfSolHasta.selectedDate){
+					Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+					dtfSolDesde.selectedDate = dtfSolHasta.selectedDate;
+				}
+			}
+			
+			public function validaSituacion(event:Event):void{
+				if(chkSolic.selected == false && chkSitCart.selected == false && chkRechazado.selected == false){
+					var obj:CheckBox = event.target as CheckBox;
+					obj.selected = true;
+					Alert.show("Debe seleccionar al menos una Situación.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="165.5" styleName="canvasMod" id="cnvCriterio">
+		<control:CtrlFiltroInfoAsesor id="ctrlFiltro" x="6" y="6"/>
+	</mx:Canvas>
+	<mx:Label x="18" y="227" text="Solicitudes" id="lblPrestamos"/>
+	<mx:Canvas x="18" y="246" width="264" height="61" styleName="canvasMod" id="cnvPrestamos">
+		<mx:RadioButtonGroup id="prestamos"/>
+		<mx:RadioButton x="64.5" y="5" label="Grupales" height="23" width="108" id="chkPrnGrupales" groupName="prestamos" value="0"/>
+		<mx:RadioButton x="64.5" y="31" label="Acreditados de Grupo" height="23" width="133" id="chkPrnAcred" groupName="prestamos" value="1" enabled="false"/>
+	</mx:Canvas>
+	<mx:Label x="290.05" y="227" text="Situación" id="lblSituacion"/>
+	<mx:Canvas x="290.05" y="246" width="264" height="61" styleName="canvasMod" id="cnvSituacion">
+		<mx:CheckBox x="20" y="4" label="Solicitado" id="chkSolic" change="validaSituacion(event)"/>
+		<mx:CheckBox x="116" y="4" label="Autorizado por Cartera" id="chkSitCart" change="validaSituacion(event)"/>
+		<mx:CheckBox x="20" y="32" label="Rechazado" id="chkRechazado" change="validaSituacion(event)"/>
+	</mx:Canvas>
+	<mx:Label x="290" y="130.5" text="Inicio del Ciclo" id="lblIniCiclo"/>
+	<mx:Canvas x="290" y="149" width="264.05" height="70" styleName="canvasMod" id="cnvIniCiclo">
+		<mx:DateField id="dtfIniDesde" x="104.5" y="6" width="100" change="validaFechaIni()"/>
+		<mx:DateField id="dtfIniHasta" x="104.5" y="38" width="100" change="validaFechaIni()"/>
+		<mx:Label x="51.5" y="8" text="Desde:" width="45" textAlign="right"/>
+		<mx:Label x="51.5" y="38" text="Hasta:" width="45" textAlign="right"/>
+	</mx:Canvas>
+	
+	<mx:Button x="207.5" y="321" label="Generar" click="generar()" id="btnGenerar"/>
+	<mx:Button x="291.5" y="321" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Label x="290" y="34" text="Registro de Solicitud" id="lblIniCiclo0"/>
+	<mx:Canvas x="290" y="53.5" width="264.05" height="70" styleName="canvasMod" id="cnvIniCiclo0">
+		<mx:DateField id="dtfSolDesde" x="104.5" y="6" width="100" change="validaFechaSol()"/>
+		<mx:DateField id="dtfSolHasta" x="104.5" y="38" width="100" change="validaFechaSol()"/>
+		<mx:Label x="51.5" y="8" text="Desde:" width="45" textAlign="right"/>
+		<mx:Label x="51.5" y="38" text="Hasta:" width="45" textAlign="right"/>
+	</mx:Canvas>
+</mx:Canvas>

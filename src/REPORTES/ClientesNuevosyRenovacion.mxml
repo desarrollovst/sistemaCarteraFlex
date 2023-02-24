@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationPolicy="all" 
+	creationComplete="initApp()" verticalScrollPolicy="auto" horizontalScrollPolicy="auto">
+	
+	<!--Componente de Reporte de Clientes Nuevos y Renovaciones-->
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var fecFin:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);
+			}
+		
+			public function generar():void{
+				var cont:int;
+				
+				if(valida()){
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+					
+						btnExportar.enabled = false;
+						cont = _xmlRep.elements().length();
+													
+						if(_xmlRep.elements().length() > 0){
+							btnExportar.enabled = true;
+							dgReporte.dataProvider = _xmlRep.Table;
+							lblTotal.text = cont + " Registro(s)";   
+							fecIni = dtfFecha.text;
+							fecFin = dtfFechaFinal.text;
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							dgReporte.dataProvider = null;
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepClientesNuevosRenov.send(dtfFecha.text, dtfFechaFinal.text);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Clientes Nuevos y Renovación";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFechaFinal.text == ""){
+					Alert.show("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaFecha():void{
+				dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="800" height="420" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Label id="lblTitulo" x="18" y="10" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="17.95" y="53.5" width="270.05" height="65.5" styleName="canvasMod">
+			<mx:Label x="10" y="10" text="Fecha Inicial" width="81" height="20" id="label2"/>
+			<mx:Label x="141.05" y="10" text="Fecha Final" width="81" height="20" id="label1"/>
+			<mx:DateField id="dtfFecha" x="10" y="28.5" width="111" change="validaFecha()"/>
+			<mx:DateField id="dtfFechaFinal" x="141.05" y="28.5" width="111" change="validaFecha()"/>
+		</mx:Canvas>
+		<mx:Button x="71.75" y="127" label="Generar" click="generar()"/>
+		<mx:Button x="150.25" y="127" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+		<mx:DataGrid id="dgReporte" x="18.45" y="163" width="763.05" visible="true" height="220" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="COD_SUC" width="80"/>
+				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="COD_GPO" width="70"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+				<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASE" width="80"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR" width="180"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="COD_CTE" width="90"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="CLIENTE" width="180"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="TIPO" width="80"/>	
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnExportar" x="678.5" y="127" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Label id="lblTotal" x="18.45" y="391" width="763.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	</mx:Canvas>
+</mx:Canvas>

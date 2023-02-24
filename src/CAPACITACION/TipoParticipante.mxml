@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="1110" height="494"
+	 xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	 xmlns:Administracion="Administracion.*">
+
+	<!--Componente que permite observar el listado de los tipos de un participante para una capacitación-->
+	
+	<mx:Script>
+	<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.controls.DataGrid;
+		import mx.core.Application;
+		import mx.effects.easing.Elastic;
+		import mx.events.CloseEvent;
+		import mx.events.DataGridEvent;				
+		import mx.events.FlexEvent;
+		import mx.events.ListEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.formatters.NumberFormatter;
+		import mx.formatters.SwitchSymbolFormatter;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.Fault;
+		import mx.rpc.soap.WebService;
+		
+		private var _xmlInfo:XML = new XML();
+		private var dPermisos:XML = new XML();
+		
+		private var wsMS:WebService = new WebService();
+		private var titulo:String;	
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var objMtto:Sprite = new Sprite();
+		
+		private var accion:int;
+		private var ind:int;
+		private var vScroll:Number;
+		
+		private var alta:Boolean = new Boolean();
+		private var borrado:Boolean = new Boolean();
+		private var consulta:Boolean = new Boolean();
+		private var edicion:Boolean = new Boolean();
+		
+		private function activarCont(band:Boolean):void{
+			if(alta == true)
+			btnAgregar.enabled = band;
+		}
+		
+		private function activarContMod(band:Boolean):void{
+			if(borrado == true)
+				btnEliminar.enabled = band;
+			if(edicion == true)	
+				btnEditar.enabled = band;
+		}
+		
+		private function actualizar(event:Event):void{
+			buscarLista(1);
+		}
+		
+		private function buscarLista(tipo:int):void{
+			var wsCatCap:WebService = new WebService();
+			var params:Array = new Array();
+			
+			dgInfo.dataProvider = null;
+			dgInfo.invalidateList();
+			
+			if (txtCodigo.text != "" || txtNombre.text != ""){
+				du.initWsCatCap(wsCatCap);
+		 		du.sCursor();
+		 	
+				if (tipo == 1)
+					Application.application.bloquear();	
+					
+				du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+					_xmlInfo = new XML(event.result);
+					
+					du.closeWs(wsCatCap);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+					if (_xmlInfo.elements().length() > 0){
+						dgInfo.dataProvider = _xmlInfo.Table;
+				
+						if(accion == 2){
+							dgInfo.validateNow();
+							dgInfo.verticalScrollPosition = vScroll;
+							dgInfo.selectedIndex = ind;
+							this.accion = 0;
+						}
+						selecciona();
+					}
+				});
+				
+				params[0] = txtCodigo.text;
+				params[1] = txtNombre.text;
+				params[2] = "";
+				wsCatCap.getInfoCapacitacion.send(7, params);
+			}
+		}
+		
+		private function eliminar():void{
+			if(dgInfo.selectedIndex >= 0){
+				if(dgInfo.selectedItem.CODIGO != "")
+					Alert.show("¿Desea eliminar el tipo de participante seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+				else
+					Alert.show("Seleccione el tipo de participante a eliminar.", titulo, 4,null,null,global.iAlert);
+			}
+		}
+		
+		private function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Mantenimiento de Tipos de Participantes";
+			lblTitulo.text = titulo.toUpperCase();
+			alta = false;
+			borrado = false;
+			consulta = false;
+			edicion = false;
+			permisos();
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServCap.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function iniVar():void{
+			this.ind = -1;
+			this.vScroll = -1;
+		}
+				
+		private function manejadorEliminar(e:CloseEvent):void{
+			if(e.detail==Alert.YES){
+				var mCodigo:String = dgInfo.selectedItem.CODIGO;
+				var mNombre:String = "";
+				var mActivo:String = "";
+				
+		    	initConexion();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoParticipante);
+				wsMS.setAccionCpParticipanteTipo.send(mCodigo, mNombre, mActivo, 3);
+		    } 
+		}
+		
+		private function mostrarForm(tipo:int):void{
+			//tipo = 1 NUEVO REGISTRO
+			//tipo = 2 MODIFICA REGISTRO
+			var comMttoTipoParticipante:MttoTipoParticipante = new MttoTipoParticipante(); 
+			if(edicion == true){
+				objMtto = this;
+				accion = tipo;
+				switch(tipo){
+					case 1: 
+						comMttoTipoParticipante = MttoTipoParticipante(PopUpManager.createPopUp(objMtto,MttoTipoParticipante,true));
+						comMttoTipoParticipante.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+						PopUpManager.centerPopUp(comMttoTipoParticipante);
+						comMttoTipoParticipante.Nuevo();
+						break;
+					case 2: 
+						if (dgInfo.selectedIndex >= 0){
+							comMttoTipoParticipante = MttoTipoParticipante(PopUpManager.createPopUp(objMtto,MttoTipoParticipante,true));	
+							comMttoTipoParticipante.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+							PopUpManager.centerPopUp(comMttoTipoParticipante);
+							iniVar();
+							this.ind = dgInfo.selectedIndex;
+							this.vScroll = dgInfo.verticalScrollPosition;
+							comMttoTipoParticipante.Edicion(_xmlInfo.Table[dgInfo.selectedIndex]);
+						}
+						else
+							Alert.show("Debe seleccionar el registro del tipo de participante.",titulo,4,null,null,global.iAlert); 
+						break;
+				}
+			}
+		}
+		
+		private function permisos():void{
+			var mod_id:String = Application.application._Current_Mod_Id;
+			var perfil_id:String = Application.application.cadPerfil;
+			var Params:Array;
+			var i:int;
+			var cont:int;
+			
+			wsMS = du.initWs(wsMS);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				dPermisos = new XML(evt.result.toString());
+					
+				cont = dPermisos.elements().length();
+				
+				for(i = 0; i < cont; i++){
+					switch(dPermisos.Table[i].OPCION.toString()){
+						case "C":
+							consulta = true;
+							if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+								borrado = true;
+								alta = true;
+								edicion = true;
+							}
+							break;	
+						/*case "B":
+							borrado = true;
+							break;
+						case "I":
+							alta = true;
+							break;
+						case "E":
+							edicion = true;
+							break;	*/			
+					}
+				}
+				btnAgregar.enabled = alta;
+				du.rCursor();
+				du.closeWs(wsMS);					
+			});
+			Params = new Array();
+			Params[0] = perfil_id;
+			Params[1] = mod_id;
+			wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+		}
+		
+		private function selecciona():void{
+			if (dgInfo.selectedIndex >= 0){
+				activarContMod(true);
+			}
+			else{
+				activarContMod(false);
+			}
+		}
+	
+		private function setAccionTipoParticipante(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoParticipante);
+			var res:String = new String(event.result.toString());
+			
+			if (res.substr(0,1) == "1")
+				buscarLista(1);
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+		}
+	]]>
+	</mx:Script>
+		
+	<mx:Canvas width="765" height="313" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="219" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgInfo" x="10" y="10" width="700.5" height="197"
+				verticalScrollPolicy="on" doubleClickEnabled="true" itemDoubleClick="mostrarForm(2)" itemClick="selecciona()"> 
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="40"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="120"/>
+					<mx:DataGridColumn headerText="ACTIVO" dataField="ACTIVOSTR" width="40"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="440" y="39" width="305" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista(1)" toolTip="Buscar"/>
+			<mx:Button id="btnAgregar" x="154" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarForm(1)" toolTip="Registrar"/>
+			<mx:Button id="btnEliminar" x="229" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminar()"  enabled="false" toolTip="Eliminar"/>
+			<mx:Button id="btnEditar" x="82" y="3" icon="@Embed(source='assets/images/edit.png')" click="mostrarForm(2)" enabled="false" toolTip="Editar"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="413.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblNombre" x="120" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+			<mx:TextInput id="txtNombre" x="178.5" y="5" width="223" enter="buscarLista(1)" />
+			<mx:Label id="lblCod" x="6" y="7" text="CODIGO:" width="53"/>
+			<mx:TextInput id="txtCodigo" x="58" y="5" width="50" maxChars="3" enter="buscarLista(1)"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="10" text="..." width="413.5" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblTitulo"/>
+	</mx:Canvas>
+</mx:Canvas>

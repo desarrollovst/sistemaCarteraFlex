@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:admin="Administracion.*" xmlns:control="Controls.*" height="100%"  >
+	<mx:states>
+		<mx:State name="registro">
+			<mx:RemoveChild target="{cnvEncabezado}"/>
+			<mx:RemoveChild target="{cnvFecha}"/>
+			<mx:RemoveChild target="{btnConsultar}"/>
+			<mx:RemoveChild target="{btnLimpiar}"/>
+			<mx:SetProperty target="{canvas1}" name="width" value="480"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="660"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="19" y="281" width="440" height="369" styleName="canvasMod">
+					<mx:Label id="lblFechaAc" x="72" y="12" text="Fecha:"/>
+					<mx:DateField id="dtfFechaAc" x="118" y="10" width="110"/>
+					<mx:Label id="lblMonto" x="291" y="12" text="Monto:" visible="false"/>
+					<mx:TextInput id="txtMonto" x="336" y="10" width="92" visible="false"/>
+					<mx:Label id="lblObserv" x="28" y="41" text="Observaciones:"/>
+					<mx:TextArea id="txtObserv" x="118" y="40" width="310" height="73"/>
+					<mx:Button id="btnAceptar" x="275" y="153" click="enviar()" visible="true" label="Registrar"/>
+					<mx:Button id="btnLimpiarAc" x="360" y="153" click="limpiarAcuerdo()" visible="true" label="Limpiar"/>
+					<mx:DataGrid id="dgAc" x="10" y="191" width="420" height="166">
+						<mx:columns>
+							<mx:DataGridColumn headerText="FECHA" dataField="FECAC" width="80"/>
+							<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="80"/>
+							<mx:DataGridColumn headerText="OBSERVACIONES" dataField="OBSERV" width="160"/>
+							<mx:DataGridColumn headerText="REGISTRO" dataField="NOMPE" width="100"/>
+						</mx:columns>
+					</mx:DataGrid>
+					<mx:Button id="btnEliminar" x="10" y="159" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarAcuerdo()" toolTip="Eliminar Acuerdo" width="40"/>
+					<mx:CheckBox id="chkDificil" x="275" y="10" label="Dificil" width="77"/>
+					<mx:Label id="lblResp" x="39" y="124" text="Responsable:"/>
+					<mx:ComboBox id="cboResp" labelField="nombre" x="118" y="121" width="310"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="19" y="64" width="440" height="184" styleName="canvasMod">
+					<mx:DataGrid id="dgRep" dataProvider="{_xmlList}" x="9" y="10" width="420" height="162" itemClick="limpiarListaAcuerdo()">
+						<mx:columns>
+							<mx:DataGridColumn headerText="GRUPO" dataField="COD_GPO" width="70"/>
+							<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE_GRUPO" width="180"/>
+							<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+							<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD" width="110"/>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label id="lblPagos" x="19" y="39" width="300" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label id="lblAcuerdos" x="19" y="256" width="300" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button id="btnDatos" x="406" y="31" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcuerdos()" toolTip="Lista de Acuerdos" width="40"/>
+			</mx:AddChild>
+			<mx:SetProperty name="height" value="680"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{canvas1}"/> 
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+	
+	<!--Componente de Registro de Acuerdos-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;			
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ArrayUtil;  
+			
+			private var _xmlResp:XML = new XML();          
+			private var _xmlRep:XML = new XML();
+			[Bindable]
+			private var _xmlList:XMLList = new XMLList();
+			private var _xmlAc:XML = new XML();
+			
+			public var respObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var wsRep:WebService;
+			public var titulo:String;
+			private var fecha:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+
+			private function buscarListaAcuerdos():void{
+				if(dgRep.selectedIndex >= 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					
+					var codigo:String = dgRep.selectedItem.COD_GPO;
+					var ciclo:String = dgRep.selectedItem.CICLO;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+							
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlAc = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						dgAc.dataProvider = null;
+													
+						if(_xmlAc.elements().length() > 0)
+							dgAc.dataProvider = _xmlAc.Table;
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = codigo;
+					params[1] = ciclo;
+					params[2] = fecha;
+					wsCat.getListado.send(79, params);
+				}
+				else
+					Alert.show("Debe seleccionar un registro de pago.",titulo,4,null,null,global.iAlert);
+			}
+
+			private function buscarPagos():void{
+				fecha = dtfFecha.text;
+				
+				var region:String = ctrlFiltro.obtieneRegion();
+				var sucursal:String = ctrlFiltro.obtieneSucursal();
+				var coord:String = ctrlFiltro.obtieneCoord();	
+				var asesor:String = ctrlFiltro.obtieneAsesor();				 
+				
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsRep);
+					Application.application.desbloquear();
+												
+					if(_xmlRep.elements().length() > 0){
+						currentState = "registro";
+						lblPagos.text = "Pagos Esperados al " + fecha;
+						lblAcuerdos.text = "Información de Acuerdos";
+				
+						_xmlList = _xmlRep.Table.(Number(DIFERENCIA) > 0);
+						
+						var wsCat:WebService = new WebService;
+						var params:Array = new Array;
+						
+						du.initWsCat(wsCat);
+						du.sCursor();
+					
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+							_xmlResp = new XML(evt.result);
+							
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							if (_xmlResp.elements().length() > 0){
+								formateaResp();
+								cboResp.dataProvider = respObj;
+							}
+						}); 
+						params[0] = Application.application.U_ID;
+						wsCat.getListado.send(80, params);
+					}
+					else
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+				});
+				wsRep.getRepPagosEsperados.send(fecha, region, sucursal, coord, asesor);
+			}
+			
+			private function eliminarAcuerdo():void{
+				if(dgAc.selectedIndex >= 0){
+					var fechaPago:String = fecha;
+					var codigo:String = dgRep.selectedItem.COD_GPO;
+					var ciclo:String = dgRep.selectedItem.CICLO;
+					var fechaAc:String = String(dgAc.selectedItem.FECAC) != ""? dgAc.selectedItem.FECAC : "01/01/1900"; 
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,function():void{
+								limpiarAcuerdo();
+								buscarListaAcuerdos();
+							},global.iInfo);
+						}
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					wsMS.setAccionAcuerdo.send(2, codigo, ciclo, fechaPago, fechaAc, "", 0, "", Application.application.U_ID);
+				}
+				else
+					Alert.show("Debe seleccionar un registro de acuerdo.",titulo,4,null,null,global.iAlert);	
+			}
+			
+			private function enviar():void{
+				if(valida()){
+					var fechaPago:String = fecha;
+					var fechaAc:String = dtfFechaAc.text != ""? dtfFechaAc.text : "01/01/1900";
+					var dificil:String = chkDificil.selected ? "S": "N";
+					var observ:String = txtObserv.text;
+					var codigo:String = dgRep.selectedItem.COD_GPO;
+					var ciclo:String = dgRep.selectedItem.CICLO;
+					var monto:Number = dgRep.selectedItem.PARCIALIDAD;
+					var resp:String = cboResp.selectedItem.id;
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiarAcuerdo();
+							buscarListaAcuerdos();
+						}
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					wsMS.setAccionAcuerdo.send(1, codigo, ciclo, fechaPago, fechaAc, dificil, monto, observ, resp);
+				}
+			}
+			
+			private function formateaResp():void{
+				var cont:int = _xmlResp.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				respObj.removeAll();
+				respObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlResp.Table[i].CDGPE;
+					oItem.nombre = _xmlResp.Table[i].NOMPE;		
+					item.push(oItem);
+				}
+				respObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de Acuerdos";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function initConexionRep():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}				
+			
+			private function limpiar():void{
+				ctrlFiltro.limpiar();
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));	
+			}
+			
+			private function limpiarAcuerdo():void{
+				dtfFechaAc.selectedDate = null;
+				txtObserv.text = "";
+				chkDificil.selected = false;
+				cboResp.selectedIndex = 0;
+			}
+			
+			private function limpiarListaAcuerdo():void{
+				limpiarAcuerdo();
+				dgAc.dataProvider = null;
+			}
+			
+			private function valida():Boolean{
+				if(dgRep.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro de pago esperado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFechaAc.text == "" && chkDificil.selected == false){
+					Alert.show("Debe capturar la fecha del acuerdo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtObserv.text == ""){
+					Alert.show("Debe capturar observaciones del acuerdo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboResp.selectedIndex == 0){
+					Alert.show("Debe seleccionar a un resposable de seguimiento.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function validaMonto(event:Event):void{
+				if(TextInput(event.currentTarget).text != "-"){
+					numVal.source = TextInput(event.currentTarget);
+					vResult = numVal.validate();
+			
+					if(vResult.type!=ValidationResultEvent.VALID)
+			           	TextInput(event.currentTarget).text = "";
+			    }
+			}	
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2" allowNegative="true"   
+		 decimalSeparator="." thousandsSeparator="," domain="real" required="false"/>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="310" height="360" id="canvas1">
+		<mx:Label id="lblTitulo" x="19" y="10" width="235" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvEncabezado" x="19" y="39" width="270" height="225" styleName="canvasMod">
+			<control:CtrlFiltroInfo id="ctrlFiltro" x="9" y="10" />
+		</mx:Canvas>
+		<mx:Canvas id="cnvFecha" x="20" y="272" width="270" height="42" styleName="canvasMod">
+			<mx:Label id="lblFecha" x="61" y="10" text="Fecha:"/>
+			<mx:DateField id="dtfFecha" x="107" y="8" width="100"/>
+		</mx:Canvas>
+		<mx:Button x="75.5" y="324" label="Consultar" id="btnConsultar" click="buscarPagos()"/>
+		<mx:Button x="163.5" y="324" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	</mx:Canvas>
+</mx:Canvas>

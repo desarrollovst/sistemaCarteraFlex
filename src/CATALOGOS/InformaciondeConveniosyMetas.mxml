@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar la informacion de Convenios y Metas utilizadas en el calculo de incentivos-->
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;   				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		
+			private var dPermisos:XML = new XML();
+			private var _xmlConv:XML = new XML();
+			private var _xmlMeta:XML = new XML();
+			
+			public var wsMS:WebService = new WebService();
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionConv:int;
+			private var accionMeta:int;
+			private var indConv:int;
+			private var indMeta:int;
+			private var vScroll:Number;
+			private var titulo:String;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			private function activarContConv(band:Boolean):void{
+				if(edicion == true)
+					btnEditarConv.enabled = band;
+				if(borrado == true)
+					btnEliminarConv.enabled = band;
+			}
+			
+			private function activarContMeta(band:Boolean):void{
+				if(edicion == true)
+					btnEditarMeta.enabled = band;
+				if(borrado == true)
+					btnEliminarMeta.enabled = band;
+			}
+			
+			private function actualizarConv(event:Event):void{
+				buscarConv(1);
+			}
+			
+			private function actualizarMeta(event:Event):void{
+				buscarMeta(1);
+			}
+			
+			private function buscarConv(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				btnBuscarConv.setFocus();
+				dgConv.dataProvider = null;
+			
+				du.initWsCat(wsCat);
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlConv = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlConv.elements().length() > 0){
+						dgConv.dataProvider = _xmlConv.Table;
+						
+						if(accionConv == 2){
+							dgConv.validateNow();
+							dgConv.verticalScrollPosition = vScroll;
+							dgConv.selectedIndex = indConv;
+							this.accionConv = 0;
+						}
+					}	
+				});
+				//Obtiene informacion de los Convenios de Asesor
+				wsCat.getListado.send(49, params);
+			}
+			
+			private function buscarMeta(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				btnBuscarMeta.setFocus();
+				dgMeta.dataProvider = null;
+				
+				du.initWsCat(wsCat);
+				if(tipo == 1)
+					Application.application.bloquear();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlMeta = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlMeta.elements().length() > 0){
+						dgMeta.dataProvider = _xmlMeta.Table;
+						
+						if(accionMeta == 2){
+							dgMeta.validateNow();
+							dgMeta.verticalScrollPosition = vScroll;
+							dgMeta.selectedIndex = indMeta;
+							this.accionMeta = 0;
+						}
+					}		
+				});
+				//Obtiene informacion de las Metas por Asesor
+				wsCat.getListado.send(50, params);
+			}
+			
+			private function eliminarConv():void{
+				Alert.show("¿Desea eliminar el Convenio del Asesor?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarConv,global.iQuest);
+			}
+			
+			private function eliminarMeta():void{
+				Alert.show("¿Desea eliminar la Meta del Asesor?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarMeta,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indConv = -1;
+				this.indMeta = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Información de Convenios y Metas";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function manejadorEliminarConv(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codAnt:String = dgMeta.selectedItem.CODIGO;
+					initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionConv);
+					wsMS.setAccionConv.send(3, codAnt, "", "");
+			    } 
+			}
+			
+			private function manejadorEliminarMeta(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codTipo:String = dgConv.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionMeta);
+					wsMS.setAccionMeta.send(3, codTipo, "", "");
+			    } 
+			}
+			
+			public function mostrarFormConv(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO 
+				var comMttoConv:MttoConvenio = new MttoConvenio();
+				comMttoConv = MttoConvenio(PopUpManager.createPopUp(this,MttoConvenio,true));
+				switch(tipo){
+					case 1: 
+						comMttoConv.addEventListener(Event.REMOVED_FROM_STAGE, actualizarConv);
+						PopUpManager.centerPopUp(comMttoConv);
+						comMttoConv.registraInfoConvenio();
+						break;
+					case 2: 
+						if (dgConv.selectedIndex >= 0){
+							accionConv = tipo; 
+							var asesor:String = dgConv.selectedItem.NOMINA;
+							var fecIni:String = dgConv.selectedItem.FECINI;
+							var fecFin:String = dgConv.selectedItem.FECFIN;
+							var monto:Number = dgConv.selectedItem.INCENTIVO;
+							var indice:int = dgConv.selectedIndex;
+							iniVar();
+							this.indConv = indice;
+							this.vScroll = dgConv.verticalScrollPosition;
+							comMttoConv.addEventListener(Event.REMOVED_FROM_STAGE, actualizarConv);
+							PopUpManager.centerPopUp(comMttoConv);
+							comMttoConv.cargaInfoConvenio(asesor,fecIni,fecFin,monto);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Convenio de Asesor",titulo,4,null,null,global.iAlert);
+					break;
+				}
+			}
+			
+			public function mostrarFormMeta(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoMeta:MttoMeta = new MttoMeta();
+				comMttoMeta = MttoMeta(PopUpManager.createPopUp(this,MttoMeta,true)); 
+				switch(tipo){
+					case 1: 
+						comMttoMeta.addEventListener(Event.REMOVED_FROM_STAGE, actualizarMeta);
+						PopUpManager.centerPopUp(comMttoMeta);
+						comMttoMeta.registraInfoMeta();
+						break;
+					case 2: 
+						if (dgMeta.selectedIndex >= 0){
+							accionMeta = tipo;
+							var asesor:String = dgMeta.selectedItem.NOMINA;
+							var mes:int = dgMeta.selectedItem.MES;
+							var anio:int = dgMeta.selectedItem.ANIO;
+							var meta:Number = dgMeta.selectedItem.META;
+							var pondCol:Number = dgMeta.selectedItem.METACOL;
+							var pondCtes:Number = dgMeta.selectedItem.METACTES;
+							var pondDes:Number = dgMeta.selectedItem.METADES;
+							var pondMora:Number = dgMeta.selectedItem.METAMOR;
+							var indice:int = dgMeta.selectedIndex;
+							iniVar();
+							this.indMeta = indice;
+							this.vScroll = dgMeta.verticalScrollPosition;
+							comMttoMeta.addEventListener(Event.REMOVED_FROM_STAGE, actualizarMeta);	
+							PopUpManager.centerPopUp(comMttoMeta);
+							comMttoMeta.cargaInfoMeta(asesor,mes,anio,meta,pondCol,pondCtes,pondDes,pondMora);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Meta de Asesor",titulo,4,null,null,global.iAlert); 
+						break;
+				}
+			}
+			
+			private function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								break;	
+							case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;				
+						}
+					}
+					btnAgregarConv.enabled = alta;
+					btnAgregarMeta.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			private function seleccionaConv():void{
+				if (dgConv.selectedIndex >= 0){
+					activarContConv(true);
+				}
+				else{
+					activarContConv(false);
+				}
+			}
+			
+			private function seleccionaMeta():void{
+				if (dgMeta.selectedIndex >= 0){
+					activarContMeta(true);
+				}
+				else{
+					activarContMeta(false);
+				}
+			}
+			
+			private function setAccionConv(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionConv);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarConv(1);
+				else
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+			}
+
+			private function setAccionMeta(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionMeta);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarMeta(1);
+				else
+					Alert.show("Error en el proceso: " + res,titulo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="461">
+		<mx:Label x="18" y="26" text="CONVENIOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="10" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarConv" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarConv(1)" toolTip="Buscar Convenio" width="40" />
+			<mx:Button id="btnEditarConv" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormConv(2)" toolTip="Editar Convenio" width="40"/>
+			<mx:Button id="btnAgregarConv" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormConv(1)" toolTip="Registrar Convenio" width="40"/>
+			<mx:Button id="btnEliminarConv" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarConv()" enabled="false" toolTip="Eliminar Convenio" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18" y="55" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgConv" x="10" y="10" width="700.5" height="143" sortableColumns="false" itemDoubleClick="mostrarFormConv(2)" 
+				doubleClickEnabled="true" horizontalScrollPolicy="auto" itemClick="seleccionaConv()"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NÓMINA ASESOR" dataField="NOMINA" width="110"/>
+					<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMPE" width="220"/>
+					<mx:DataGridColumn headerText="FECHA INICIO" dataField="FECINI" width="100"/>
+					<mx:DataGridColumn headerText="FECHA FIN" dataField="FECFIN" width="80"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="INCENTIVO" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="254" text="METAS Y PONDERACIONES" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvTasa" x="18" y="283" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgMeta" x="10" y="10" width="704.5" height="143" sortableColumns="false" doubleClickEnabled="true" itemDoubleClick="mostrarFormMeta(2)"
+				horizontalScrollPolicy="auto" itemClick="seleccionaMeta()"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NÓMINA ASESOR" dataField="NOMINA" width="110"/>
+					<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMPE" width="220"/>
+					<mx:DataGridColumn headerText="MES" dataField="MES" width="50"/>
+					<mx:DataGridColumn headerText="AÑO" dataField="ANIO" width="50"/>
+					<mx:DataGridColumn headerText="META" dataField="META" width="60"/>
+					<mx:DataGridColumn headerText="PONDERACION COLOCACION" dataField="METACOL" width="180"/>
+					<mx:DataGridColumn headerText="PONDERACION CLIENTES" dataField="METACTES" width="160"/>
+					<mx:DataGridColumn headerText="PONDERACION DESERCION" dataField="METADES" width="170"/>
+					<mx:DataGridColumn headerText="PONDERACION MORA" dataField="METAMOR" width="160"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="539.5" y="238" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarMeta" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarMeta(1)" toolTip="Buscar Meta" width="40" />
+			<mx:Button id="btnEditarMeta" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormMeta(2)" toolTip="Editar Meta" width="40"/>
+			<mx:Button id="btnAgregarMeta" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormMeta(1)" toolTip="Registrar Meta" width="40"/>
+			<mx:Button id="btnEliminarMeta" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarMeta()" enabled="false" toolTip="Eliminar Meta" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

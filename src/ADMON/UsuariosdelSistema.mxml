@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="initApp()" creationPolicy="all">
+	<mx:Label x="10" y="10" text="USUARIOS DEL SISTEMA" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:DataGrid x="10" y="49" width="800" height="259" dataProvider="{dpUsuariosF}" id="dgUsuarios" 
+		itemClick="muestraDetalle()" doubleClickEnabled="true" itemDoubleClick="modifica()" >
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE1"/>
+			<mx:DataGridColumn headerText="SEGUNDO NOMBRE" dataField="NOMBRE2"/>
+			<mx:DataGridColumn headerText="APELLIDO PATERNO" dataField="PRIMAPE"/>
+			<mx:DataGridColumn headerText="APELLIDO MATERNO" dataField="SEGAPE"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Script>
+	
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.events.CloseEvent;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		
+		public var ind:int;
+		public var vScroll:Number;
+		private var ws:WebService;
+		private var du:Utils;
+		private var global:Globales;
+		
+		[Bindable]
+		public var dpUsuarios:XML = new XML();
+		[Bindable]
+		public var dpUsuariosF:XMLList = new XMLList();
+		
+		public function activa(_Acciones:XML):void{
+			var v_acciones:int = _Acciones.elements().length();
+			for (var i:int = 0;i < v_acciones; i++){
+				var dObj:DisplayObject;
+				var str:String = _Acciones.Table[i].OBJETO;
+				dObj = getChildByName(_Acciones.Table[i].OBJETO);
+				
+				if (dObj != null)
+					dObj.visible = true;	
+			}
+		}
+		
+		private function agrega():void{
+			var usrAdd:MttoUsuario = new MttoUsuario();												
+			usrAdd = MttoUsuario(PopUpManager.createPopUp(this,MttoUsuario,true));				
+			usrAdd.registraInfoUsuario();
+			usrAdd.addEventListener('CloseEvent',recargar);		
+			PopUpManager.centerPopUp(usrAdd);							
+		}
+		
+		private function baja():void{
+			if(dgUsuarios.selectedIndex < 0){
+				Alert.show("Debe seleccionar un registro de usuario.","Baja Usuario",4,null,null,global.iAlert);
+				return;
+			}
+			var usrAdd:MttoBaja = new MttoBaja();												
+			usrAdd = MttoBaja(PopUpManager.createPopUp(this,MttoBaja,true));				
+		    usrAdd.init(dgUsuarios.selectedItem.CODIGO, dgUsuarios.selectedItem.BAJA);
+			usrAdd.addEventListener('CloseEvent',recargar);		
+			PopUpManager.centerPopUp(usrAdd);							
+		}
+		
+		private function buscaUsuario():void{
+			if(txtBusqueda.text != ''){
+				switch(lstBuscar.text){
+					case "Código":
+						dpUsuariosF = dpUsuarios.Table.(CODIGO.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());
+						break;
+					case "Nombre":
+						dpUsuariosF = dpUsuarios.Table.(NOMBRE1.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());												
+						break;
+					case "Apellido Paterno":
+						dpUsuariosF = dpUsuarios.Table.(PRIMAPE.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());
+						break;
+				}
+				muestraDetalle();
+			}
+			else
+				dpUsuariosF = dpUsuarios.elements();
+		}
+		
+		private function cargaUsuario():void{
+			var Params:Array;
+			/*ws = du.initWs(ws);
+			du.sCursor();
+			du.ejecutaWsMethod(ws,function(evt_2:ResultEvent):void{
+				var dpAcciones:XML = new XML(evt_2.result.toString());
+				Activar(dpAcciones);*/
+				//du.rCursor();
+				//ws = du.closeWs(ws);
+					ws = du.initWs(ws);
+					Application.application.bloquear();
+					//initConexion();
+					du.sCursor();
+					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+						dpUsuarios = new XML(evt.result.toString());	
+						buscaUsuario();
+						Application.application.desbloquear();
+						du.rCursor();
+						du.closeWs(ws);	
+					});
+					ws.ES_Admin_Usuarios.send(4,null);					
+			/*});
+			Params = new Array();
+			Params[0] = Application.application.PERFIL_ID;
+			Params[1] = Application.application._Current_Mod_Id;
+			ws.ESLoginMethods.send(6,Params);*/
+		}
+		
+		private function confirmaBorrar():void{
+			if(dgUsuarios.selectedIndex == -1){
+				Alert.show("Debe seleccionar un registro de usuario.","Eliminar usuario",4,null,null,global.iAlert);
+				return;
+			}				
+			Alert.show("¿Confirma eliminar el usuario seleccionado?","Eliminar usuario",3,null,eliminaUsuario,global.iQuest,4);				
+		}
+		
+		private function eliminaUsuario(evt:CloseEvent):void{
+			var ID_USR:String = '0';
+			ID_USR = dgUsuarios.selectedItem.CODIGO;
+			if(evt.detail == Alert.YES){
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+					var res:String = evt.result.toString();
+					if(res.substr(0,1) == "1"){
+						txtBusqueda.text = "";
+						cargaUsuario();	
+					}
+					else
+						Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Usuario",4,null,eliminaUsuario,global.iAlert,4);
+						
+					du.closeWs(ws);
+					du.rCursor();
+				});
+				var Params:Array = new Array();
+				Params[0] = ID_USR;
+				ws.ES_Admin_Usuarios.send(3,Params);
+			}
+		}
+		
+		private function initApp():void{
+			du = new Utils();
+			global = new Globales();
+			ws = new WebService();
+			cargaUsuario();				
+		}						
+		
+		private function modificaCriterio():void{
+			txtBusqueda.text = "";
+			buscaUsuario();
+		}
+		
+		private function modifica():void{
+			if(dgUsuarios.selectedIndex == -1){
+				Alert.show("Debe seleccionar un registro de usuario.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return;
+			}
+			ind = dgUsuarios.selectedIndex;
+			vScroll = dgUsuarios.verticalScrollPosition;
+			var usrAdd:MttoUsuario = new MttoUsuario();								
+			usrAdd = MttoUsuario(PopUpManager.createPopUp(this,MttoUsuario,true));								
+			usrAdd.cargaInfoUsuario();
+			usrAdd.UsrInfo = dgUsuarios.selectedItem as XML;
+			usrAdd.addEventListener('CloseEvent',recargar);
+			PopUpManager.centerPopUp(usrAdd);	
+		}
+		
+		private function muestraDetalle():void{
+			if(dgUsuarios.selectedIndex >= 0){
+				var nomSuc:String = dgUsuarios.selectedItem.SUCURSAL.toString();
+				txtSucursal.text = dgUsuarios.selectedItem.CDGCO.toString() + (nomSuc != ""? " - " + nomSuc: "");
+				txtPerfil.text = dgUsuarios.selectedItem.PERFIL.toString(); 	
+				txtNomina.text = dgUsuarios.selectedItem.TELEFONO.toString();
+				txtNomJefe.text = dgUsuarios.selectedItem.CALLE.toString();
+				txtFecIng.text = dgUsuarios.selectedItem.ALTA.toString();
+				txtFecBaja.text = dgUsuarios.selectedItem.BAJA.toString();
+			}	
+			else{
+				txtSucursal.text = "";
+				txtPerfil.text = ""; 	
+				txtNomina.text = "";
+				txtNomJefe.text = "";
+				txtFecIng.text = "";
+				txtFecBaja.text = "";
+			}
+		}
+		
+		private function recargar(evt:CloseEvent):void{	
+			if(evt.target is MttoUsuario){
+				var alta:MttoUsuario = evt.target as MttoUsuario;				
+				alta.removeEventListener('CloseEvent',recargar);
+				PopUpManager.removePopUp(alta);	
+			}
+			else if(evt.target is MttoBaja){
+				var baja:MttoBaja = evt.target as MttoBaja;				
+				baja.removeEventListener('CloseEvent',recargar);
+				PopUpManager.removePopUp(baja);	
+			}
+			cargaUsuario();
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:TabNavigator x="10" y="362" width="800" height="168">
+		<mx:Canvas label="Detalle de usuario" width="100%" height="100%" id="TabDetalle">
+			<mx:Canvas styleName="canvasMod" width="786" height="120" x="5">
+				<mx:Label x="32" y="9" text="Sucursal:"/>
+				<mx:Text x="91" y="10" width="150" id="txtSucursal"/>
+				<mx:Label x="51" y="37" text="Perfil:"/>
+				<mx:Text x="91" y="38" width="150" id="txtPerfil"/>
+				<mx:Label text="Nómina:" x="325" y="10"/>
+				<mx:Text x="376" y="10" width="52" id="txtNomina"/>
+				<mx:Label text="Nómina Jefe:" x="301" y="38"/>
+				<mx:Text id="txtNomJefe" x="376" y="38" width="52"/>
+				<mx:Label text="Fecha Ingreso:" x="520" y="10"/>
+				<mx:Label text="Fecha Baja:" x="535" y="38"/>
+				<mx:Text x="605" y="10" width="80" id="txtFecIng"/>
+				<mx:Text x="605" y="38" width="80" id="txtFecBaja"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Canvas styleName="canvasMod" x="10" y="316" height="38" width="185">
+		<mx:Button id="btnAlta" x="13.5" y="3" icon="@Embed(source='assets/images/add.png')" width="40" toolTip="Agregar Usuario" click="agrega()"/>
+		<mx:Button id="btnCambio" x="71.5" y="3" icon="@Embed(source='assets/images/edit.png')" width="40" toolTip="Editar Usuario" click="modifica()"/>
+		<mx:Button id="btnBaja" x="129.5" y="3" icon="@Embed(source='assets/images/iconDelete.png')" width="40" toolTip="Baja de Usuario" click="baja()"/>
+	</mx:Canvas>
+	<mx:TextInput x="404" y="17" width="150" id="txtBusqueda" change="buscaUsuario()"/>
+	<mx:Label x="195" y="19" text="Buscar:"/>
+	<mx:ComboBox x="246" y="16" width="150" id="lstBuscar" change="modificaCriterio()">
+		<mx:dataProvider>	            
+			<mx:Object label="Código" data="Codigo"/>	
+	    	<mx:Object label="Nombre" data="Nombre"/>
+	    	<mx:Object label="Apellido Paterno" data="Primape"/>     
+		</mx:dataProvider>  
+	</mx:ComboBox>
+</mx:Canvas>

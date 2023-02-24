@@ -1,0 +1,1128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="ABC">
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Canvas x="10" y="74" width="438" height="230" styleName="canvasMod">
+					<mx:Label id="lblPeriodicidad" x="90.899994" y="10"/>
+					<mx:Label x="9.900002" y="40" text="Monto Mínimo:" id="lblMin2" textAlign="right"/>
+					<mx:Label x="5.9000015" y="70" text="Monto Máximo:" id="lblMax2" textAlign="right"/>
+					<mx:Label id="lblMontoMin" x="90.899994" y="40"/>
+					<mx:Label x="211" y="40" text="Integrantes Mínimos:" id="lblMin3" textAlign="right"/>
+					<mx:Label x="207" y="70" text="Integrantes Máximos:" id="lblMax3" textAlign="right"/>
+					<mx:Label x="280" y="10" text="Plazo:" id="lblPla" textAlign="right"/>
+					<mx:Label x="193" y="100" text="Part. Hombres Máximos:" id="lblMax6" textAlign="right"/>
+					<mx:Label x="196" y="130" text="Part. Hombres Formato:" id="lblFormato1" textAlign="right"/>
+					<mx:Label x="11.900002" y="100" text="Días Mínimos:" id="lblMin1" textAlign="right"/>
+					<mx:Label x="7.9000015" y="130" text="Días Máximos:" id="lblMax1" textAlign="right"/>
+					<mx:Label x="10.900002" y="190" text="Edad Máxima:" id="lblMax4" textAlign="right"/>
+					<mx:Label x="14.900002" y="160" text="Edad Mínima:" id="lblMin4" textAlign="right"/>
+					<mx:Label x="229" y="160" text="Vigencia Mínima:" id="lblMin5" textAlign="right"/>
+					<mx:Label x="225" y="190" text="Vigencia Máxima:" id="lblMax5" textAlign="right"/>
+					<mx:Label id="lblDiasMin" x="90.899994" y="100"/>
+					<mx:Label id="lblDiasMax" x="90.899994" y="130"/>
+					<mx:Label id="lblEdadMin" x="90.899994" y="160"/>
+					<mx:Label id="lblEdadMax" x="90.899994" y="190"/>
+					<mx:Label id="lblPlazo" x="322" y="10"/>
+					<mx:Label id="lblIntegMin" x="322" y="40"/>
+					<mx:Label id="lblIntegMax" x="322" y="70"/>
+					<mx:Label id="lblPartHMax" x="322" y="100"/>
+					<mx:Label id="lblForPartHMax" x="322" y="130"/>
+					<mx:Label id="lblVigMin" x="322" y="160"/>
+					<mx:Label id="lblVigMax" x="322" y="190"/>
+					<mx:Label x="15.900002" y="10" text="Periodicidad:" id="lblPerio" textAlign="right"/>
+					<mx:Label id="lblMontoMax" x="90.899994" y="70"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblProducto" x="65.5" y="44" text="Tipo de Producto:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:ComboBox id="cboProducto" x="162.5" y="42" width="230" labelField="nombre" change="cargaListaParametrosABC()"/>
+			</mx:AddChild>
+			<mx:SetProperty name="width" value="100%"/>
+			<mx:SetProperty name="height" value="100%"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="688"/>
+		</mx:State>
+		<mx:State name="PRONAFIM">
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblFecIni" x="73.75" y="73" text="Fecha de Inicio:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:DateField id="dtfFecIni" width="100" x="161.75" y="71" enabled="true" change="validaFecha()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:DateField id="dtfFecFin" width="100" x="323.25" y="71" enabled="true" change="validaFecha()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblHasta" x="280.25" y="73" text="hasta:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:TextInput id="txtMontoMax" x="161.75" y="40" width="100" maxChars="13" change="validaMonto(event)" editable="false"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblMM" x="34.75" y="42" text="Monto Max. Acreditado:"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtImporte}" name="x" value="161.75"/>
+			<mx:SetProperty target="{lblImporte}" name="x" value="110.75"/>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblSexo" x="105.5" y="107" text="Sexo:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblRegion" x="97.5" y="139" text="Región:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Label id="lblCoord" x="87.5" y="171" text="Sucursal:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:ComboBox id="cboSexo" x="146.5" y="105" width="170" enabled="false" labelField="nombre"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:ComboBox id="cboRegion" x="146.5" y="137" width="170" enabled="false" labelField="nombre" change="cargaCoord()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:ComboBox id="cboCoord" x="146.5" y="169" width="170" enabled="false" labelField="nombre"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:CheckBox id="chkSexo" x="33" y="107" width="16" change="{cboSexo.enabled = chkSexo.selected}"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:CheckBox id="chkRegion" x="33" y="139" width="16" change="{cboRegion.enabled = chkRegion.selected}"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:CheckBox id="chkCoord" x="33" y="171" width="16" change="{cboCoord.enabled = chkCoord.selected}"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:CheckBox id="chkDir" x="33" y="204" width="16" change="{cboEntFed.enabled = cboMunic.enabled = cboLocalidad.enabled = chkDir.selected}" enabled="false"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvDir}" position="lastChild">
+				<mx:Canvas x="73.5" y="198" width="270" height="102" styleName="canvasMod">
+					<mx:Label id="lblEntFed" x="21" y="6" text="Entidad:"/>
+					<mx:ComboBox id="cboEntFed" x="72" y="6" width="170" enabled="false" labelField="nombre" change="cargaMunicipio()"/>
+					<mx:ComboBox id="cboMunic" x="72" y="38" width="170" enabled="false" labelField="nombre" change="cargaLocalidad()"/>
+					<mx:ComboBox id="cboLocalidad" x="72" y="70" width="170" enabled="false" labelField="nombre"/>
+					<mx:Label id="lblMunic" x="12" y="38" text="Municipio:"/>
+					<mx:Label id="lblLocalidad" x="10" y="70" text="Localidad:"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente que permite realizar el marcado de fondeo para ABC-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.events.CloseEvent;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.controls.DataGrid;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		]]>
+	</mx:Script>
+
+	<!-- VARIABLES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+		private var global:Globales;
+		private var du:Utils;
+		private var titulo:String;
+		private var vResult:ValidationResultEvent;
+		
+		private var _xmlInfo:XML = new XML();
+		private var _xmlOF:XML = new XML();
+		private var _xmlLC:XML = new XML();
+		private var _xmlDisp:XML = new XML();
+		private var _xmlRes:XML = new XML();
+		
+		private var wsMS:WebService;	
+		
+		private var acredObj:ArrayCollection = new ArrayCollection();
+		private var orgObj:ArrayCollection = new ArrayCollection();
+		private var lineaObj:ArrayCollection = new ArrayCollection();
+		private var dispObj:ArrayCollection = new ArrayCollection();
+		
+		private var vg_States:String;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES PRONAFIM -->
+	<mx:Script>
+		<![CDATA[
+		private var coordObj:ArrayCollection = new ArrayCollection();
+		private var regObj:ArrayCollection = new ArrayCollection();
+		private var munObj:ArrayCollection = new ArrayCollection();
+		private var locObj:ArrayCollection = new ArrayCollection();
+		private var sexoObj:ArrayCollection = new ArrayCollection();
+				
+		private var _xmlCoord:XMLList = new XMLList;
+		private var _xmlReg:XML = new XML();
+		private var _xmlMunic:XML = new XML();
+		private var _xmlLoc:XML = new XML();
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES ABC -->
+	<mx:Script>
+		<![CDATA[
+		private var _xmlProd:XML = new XML();
+		private var _xmlParamABC:XML = new XML();
+		
+		private var vg_BajaFondeo:Boolean = false; // AYUDA A NO HACER UNA DOBLE CONSULTA AL ELIMINAR REGISTROS ANTERIORES DE PRC_FONDE
+		
+		private var acProductos:ArrayCollection = new ArrayCollection();
+		]]>
+	</mx:Script>
+
+	<!-- FORMATEOS -->
+	<mx:Script>
+		<![CDATA[
+		public function formateaCoord():void{
+			var cont:int = _xmlCoord.length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlCoord.CODIGO[i].toString();
+				oItem.nombre = _xmlCoord.NOMBRE[i].toString();
+				item.push(oItem);
+			}
+			coordObj.source = coordObj.source.concat(item);
+		}
+		private function formateaDisp():void{
+			var cont:int = _xmlDisp.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			dispObj.removeAll();
+			dispObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlDisp.Table[i].CODIGO;
+				oItem.desc = _xmlDisp.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			dispObj = new ArrayCollection(item);
+		}
+		private function formateaLC():void{
+			var cont:int = _xmlLC.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			lineaObj.removeAll();
+			lineaObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlLC.Table[i].CODIGO;
+				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			lineaObj = new ArrayCollection(item);
+		}
+		public function formateaLocalidad():void{
+			var cont:int = _xmlLoc.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			locObj.removeAll();
+			locObj.refresh();
+			
+			locObj.addItem(agregaInicial("0", "--Todas--"))
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlLoc.Table[i].NOMBRE;
+				oItem.codigo = _xmlLoc.Table[i].CODIGO;
+				item.push(oItem);
+			}
+			locObj.source = locObj.source.concat(item);
+		}
+		public function formateaMunic():void{
+			var cont:int = _xmlMunic.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			munObj.removeAll();
+			munObj.refresh();
+			
+			munObj.addItem(agregaInicial("0", "--Todas--"))
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlMunic.Table[i].NOMBRE;
+				oItem.codigo = _xmlMunic.Table[i].CODIGO;
+				item.push(oItem);
+			}
+			munObj.source = munObj.source.concat(item);
+		}
+		private function formateaOF():void{
+			var cont:int = _xmlOF.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for (var i:int = 0; i < cont; i++){
+				if(_xmlOF.Table[i].CODIGO == "0005"){
+					oItem = new Object();
+					oItem.nombre = _xmlOF.Table[i].NOMBRE;
+					oItem.codigo = _xmlOF.Table[i].CODIGO;
+					item.push(oItem);
+				}
+			}
+			orgObj = new ArrayCollection(item);
+		}
+		private function formateaProducto():void{
+			var cont:int = _xmlProd.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			acProductos = null;
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProd.Table[i].CODIGO;	
+				oItem.nombre = _xmlProd.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductos = new ArrayCollection(item);
+		}
+		public function formateaRegion():void{
+			var cont:int = _xmlReg.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlReg.Table[i].CODIGO;
+				oItem.nombre = _xmlReg.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			regObj.source = regObj.source.concat(item);
+		}
+		public function formateaSexo():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			sexoObj.removeAll();
+			sexoObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Todos--";
+			item.push(oItem);	
+			
+			oItem = new Object();
+			oItem.codigo = "F";
+			oItem.nombre = "Femenino";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "M";
+			oItem.nombre = "Masculino";
+			item.push(oItem);
+			
+			sexoObj = new ArrayCollection(item);
+		}
+		]]>
+	</mx:Script>
+
+	<!-- CARGA XML's -->
+	<mx:Script>
+		<![CDATA[
+		public function cargaCoord():void{
+			_xmlCoord = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+			
+			coordObj.removeAll();
+			coordObj.refresh();	
+			coordObj.addItem(agregaInicial("000", "--Todas--"))
+						
+			formateaCoord();
+			cboCoord.dataProvider = coordObj;
+		}
+		public function cargaLocalidad():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var entFed:String = cboEntFed.selectedItem.codigo;
+			var munic:String = cboMunic.selectedItem.codigo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			locObj.removeAll();
+			locObj.refresh();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlLoc = new XML(evt.result.toString());
+					
+				if(_xmlLoc.elements().length() > 0){
+					formateaLocalidad();
+					cboLocalidad.dataProvider = locObj;
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+			});
+			params[0] = entFed;
+			params[1] = munic;
+			params[2] = "";
+			wsCat.getCatalogoGral.send(4, params);
+		}
+		public function cargaMunicipio():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var entFed:String = cboEntFed.selectedItem.codigo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			munObj.removeAll();
+			munObj.refresh();
+			locObj.removeAll();
+			locObj.refresh();	
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlMunic = new XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if(_xmlMunic.elements().length() > 0){
+					formateaMunic();
+					cboMunic.dataProvider = munObj;
+				}
+			});
+			params[0] = entFed;
+			params[1] = "";
+			wsCat.getCatalogoGral.send(3, params);
+		}
+		public function cargaRegion():void{ 				  
+			_xmlReg = Application.application._xmlReg;
+			
+			regObj.removeAll();
+			regObj.refresh();	
+			regObj.addItem(agregaInicial("000", "--Todas--"));
+			
+			formateaRegion();
+			cboRegion.dataProvider = regObj;
+			cargaCoord();
+		}
+		private function cargaTipoProducto():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlProd = new XML(event.result);
+									
+				if(_xmlProd.elements().length() >0){
+					formateaProducto();
+					cboProducto.dataProvider = acProductos;
+				}
+					
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+				
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(45, params);
+		}
+		]]>
+	</mx:Script>
+
+	<!-- SELECCIONA -->
+	<mx:Script>
+		<![CDATA[
+		private function seleccionarLC():void{
+			cboDisp.dataProvider = null;
+			
+			if(cboLC.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlDisp = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDisp = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlDisp.elements().length() > 0){
+						formateaDisp();
+						cboDisp.dataProvider = dispObj;
+						cboDisp.selectedIndex = 0;	
+					}
+					buscarInfoDisp();
+				});
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				wsCat.getListado.send(22, params);
+			}
+			else
+				buscarInfoDisp();
+		}
+		private function seleccionarOF():void{
+			cboLC.dataProvider = null;
+			cboDisp.dataProvider = null;
+			currentState = null;
+			txtImporte.text = "";
+			
+			if(cboOF.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlLC = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLC = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlLC.elements().length() > 0){
+						formateaLC();
+						cboLC.dataProvider = lineaObj;
+						cboLC.selectedIndex = 0;
+						seleccionarTipoFondeo(orgFond);
+					}
+					buscarInfoDisp();
+				});
+				params[0] = orgFond;
+				wsCat.getListado.send(21, params);
+			}	
+			else
+				buscarInfoDisp();
+		}
+		]]>
+	</mx:Script>
+
+	<!-- VALIDACIONES -->
+	<mx:Script>
+		<![CDATA[
+		private function validaFecha():void{
+			dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		private function validaMontoFormato():void{
+			txtImporte.text = global.formatoDecimal(Number(txtImporte.text).toString());
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<!-- METODOS GENERALES -->
+	<mx:Script>
+		<![CDATA[
+		public function agregaInicial(codigo:String, texto:String):Object{
+			var oItem:Object = new Object();
+			oItem.codigo = codigo;	
+			oItem.nombre = texto;
+			return oItem;
+		}
+		private function buscarInfoDisp():void{
+			if(cboOF.selectedIndex > 0 && cboLC.selectedIndex > 0 && 
+			   cboDisp.selectedIndex > 0 && dtfFecSaldo.selectedDate){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var disp:String = cboDisp.selectedItem.codigo;
+				var fecSaldo:String = dtfFecSaldo.text;
+				var cdgProd:String  = "";
+				var tipo:Number = 1; // CUANTOS REGISTROS NO CUMPLEN CON LOS PARAMETROS ABC
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlInfo = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if(_xmlInfo.elements().length() > 0){
+						llenaRegistros();
+						
+						if(lblSaldo.text != ""){
+							var occursSaldo:int = lblSaldo.text.split(",").length - 1;
+							var saldoStr:String;
+							var i:int;
+							
+							saldoStr = lblSaldo.text;
+							
+							for(i = 0; i<= occursSaldo; i++){
+								saldoStr = saldoStr.replace(',','');
+								saldoStr = saldoStr.replace('$','');
+							}
+							
+							if(!vg_BajaFondeo){
+								if(Number(saldoStr) > 0){
+									//AQUI VA LA VALIDACIÓN PARA MARCADO ANTERIOR QUE NO CUMPLE CON PARAMETROS
+									initConexion();
+									du.sCursor();
+											
+									du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {										
+										var res:Array = evt.result.toString().split(",");
+										var creditos:String = res[0].toString();
+										var montocreditos:String = res[1].toString(); 
+										var mensaje:String;
+										
+										du.rCursor();
+										du.closeWs(wsMS);
+										
+										if(Number(creditos) > 0){
+											vg_BajaFondeo = true;
+											mensaje = "Se han encontrado " + creditos + " credito(s) cuyo monto asciende a " + 
+											global.formatoMoneda(montocreditos) + 
+											" que ya no se encuentran dentro de los parametros para el marcado de ABC." +
+											" .\n\n¿Desea iniciar el proceso de eliminación? ";
+											Alert.show(mensaje,titulo,Alert.YES|Alert.NO,null,manejaEliminaFondeoABC,global.iQuest);
+										}
+						   			});
+									//wsMS.getInfoFondeoABCRevision.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, "HUGO", tipo);	
+									wsMS.getInfoFondeoABCRevision.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, Application.application.U_ID, tipo);
+								}
+							}
+							
+							vg_BajaFondeo = false;
+						}
+					}	
+				});
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				params[2] = disp;
+				params[3] = fecSaldo;
+				wsCat.getInfoRegistro.send(13, params);
+			}
+			else{
+				//Alert.show("Debe seleccionar todos los datos necesarios para realizar la consulta.",titulo,4,null,null,global.iAlert);
+				lblImpDisp.text = "";
+				lblImpMarc.text = "";
+				lblSaldo.text = "";
+				lblAforo.text = "";
+				lblTotDisp.text = "";
+			}			
+		}
+		
+		private function manejaEliminaFondeoABC(event:CloseEvent):void{
+			if(event.detail==Alert.YES){
+				eliminaFondeoABCAuto();
+			}
+			else
+				vg_BajaFondeo = false;
+		}
+		
+		public function eliminaFondeoABCAuto():void{
+			var orgFond:String = cboOF.selectedItem.codigo;
+			var lineaCred:String = cboLC.selectedItem.codigo;
+			var disp:String = cboDisp.selectedItem.codigo;
+			var fecSaldo:String = dtfFecSaldo.text;
+			var cdgProd:String  = "";
+			var tipo:Number = 2; // ELIMINA LOS REGISTROS DE PRF_FONDEO Y LOS INSERTA EN BITACORA_ELIMINACION_DATOS
+			
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+				var res:String = evt.result.toString();
+				
+				du.rCursor();
+				du.closeWs(wsMS);
+				Application.application.desbloquear();
+					
+  			    Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+  			    buscarInfoDisp();
+			});
+			wsMS.getInfoFondeoABCRevision.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, Application.application.U_ID, tipo); 
+			//wsMS.getInfoFondeoABCRevision.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, "HUGO", tipo); 
+		}
+		
+		private function enviar():void{			
+			if(valida()){
+				if(vg_States == "0002")
+					enviarPRONAFIM();
+				else if (vg_States == "0005")
+					enviarABC();
+			}
+		}
+		private function enviarABC():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			var occursImporte:int = txtImporte.text.split(",").length - 1;
+			var occursSaldo:int = txtImporte.text.split(",").length - 1;
+			var importeStr:String;
+			var saldoStr:String;
+			var i:int;
+			
+			importeStr = txtImporte.text;
+			saldoStr = lblSaldo.text;
+			
+			for(i = 0; i<= occursImporte; i++){
+				importeStr = importeStr.replace(',','');
+			}
+			
+			for(i = 0; i<= occursSaldo; i++){
+				saldoStr = saldoStr.replace(',','');
+				saldoStr = saldoStr.replace('$','');
+			}
+			
+			var orgFond:String = cboOF.selectedItem.codigo;
+			var lineaCred:String = cboLC.selectedItem.codigo;
+			var disp:String = cboDisp.selectedItem.codigo;
+			var importe:Number = Number(importeStr);
+			var fecSaldo:String = dtfFecSaldo.text;
+			//var cdgProd:String = cboProducto.selectedItem.codigo;
+			var cdgProd:String  = "";
+			 
+			Application.application.bloquear();
+			initConexion();
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				var res:String = evt.result.toString();
+
+   				du.closeWs(wsMS);		
+				
+				if(res.substr(0,1) == "1"){
+					du.initWsCat(wsCat);
+					
+					du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void {											
+						_xmlRes = new XML(ev.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if(_xmlRes.elements().length() - 1 > 0){
+							//var cont:Number = _xmlRes.elements().length() - 1;
+							var cont:Number = 0;
+							var mensaje:String;
+							var monto:Number = 0;
+							
+							for(var i:int = 0; i< _xmlRes.elements().length() - 1; i++){
+								if(_xmlRes.Table[i].REGISTRO == "N"){ 
+									monto = monto + Number(_xmlRes.Table[i].SALDO);
+									cont = cont + 1;
+								}
+							}  
+							
+							if(Number(saldoStr) > monto){
+								var diferencia:Number = Number(saldoStr) - monto; 
+								mensaje = "Se han encontrado " + cont.toString() + " credito(s) cuyo monto asciende a " 
+								+ global.formatoMoneda(monto.toString()) 
+								+ ".\n\nFaltan " + global.formatoMoneda(diferencia.toString()) + " para lograr el saldo requerido."
+								+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
+							}
+							else{
+								mensaje = "Se han encontrado " + cont.toString() + " creditos(s) cuyo monto asciende a " 
+								+ global.formatoMoneda(monto.toString()) 
+								+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
+							}
+							
+							formateaRegistro(ev.result.toString());
+							Alert.show(mensaje,titulo,Alert.YES|Alert.NO,null,manejaAsignaFondeoABC,global.iQuest);
+						}
+						else{
+							Alert.show("No se encontró información que coincida con los criterios de consulta " +
+							" o no encontraron credito(s) que cumpla con el monto requerido de: $" + txtImporte.text + "." + 
+							"\n\nVerifique la información selecionada.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					//params[0] = "HUGO";
+					params[0] = Application.application.U_ID;
+					wsCat.getListado.send(34, params);
+				}
+				else{
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
+				}					
+			});
+			//wsMS.getInfoFondeoABC.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, importe, "HUGO");
+			wsMS.getInfoFondeoABC.send(orgFond, lineaCred, disp, fecSaldo, cdgProd, importe, Application.application.U_ID);
+			
+		}
+		
+		public function formateaRegistro(datos:String):void{
+			var array:Array;
+			var xml:XMLDocument = new XMLDocument( datos ); 
+     		var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     		var data:Object = decoder.decodeXML( xml );  
+     	
+			array = ArrayUtil.toArray(data.NewDataSet.Table);
+			
+			var cont:Number = array.length;
+			   
+			acredObj = new ArrayCollection(array);
+			acredObj.removeItemAt(cont-1);
+		}
+		
+		private function manejaAsignaFondeoABC(event:CloseEvent):void{
+			if(event.detail==Alert.YES){
+				asignaFondeoABC();
+			}
+		}
+		public function asignaFondeoABC():void{
+			var orgFond:String = cboOF.selectedItem.codigo;
+			var lineaCred:String = cboLC.selectedItem.codigo;
+			var disp:String = cboDisp.selectedItem.codigo;
+			var cadena:Array;
+			var registro:String = "";
+			var tipoAccion:int = 2;
+			var i:int;
+			
+			cadena = formateaRegAcred().split(";");
+			
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
+				var res:String = evt.result.toString();
+				
+				if (res.substr(0,1) == "1"){
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+							
+		  			    Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+		  			    buscarInfoDisp();
+					}); 
+								
+					// ASIGNA EL FONDEO CON EL SPASIGNAFONDEO
+					wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, tipoAccion, registro, Application.application.U_ID);
+				}
+				else{
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
+				}
+			});
+			// ENVIA LOS REGISTROS A FONDEAR A LA TABLA FONDEO_CADENA
+			wsMS.setAccionFondeoCadena.send(cadena, Application.application.U_ID, "ABC", orgFond, lineaCred, disp, 1);
+		}
+		
+		public function formateaRegAcred():String{
+			var listaAcred:ArrayCollection = acredObj;
+			var registro:String = "";
+			var i:int;
+			var contador:int = 250;
+			var repeticion:int = 1;
+			
+			for (i = 0; i < listaAcred.length; i++){
+				registro += (registro != "" ? ",":"") + listaAcred[i].CDGNS + listaAcred[i].CICLO + listaAcred[i].CDGCL;
+				
+				if(i == contador){
+					registro += ";"
+					repeticion = repeticion + 1;
+					contador = contador + 250;
+				}
+			}
+			
+			for(i = 0; i <= repeticion; i++){
+				registro = registro.replace(";,",";");
+			}
+			
+			return registro;
+		}
+		
+		private function enviarPRONAFIM():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;	
+		}
+				
+		private function initApp():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales(); 
+			du = new Utils();
+			titulo = "Asignación de Fondeo ABC";
+			lblTitulo.text = titulo.toUpperCase();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOF = new XML(evt.result.toString());
+					
+				if(_xmlOF.elements().length() > 0){
+					formateaOF();
+					cboOF.dataProvider = orgObj;
+				}
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				
+			});
+			//Obtiene informacion de las Organizaciones Fondeadoras
+			wsCat.getCatalogoGral.send(29);			
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function llenaRegistros():void{
+			
+			// ---> COMENTAR PARA PRUEBAS
+			var porc:Number = Number(_xmlInfo.Table[0].AFORO);
+			var impDis:Number = Number(_xmlInfo.Table[0].CANTIDAD);
+			var porcImp:Number = porcImp = (porc * impDis) / 100; 
+			var cant:Number = Number(_xmlInfo.Table[0].AFORO);
+			
+			lblImpDisp.text = global.formatoMoneda(Number(impDis).toString());
+			lblImpMarc.text = global.formatoMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
+			lblSaldo.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+			txtImporte.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+			
+			if(vg_States == "0005"){ //ABC
+				if(_xmlInfo.Table[0].FAFORO == "P"){
+					lblAforo.text = porc + " %";
+					lblTotDisp.text = global.formatoMoneda((impDis + porcImp).toString());  
+				}
+				else if (_xmlInfo.Table[0].FAFORO == "E"){					
+					lblAforo.text = cant.toString();
+					lblTotDisp.text = global.formatoMoneda((cant + impDis).toString());
+				}
+			}
+			
+			if(vg_States == "0002"){ //PRONAFIM
+				txtMontoMax.text = _xmlInfo.Table[0].MONTOMAX;
+				dtfFecIni.selectedDate = global.convCadenaFecha(_xmlInfo.Table[0].FINICIO.toString());
+				dtfFecFin.selectedDate = global.convCadenaFecha(_xmlInfo.Table[0].FFIN.toString());
+			}
+			
+			if(_xmlInfo.Table[0].FFIN.toString() != ""){
+				lblFecEnvio.text = "ÚLTIMO REPORTE ENVIADO EL " + _xmlInfo.Table[0].FFIN.toString(); 	
+			}
+		}
+		private function QuitaMontoFormato():void{
+			var occurs:int = txtImporte.text.split(",").length - 1;
+			
+			for(var i:int = 0; i<= occurs; i++){
+				txtImporte.text = txtImporte.text.replace(',','');
+			}
+		}
+		private function seleccionarTipoFondeo(orgFond:String):void{
+			txtImporte.text = "";
+			txtImporte.editable = false;
+			vg_States = orgFond;
+			
+			if(vg_States == "0005"){
+				currentState = "ABC";
+				limpiaABC();
+				cargaTipoProducto();
+				txtImporte.editable = true;	
+			}
+			else if(vg_States == "0002"){
+				currentState = "PRONAFIM";
+				txtMontoMax.text = "";
+				dtfFecIni.text = "";
+				dtfFecFin.text = "";
+				
+				formateaSexo();
+				cboSexo.dataProvider = sexoObj;
+				cargaRegion();
+			}
+		}
+		private function valida():Boolean{
+			if(lblSaldo.text == "" && lblImpDisp.text == "" && lblImpMarc.text == ""){
+				Alert.show("Para iniciar el proceso debe seleccionar los criterios de fondeo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtImporte.text == ""){
+				Alert.show("Debe capturar el importe que debe asignarse.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(Number(txtImporte.text) > Number(global.formatoNumerico(lblSaldo.text))){
+				Alert.show("El importe capturado no puede ser mayor que el saldo disponible.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFecSaldo.selectedDate == null){
+				Alert.show("Debe seleccionar la fecha de cálculo de saldos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+
+			/* if(vg_States == "0005"){
+				if(cboProducto.selectedIndex == 0){
+					Alert.show("Debe seleccionar el tipo de producto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+			} */
+			
+			return true;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- METODOS ABC -->
+	<mx:Script>
+		<![CDATA[	
+		private function cargaListaParametrosABC():void{
+			limpiaABC();
+						
+			if(cboProducto.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codigo:String = cboProducto.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlParamABC = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlParamABC = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlParamABC.elements().length() > 0){
+						lblPeriodicidad.text = _xmlParamABC.Table[0].PERIODICIDADSTR;
+						lblMontoMin.text = global.formatoMoneda(Number(_xmlParamABC.Table[0].MONTOMIN).toString());
+						lblMontoMax.text = global.formatoMoneda(Number(_xmlParamABC.Table[0].MONTOMAX).toString());
+						lblDiasMin.text = _xmlParamABC.Table[0].MORAMIN;
+						lblDiasMax.text = _xmlParamABC.Table[0].MORAMAX;
+						lblEdadMin.text = _xmlParamABC.Table[0].EDADMIN;
+						lblEdadMax..text = _xmlParamABC.Table[0].EDADMAX;
+						lblPlazo.text = _xmlParamABC.Table[0].PLAZO;
+						lblIntegMin.text = _xmlParamABC.Table[0].INTEGMIN;
+						lblIntegMax.text = _xmlParamABC.Table[0].INTEGMAX;
+						lblForPartHMax.text = _xmlParamABC.Table[0].FMAXINTEGHOMSTR;
+						lblVigMin.text = _xmlParamABC.Table[0].VIGMIN;
+						lblVigMax.text = _xmlParamABC.Table[0].VIGMAX;
+						
+						if(_xmlParamABC.Table[0].FMAXINTEGHOM == "P") 
+							lblPartHMax.text = _xmlParamABC.Table[0].MAXINTEGHOM + " %";
+						else
+							lblPartHMax.text = _xmlParamABC.Table[0].MAXINTEGHOM;
+						
+					}
+				});
+				params[0] = codigo;
+				wsCat.getCatalogoGral.send(47, params);
+			}
+		}
+		private function limpiaABC():void{
+			lblPeriodicidad.text = "";
+			lblMontoMin.text = "";
+			lblMontoMax.text = "";
+			lblDiasMin.text = "";
+			lblDiasMax.text = "";
+			lblEdadMin.text = "";
+			lblEdadMax..text = "";
+			lblPlazo.text = "";
+			lblIntegMin.text = "";
+			lblIntegMax.text = "";
+			lblPartHMax..text = "";
+			lblForPartHMax.text = "";
+			lblVigMin.text = "";
+			lblVigMax.text = "";
+		}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Canvas x="0" y="0" width="492" height="685" backgroundAlpha="1.0" backgroundColor="#FFFFFF"  id="canvas1">
+		<mx:Canvas id="cnvFondeo" x="10" y="55" width="460" height="247" styleName="canvasMod">
+		<mx:Label id="lblOF" x="70.05" y="13" text="Fondeadora:"/>
+			<mx:ComboBox id="cboOF" x="144.05" y="11" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+			<mx:Label id="lblLC" x="65.05" y="43" text="Línea Crédito:"/>
+			<mx:ComboBox id="cboLC" x="144.05" y="41" width="230" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+			<mx:Label id="lblDisp" x="73.05" y="73" text="Disposición:"/>
+			<mx:ComboBox id="cboDisp" x="144.05" y="71" width="230" labelField="desc" change="buscarInfoDisp()"/>
+			<mx:Label id="lblEtqImpDisp" x="36" y="133" text="Importe Disposición:"/>
+			<mx:Label id="lblEtqImpMarc" x="246.9" y="163" text="Importe Marcado:"/>
+			<mx:Label id="lblEtqSaldo" x="299.9" y="133" text="Saldo:"/>
+			<mx:Button id="btnBusqDisp" x="378.9" y="43" icon="@Embed(source='assets/images/iconBusq.png')" toolTip="Buscar Info Disposición" width="40" click="buscarInfoDisp()" visible="false"/>
+			<mx:Label id="lblImpDisp" x="145" y="133"/>
+			<mx:Label id="lblImpMarc" x="342.9" y="163"/>
+			<mx:Label id="lblSaldo" x="342.9" y="133"/>
+			<mx:Label id="lblFecSaldo" x="10" y="103" text="Fecha Cálculo de Saldos:"/>
+			<mx:DateField id="dtfFecSaldo" width="110" x="145" y="101" change="buscarInfoDisp()"/>
+			<mx:Label id="lblFecEnvio" x="97.95" y="222" width="262.05" fontStyle="italic" fontWeight="bold" textAlign="center"/>
+			<mx:Label id="lblEtqAforo" x="101" y="163" text="Aforo:"/>
+			<mx:Label id="lblAforo" x="145" y="163"/>
+			<mx:Label id="lblEtqTotDisp" x="48" y="193" text="Total Disposición:"/>
+			<mx:Label id="lblTotDisp" x="145" y="193"/>
+		</mx:Canvas>
+		<mx:Label id="lblFondeo" x="10" y="36" text="Criterios de Fondeo"/>
+		<mx:Label id="lblTitulo" x="10" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvDir" x="10" y="330" styleName="canvasMod" width="460" height="315">
+			<mx:Label id="lblImporte" x="110.75" y="12" text="Importe:"/>
+			<mx:TextInput id="txtImporte" x="161.75" y="10" width="100" maxChars="13" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)" editable="false"/>
+		</mx:Canvas>
+		<mx:Label id="lblConsulta" x="10" y="310" text="Criterios de Selección"/>
+		<mx:Button id="btnAceptar" x="406" y="653" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="290" height="335" backgroundAlpha="1.0" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" backgroundColor="#FFFFFF" creationPolicy="all" 
+	xmlns:control="Controls.*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.events.IndexChangedEvent;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML = new XML();			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+
+			public function enviar():void{
+				if(valida()){
+					var consulta:String;
+					var rep:String;		
+					var asesor:String;
+					var grupo:String;
+					var ciclo:String;
+					grupo = txtGrupo.text;
+					ciclo = txtCiclo.text;							
+					rep = "52"; 
+					var id:String = "&id=" + rep;					 
+					var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();					
+					if(ctrlFiltro.obtieneAsesor() != "000000"){
+						asesor = "&asesor=" + ctrlFiltro.obtieneAsesor();
+					}else {
+						asesor = "&asesor=";
+					}
+					if (grupo != null && grupo != "" && ciclo != null && ciclo != ""){
+						grupo = "&grupo=" + grupo;
+						ciclo = "&ciclo=" + ciclo;
+					} else {
+						grupo = "&grupo=";
+						ciclo = "&ciclo=";
+					}
+					
+					consulta = global.urlPdf + id + sucursal + asesor + grupo + ciclo;
+					var request:URLRequest = new URLRequest(consulta); 
+                  	navigateToURL(request,"_blank");
+    			}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Vigencias de Seguro";
+				lblTitulo.text = titulo.toUpperCase();
+				ctrlFiltro.init(true);
+				limpiar();
+			}
+					
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function limpiar():void{
+				ctrlFiltro.limpiar();
+				txtGrupo.text = "";
+				txtCiclo.text = "";
+			}
+			
+			private function valida():Boolean {
+				if(ctrlFiltro.obtieneRegion() == "000"){
+					Alert.show("Seleccione una Región.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(ctrlFiltro.obtieneSucursal() == "000"){
+					Alert.show("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(ctrlFiltro.obtieneAsesor() == "000000"){
+					Alert.show("Seleccione un Asesor.",titulo,4,null,null,global.iAlert);		
+					return false;		
+				}
+				
+				if(txtGrupo.text == "" && txtCiclo.text != ""){
+					Alert.show("Tiene que ingresar un grupo.",titulo,4,null,null,global.iAlert);		
+					return false;
+				}
+				
+				if(txtGrupo.text != "" && txtCiclo.text == ""){
+					Alert.show("Tiene que ingresar un ciclo.",titulo,4,null,null,global.iAlert);		
+					return false;
+				}
+				return true;
+			}	
+		]]>
+	</mx:Script>
+	<mx:Canvas x="11.95" y="53.5" width="265.05" height="165.5" styleName="canvasMod" id="canvas2">
+		<control:CtrlFiltroInfoAsesor id="ctrlFiltro" x="6" y="5" width="252.04999" height="155.5"/>
+	</mx:Canvas>
+	<mx:DataGrid id="dgReporte" x="9.95" y="278" width="290.05002" visible="false" height="66" horizontalScrollPolicy="auto">
+		<mx:columns>			                            
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="80"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_ACRED" width="220"/>
+			<mx:DataGridColumn headerText="INICIO SEGURO" dataField="INICIO" width="150" />
+			<mx:DataGridColumn headerText="FIN SEGURO" dataField="FIN" width="120"/>
+			<mx:DataGridColumn headerText="TIPO PRODUCTO" dataField="TIPO_PROD" width="60"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="60"/>	
+			<mx:DataGridColumn headerText="ASESOR" dataField="CDGOCPE" width="60"/>	
+			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMPE" width="60"/>		
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label id="lblTitulo" x="10" y="10" width="260" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="10" y="34.5" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="70" y="299.5" label="Generar" click="enviar()" id="btnGenerar"/>
+	<mx:Button x="149" y="299.5" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Canvas styleName="canvasMod" height="60.5" y="227" x="57.5" width="175">
+		<mx:Label id="lblCiclo" x="109" y="8" text="Ciclo" height="20"/>
+		<mx:Label id="lblGrupo" x="19" y="8" text="Grupo" height="20"/>
+		<mx:TextInput id="txtGrupo" x="19" y="27.5" maxChars="6" restrict="0-9" enter="enviar()"/>
+		<mx:TextInput id="txtCiclo" x="109" y="27.5" width="45" maxChars="2" restrict="0-9;R;D" enter="enviar()"/>
+	</mx:Canvas>
+</mx:Canvas>

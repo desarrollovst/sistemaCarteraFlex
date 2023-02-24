@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*" 
+	height="100%" x="70" y="4">
+
+	<!--Componente que permite observar el listado de clientes que pertenecen a la solicitud capturada por el usuario-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.controls.DataGrid;
+			import mx.events.FlexEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;	
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder; 
+			import mx.utils.ArrayUtil;           
+
+			public var dPermisos:XML = new XML();	
+			public var _xmlGrupos:XML = new XML();
+			public var _xmlAcred:XML = new XML();
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;	
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionAcred:int;
+			public var indAcred:int;
+			public var vScroll:Number;
+			public var tituloGrupo:String;
+			public var tituloAcred:String;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public var comMttoFecha:MttoSelFecha;
+			public var comMttoAgrega:MttoAgregaAcred;
+			public var comMttoBusq:MttoBusqAcred;
+			
+			public function activarContAcred(band:Boolean):void{
+				txtCodAcred.editable = band;
+				txtAcred.editable = band;
+				btnBuscarAcred.enabled = band;
+				if(alta == true)
+					btnAgregarAcred.enabled = band;
+				btnDatosAcred.enabled = band;
+			}
+			
+			public function activarContModAcred(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarAcred.enabled = band;
+				if(edicion == true)	
+					btnEditarAcred.enabled = band;
+			}
+			
+			public function activarContGrupos(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarAcred(event:Event):void{
+				buscarListaAcred(1);
+			}
+			
+			public function agregarAcred(event:MouseEvent):void{
+				//Condicion que permite indicar si se muestra la pantalla de alta de acreditado
+				//o se realiza la busqueda de alguno previamente registrado
+				if (comMttoAgrega.rdbNuevo.selected == true){
+					PopUpManager.removePopUp(comMttoAgrega);
+					mostrarFormAcred(1);
+				}
+				if (comMttoAgrega.rdbExistente.selected == true){
+					PopUpManager.removePopUp(comMttoAgrega);
+					mostrarBusqAcred();	
+				}
+			}
+			
+			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
+			//DE BUSQUEDA SELECCIONADOS
+			public function buscarAcred():void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				if (txtCodAcred.text != "" || txtAcred.text != ""){
+					btnBuscarAcred.setFocus();
+					var grupo:String = dgGrupos.selectedItem.CODIGO;
+					dgAcred.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlAcred = new XML(evt.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlAcred.elements().length() > 0){
+							formateaAcred();
+						}
+						seleccionaAcred();
+					});
+					params[0] = grupo;
+					params[1] = txtCodAcred.text; 
+					params[2] = txtAcred.text;
+					wsCat.getInfoAcred.send(3, params);
+				}
+			}
+			
+			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
+					btnBuscar.setFocus();
+					dgGrupos.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlGrupos = new XML(evt.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlGrupos.elements().length() > 0){
+							dgGrupos.dataProvider = _xmlGrupos.Table;
+						}
+						seleccionaGrupo();
+					});
+					params[0] = Application.application.U_ID;
+					params[1] = txtCodGrupo.text;
+					params[2] = txtGrupo.text;
+					wsCat.getListado.send(11, params);
+				}	
+			}
+			
+			public function buscarListaAcred(tipo:int):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				var grupo:String = dgGrupos.selectedItem.CODIGO;
+				dgAcred.dataProvider = null;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				if (tipo == 1)
+					Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+					if (_xmlAcred.elements().length() > 0){
+						formateaAcred();
+						dgAcred.dataProvider = acredObj;
+						
+						modificaColor();
+						if(accionAcred == 2){
+							dgAcred.validateNow();
+							dgAcred.verticalScrollPosition = vScroll;
+							dgAcred.selectedIndex = indAcred;
+							this.accionAcred = 0;
+						}
+					}
+					seleccionaAcred();
+				});
+				params[0] = grupo;
+				wsCat.getListado.send(1, params);
+			}
+
+			public function eliminarAcred(event:Event):void{
+				var fechaBaja:String;
+				var causa:String;
+				
+				var comMttoBaja:MttoBajaAcred = event.currentTarget as MttoBajaAcred;
+				fechaBaja = comMttoBaja.obtieneFecha();
+				causa = comMttoBaja.obtieneCausa();
+				PopUpManager.removePopUp(comMttoBaja);
+				var grupo:String = dgGrupos.selectedItem.CODIGO;  
+				var acred:String = dgAcred.selectedItem.CODIGO;
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setBajaAcred);
+				wsMS.setBajaAcred.send(Application.application.U_ID, grupo, acred, fechaBaja, causa);
+			}
+			
+			public function eliminarGrupo():void{
+				Alert.show("¿Desea eliminar el grupo seleccionado?",tituloGrupo,Alert.YES|Alert.NO,null, manejadorEliminarGrupo,global.iQuest);
+			}
+			
+			private function formateaAcred():void{
+				var array:Array;		
+				var xml:XMLDocument = new XMLDocument(_xmlAcred.toString()); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				acredObj = new ArrayCollection(array);
+				
+				dgAcred.dataProvider = acredObj;
+			}
+			
+			public function iniVar():void{
+				this.indAcred = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				tituloGrupo = "Mantenimiento de Grupo";
+				tituloAcred = "Mantenimiento de Acreditado";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiarContAcred():void{
+				txtCodAcred.text = "";
+				txtAcred.text = "";
+			}
+			
+			public function manejadorEliminarGrupo(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var grupo:String = dgGrupos.selectedItem.CODIGO;  
+			    	initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaGrupo);
+					wsMS.setEliminaGrupo.send(Application.application.U_ID, grupo);
+			    } 
+			}
+			
+			private function modificaColor():void{
+				dgAcred.rowColorFunction = seleccionaColor;
+			}
+			
+			public function mostrarAltaAcred():void{
+				comMttoAgrega = new MttoAgregaAcred();
+				comMttoAgrega = MttoAgregaAcred(PopUpManager.createPopUp(this,MttoAgregaAcred,true));
+				comMttoAgrega.btnAceptar.addEventListener(MouseEvent.CLICK, agregarAcred); 
+				PopUpManager.centerPopUp(comMttoAgrega);		
+			}
+			
+			public function mostrarBaja():void{
+				var indice:int = dgAcred.selectedIndex;
+				var fec:Date;
+				if (this._xmlAcred.Table[indice].ESTATUS != "Baja"){	
+					var comMttoBaja:MttoBajaAcred = new MttoBajaAcred();
+					comMttoBaja = MttoBajaAcred(PopUpManager.createPopUp(this,MttoBajaAcred,true));
+					//PARAMETRO IGUAL A 1 PERMITE OMITIR EL DATO
+					comMttoBaja.init();
+					comMttoBaja.addEventListener("enviar", eliminarAcred);
+					PopUpManager.centerPopUp(comMttoBaja);
+				}
+				else
+					Alert.show("El cliente ya está dado de baja",tituloAcred, 4,null,null,global.iInfo);
+			}
+			
+			public function mostrarBusqAcred():void{
+				var grupo:String = dgGrupos.selectedItem.CODIGO;
+				comMttoBusq = new MttoBusqAcred();
+				comMttoBusq = MttoBusqAcred(PopUpManager.createPopUp(this,MttoBusqAcred,true));
+				comMttoBusq.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+				comMttoBusq.init(grupo);
+				PopUpManager.centerPopUp(comMttoBusq);
+			}
+			
+			public function mostrarFormAcred(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codGrupo:String = dgGrupos.selectedItem.CODIGO;
+					var nomGrupo:String = dgGrupos.selectedItem.GRUPO;
+					var comMttoAcred:MttoAcreditado = new MttoAcreditado();
+					switch(tipo){
+						case 1: 
+							comMttoAcred = MttoAcreditado(PopUpManager.createPopUp(this,MttoAcreditado,true)); 
+							PopUpManager.centerPopUp(comMttoAcred);
+							comMttoAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+							comMttoAcred.registraInfoAcred(codGrupo, nomGrupo);
+							break;
+						case 2: 
+							if (dgAcred.selectedIndex >= 0){
+								accionAcred = tipo;
+								comMttoAcred = MttoAcreditado(PopUpManager.createPopUp(this,MttoAcreditado,true)); 
+								PopUpManager.centerPopUp(comMttoAcred);
+								var indice:int = dgAcred.selectedIndex;
+								iniVar();
+								this.indAcred = indice;
+								this.vScroll = dgAcred.verticalScrollPosition;
+								var acred:String = dgAcred.selectedItem.CODIGO;
+								comMttoAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+								comMttoAcred.cargaInfoAcred(codGrupo, nomGrupo, acred);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Acreditado",tituloAcred,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormGrupo(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO		
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							var comMttoGrupo:MttoGrupo = new MttoGrupo();
+							comMttoGrupo = MttoGrupo(PopUpManager.createPopUp(this,MttoGrupo,true)); 
+							PopUpManager.centerPopUp(comMttoGrupo);
+							comMttoGrupo.registraInfoGrupo();
+							break;
+						case 2: 
+							if (dgGrupos.selectedIndex >= 0){
+								comMttoGrupo = MttoGrupo(PopUpManager.createPopUp(this,MttoGrupo,true)); 
+								PopUpManager.centerPopUp(comMttoGrupo);
+								var grupo:String = dgGrupos.selectedItem.CODIGO;
+								comMttoGrupo.cargaInfoGrupo(grupo);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Grupo",tituloGrupo,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaAcred():void{
+				if (dgAcred.selectedIndex >= 0){
+					activarContModAcred(true);
+				}
+				else{
+					activarContModAcred(false);
+				}
+			}
+			
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var rColor:uint;
+				if (acred[rowIndex].MARCAFR == true) 
+					rColor = 0x8f999b;
+				else
+					rColor = color;
+				return rColor;
+			}
+			
+			public function seleccionaGrupo():void{
+				dgAcred.dataProvider = null;
+				activarContModAcred(false);
+				if (dgGrupos.selectedIndex >= 0){
+					activarContGrupos(true);
+					activarContAcred(true);
+					limpiarContAcred();
+				}
+				else{
+					activarContGrupos(false);
+					activarContAcred(false);
+				}
+			}
+			
+			private function setBajaAcred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setBajaAcred);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaAcred(1);
+				else
+					Alert.show(res.substr(2,res.length-1),tituloAcred,4,null,null,global.iAlert);
+			}
+			
+			private function setEliminaGrupo(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaGrupo);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarGrupo();
+				else
+					Alert.show("Error en el proceso: " + res,tituloGrupo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas  width="800" height="575" backgroundColor="#ffffff" backgroundAlpha="1.0">
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgGrupos" x="10" y="10" width="741.5" height="124" sortableColumns="false"
+			  	draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" click="seleccionaGrupo()" 
+			  	itemDoubleClick="mostrarFormGrupo(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="200"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>
+					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORDINACION" width="200"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="GRUPO" width="55" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="577" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarGrupo()" toolTip="Buscar Grupo" width="40"/>
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormGrupo(2)" toolTip="Editar Grupo" width="40"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormGrupo(1)" toolTip="Registrar Grupo" width="40"/>
+			<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarGrupo()" enabled="false" toolTip="Eliminar Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="550.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodGrupo" x="10" y="7" text="Código:" width="53"/>
+			<mx:Label id="lblGrupo" x="137" y="7" text="Grupo:"/>
+			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtGrupo" x="187" y="5" width="351.5" enter="buscarGrupo()" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="18.5" y="327" width="763.5" height="234" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="212" sortableColumns="false" resizableColumns="false" 
+				verticalScrollPolicy="on" click="seleccionaAcred()" doubleClickEnabled="true" doubleClick="mostrarFormAcred(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="ACREDITADOS" dataField="NOMBRE_CL" width="250"/>
+					<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="100"/>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="534" y="282" width="248" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarAcred" x="7" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAcred()" enabled="false" toolTip="Buscar Acreditado" width="40"/>
+			<mx:Button id="btnDatosAcred" x="55" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcred(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+			<mx:Button id="btnEditarAcred" x="103" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormAcred(2)" toolTip="Editar Acreditado" width="40"/>
+			<mx:Button id="btnAgregarAcred" x="148" y="3" icon="@Embed(source='assets/images/add.png')" enabled="false" click="mostrarAltaAcred()" toolTip="Agregar Acreditado" width="40"/>
+			<mx:Button id="btnEliminarAcred" x="196" y="3" icon="@Embed(source='assets/images/baja.png')" enabled="false" click="mostrarBaja()" toolTip="Baja de Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="282" width="507.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodAcred" x="10" y="7" text="Código:" width="53"/>
+			<mx:Label id="lblAcred" x="141" y="7" text="Nombre:" width="56.5"/>
+			<mx:TextInput id="txtCodAcred" x="64" y="5" width="68" enter="buscarAcred()" maxChars="6" editable="false" restrict="0-9"/>
+			<mx:TextInput id="txtAcred" x="198.5" y="5" width="297" enter="buscarAcred()" maxChars="50" editable="false"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="253" text="ACREDITADOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

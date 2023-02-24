@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Registro Devolucion de Excedente-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;		
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			          
+			public var _xmlExc:XML = new XML();
+			public var _xmlCred:XML = new XML();
+			public var _xmlMovs:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var ciclo:String;
+			public var cdgclns:String;
+			public var tipoCred:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+		
+			public var listaObj:ArrayCollection = new ArrayCollection();
+			public var movsObj:ArrayCollection = new ArrayCollection();
+			
+			public function buscarCred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodigo.text != "" && txtCiclo.text != "" && cboTipoCred.selectedIndex > 0){
+					cdgclns = txtCodigo.text;
+					ciclo = txtCiclo.text;
+					tipoCred = cboTipoCred.selectedItem.id;
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlCred = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						dgMovsExc.dataProvider = null;
+						
+						if (_xmlCred.elements().length() > 0){
+							lblNombre.text = _xmlCred.Table[0].NOMBRE;
+							lblInfoExc.text = _xmlCred.Table[0].SALDOEXC;
+							txtMonto.text = "";
+							cboDev.selectedIndex = 0;
+
+							du.initWsCat(wsCat);
+							du.sCursor();
+								
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlExc = XML(evt.result.toString());
+						
+								Application.application.desbloquear();
+								du.rCursor();
+								du.closeWs(wsCat);
+								
+								listaObj.removeAll();
+								listaObj.refresh();
+								
+								if(_xmlExc.elements().length() > 0){
+									formateaListaMovsExc(evt.result.toString());
+									dgMovsExc.dataProvider = listaObj;		
+								}	
+							});
+							params[0] = cdgclns;
+							params[1] = tipoCred;
+							//METODO QUE CONSULTA LOS REGISTROS DE LOS MOVIMIENTOS DE DEVOLUCION DE EXCEDENTE
+							wsCat.getListado.send(41, params);
+						}
+						else{
+							Application.application.desbloquear();
+							lblNombre.text = "";
+							lblInfoExc.text = "";
+							Alert.show("No se ha encontrado la información solicitada.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = cdgclns;
+					params[1] = ciclo;
+					params[2] = tipoCred;
+					wsCat.getInfoGeneral.send(5, params);
+				}	
+			}
+			
+			public function enviar():void{
+				if(valida() == true){
+					var fecha:String = dtfFecha.text;
+					var monto:Number = Number(txtMonto.text);
+					var dev:String = cboDev.selectedItem.id;
+					
+					initConexion();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+				
+						du.rCursor();
+						du.closeWs(wsMS);
+					
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}
+						else{
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+						}
+					});
+					//la variable de tipo de Credito indica si se trata de un credito individual o grupal
+					wsMS.setMovsExcedente.send(cdgclns, ciclo, tipoCred, fecha, monto, dev, Application.application.U_ID);
+				}
+			}
+			
+			public function formateaListaMovsExc(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				listaObj = new ArrayCollection(array);	
+			}
+			
+			private function formateaMovsExc():void{
+				var cont:int = _xmlMovs.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				movsObj.removeAll();
+				movsObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMovs.Table[i].CODIGO;
+					oItem.desc = _xmlMovs.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				movsObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Devolución de Excedente";
+				txtCodigo.setFocus();
+				lblTitulo.text = titulo.toUpperCase();
+				cboTipoCred.dataProvider = global.tipoCred;
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+					_xmlMovs = new XML(evt.result.toString());
+			
+					du.rCursor();
+					du.closeWs(wsCat);
+				
+					if(_xmlMovs.elements().length() > 0){	
+						formateaMovsExc();
+						cboDev.dataProvider = movsObj;
+					}
+				});
+				//Obtiene la lista de Movimientos de Excedentes de Pago
+				wsCat.getCatalogoGral.send(32);
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			private function valida():Boolean{
+				if(cdgclns == "" || ciclo == "" || tipoCred == ""){
+					Alert.show("Debe realizar la búsqueda del Crédito que desea utilizar.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtMonto.text == "" || Number(txtMonto.text) == 0){
+					Alert.show("Debe capturar el monto de la devolución.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboDev.selectedIndex == 0){
+					Alert.show("Debe seleccionar el movimiento de Exñcedente.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function limpiar():void{
+				var fec:Date = Application.application._Current_Fecha;
+				cdgclns = "";
+				ciclo = "";
+				tipoCred = "";
+				txtCodigo.text = "";
+				txtCiclo.text = "";
+				cboTipoCred.selectedIndex = 1;
+				lblNombre.text = "";
+				lblInfoExc.text = "";
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				txtMonto.text = "";
+				cboDev.selectedIndex = 0;
+				listaObj.removeAll();
+				listaObj.refresh();
+			}
+			
+			public function validaMonto(event:Event):void{
+				if(TextInput(event.currentTarget).text != "-"){
+					numVal.source = TextInput(event.currentTarget);
+					vResult = numVal.validate();
+			
+					if(vResult.type!=ValidationResultEvent.VALID)
+			           	TextInput(event.currentTarget).text = "";
+			    }
+			}	
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="610" height="460">
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="10" y="39" width="490.5" height="40" styleName="canvasMod" visible="true">
+			<mx:Label id="lblCodGrupo" x="47.5" y="9" text="Código:" textAlign="right"/>
+			<mx:Label id="lblCiclo" x="178.5" y="9" text="Ciclo:" textAlign="right"/>
+			<mx:Label id="lblTipoCred" x="277.45" y="9" text="Tipo:" textAlign="right"/>
+			<mx:TextInput id="txtCodigo" x="96.5" y="7" width="68" enter="buscarCred()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="217.5" y="7" width="40.5" maxChars="2" enter="buscarCred()"/>
+			<mx:ComboBox id="cboTipoCred" x="316.45" y="6" width="124.5" labelField="desc"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Canvas x="508.5" y="39" width="81.5" height="40" styleName="canvasMod" visible="true">
+			<mx:Button id="btnBuscar" x="8" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarCred()" toolTip="Buscar Crédito" />
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="10" y="87" width="590" height="325" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblFecha" x="90.55" y="71" text="Fecha:" width="50" textAlign="right"/>
+			<mx:Label id="lblMonto" x="90.55" y="105" text="Monto:" width="50" textAlign="right"/>
+			<mx:Label id="lblDevolucion" x="25.4" y="138" text="Causa de Devolución:" width="115.15" textAlign="right"/>
+			<mx:Label id="lblExc" x="19.55" y="40" text="Saldo de Excedente:" fontSize="12" fontWeight="bold" fontStyle="italic" textAlign="right"/>
+			<mx:Label id="lblInfoExc" x="148.55" y="40" width="100" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:Label id="lblEtqNombre" x="85.5" y="10" text="Nombre:" fontSize="12" fontWeight="bold" fontStyle="italic" textAlign="right"/>
+			<mx:Label id="lblNombre" x="148.55" y="10" width="247.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:DateField id="dtfFecha" x="148.55" y="69" width="100"/>
+			<mx:TextInput id="txtMonto" x="148.55" y="103" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)"/>
+			<mx:ComboBox id="cboDev" labelField="desc" x="148.55" y="135" width="297.5"></mx:ComboBox>
+			<Data:RowColorDataGrid id="dgMovsExc" x="22.6" y="176" width="545.85" height="132" sortableColumns="false"
+				resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="65"/>
+					<mx:DataGridColumn headerText="FECHA MOV." dataField="FECHA" width="90"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60"/>
+					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="300"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="520" y="420" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

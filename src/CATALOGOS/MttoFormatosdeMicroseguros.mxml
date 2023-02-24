@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="539" height="425" 
+	title="ASEGURADORAS" fontWeight="normal" xmlns:Forms="CATALOGOS.Forms.*" xmlns:Data="Data.*">
+	
+	<mx:Validator id="consentimientoV" source="{txtConsentimiento}" property="text" 
+	invalid="{txtConsentimiento.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="certificadoV" source="{txtCertificado}" property="text" 
+	invalid="{txtCertificado.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de los formatos de microseguros-->
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosFormatosMicroseguro;
+		import Data.EventFormatosMicroseguro;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+	    import mx.formatters.NumberBaseRoundType;
+		import mx.controls.CheckBox;
+		import mx.controls.ComboBox;
+		import mx.controls.DataGrid;
+		import mx.controls.dataGridClasses.DataGridItemRenderer;				
+		import mx.effects.easing.Elastic;
+		import mx.events.CloseEvent;
+		import mx.events.DataGridEvent;				
+		import mx.events.ListEvent;
+		import mx.formatters.NumberFormatter;
+		import mx.formatters.SwitchSymbolFormatter
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.Fault;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;
+	
+		[Bindable]
+		private var info:DatosFormatosMicroseguro;
+
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var _xmlProdMicro:XML = new XML();
+		private var _xmlAseguradora:XML = new XML();
+		
+		private var asegObj:ArrayCollection = new ArrayCollection();
+		private var SelectObj:ArrayCollection = new ArrayCollection();
+		private var ProdMsObj:ArrayCollection = new ArrayCollection();
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+
+		private var tipoAccion:int;
+		private var titulo:String;
+
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+	        closeEffect.duration = 500;
+	        closeEffect.play([this], playReverse);
+	        closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function enviar():void{
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosFormatosMicroseguro();
+				info.codigo = txtCodigo.text;
+				info.cdgase = cbxAseguradora.selectedItem.codigo;
+				info.consentimiento = txtConsentimiento.text;
+				info.certificado = txtCertificado.text;
+				
+				var cdgpms:String = "";
+				for(var i:int = 0; i < ProdMsObj.length; i++){
+					if(ProdMsObj[i].REGISTRO == true){
+						cdgpms += (cdgpms != "" ? ",":"") + ProdMsObj[i].CODIGO;
+					}
+				}
+				info.cdgpms = cdgpms;
+				
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				wsMS.setAccionMicroseguroFormatos.send( info.codigo, info.cdgase, info.cdgpms
+						, info.consentimiento, info.certificado, tipoAccion);			
+			}
+		}
+		
+		private function formateaAseguradora():void{
+			var cont:int = _xmlAseguradora.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			asegObj.removeAll();
+			asegObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlAseguradora.Table[i].CODIGO;
+				oItem.desc = _xmlAseguradora.Table[i].NOMBRE.toUpperCase();
+				item.push(oItem);
+			}
+			asegObj = new ArrayCollection(item);
+			cbxAseguradora.dataProvider = asegObj;
+		}
+		
+		private function formateaListaProdMs():void{
+			var cont:int = _xmlProdMicro.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			ProdMsObj.removeAll();
+			ProdMsObj.refresh();
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.REGISTRO = false;
+				oItem.CODIGO = _xmlProdMicro.Table[i].CODIGO;
+				oItem.DESCRIPCION = _xmlProdMicro.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			ProdMsObj = new ArrayCollection(item);
+		}
+			
+		public function init(pTipo:int, pxmlInfo:XML):void{
+			tipoAccion = pTipo;
+			du = new Utils(); 
+			global = new Globales();
+			titulo = "Mantenimiento de Formatos de Microseguro";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);	
+			
+			var wsCat:WebService = new WebService();
+			var params:Array = new Array();	
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+				_xmlProdMicro = new XML(event.result);
+								
+				if (_xmlProdMicro.elements().length() > 0){
+					formateaListaProdMs();
+				}
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlAseguradora = new XML(event.result);
+					
+					formateaAseguradora();
+					cbxAseguradora.selectedIndex = 0;
+				
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+					if(tipoAccion == 1){
+						dgInfo.dataProvider = ProdMsObj;
+					}	
+					else if(tipoAccion == 2){
+						txtCodigo.text = pxmlInfo.CODIGO;
+						txtConsentimiento.text = pxmlInfo.CONSENTIMIENTO;
+						txtCertificado.text = pxmlInfo.CERTIFICADO;
+						
+						for(var i:int = 0; i < asegObj.length; i++){
+							if(asegObj[i].codigo.toString() == pxmlInfo.CDGASE){
+								cbxAseguradora.selectedIndex = i;
+								break;
+							}
+						}
+						
+						var regObj:Array = pxmlInfo.CDGPMS.toString().split(",");
+						
+						for(var j:int = 0; j < regObj.length; j++){
+							var a1:String = regObj[j].toString();
+							for (i = 0; i < ProdMsObj.length; i++){
+								var b1:String = ProdMsObj[i].CODIGO; 
+								if(ProdMsObj[i].CODIGO == regObj[j].toString())
+									ProdMsObj[i].REGISTRO = true;
+							}
+						}
+						dgInfo.dataProvider = ProdMsObj;
+					}	
+				});
+				params[0] = "";
+				params[1] = "";
+				params[2] = "A";
+				wsCat.getListado.send(66, params);
+			});
+			params[0] = "";
+			params[1] = "";
+			wsCat.getListado.send(58, params);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+	
+		public function seleccionaProdMs(event:Event):void{
+				var ind:int = dgInfo.selectedIndex;
+				ProdMsObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+		}
+					
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var v_Consentimiento:Array = Validator.validateAll([consentimientoV]);
+			var v_Certificado:Array = Validator.validateAll([certificadoV]);	
+
+			if(v_Consentimiento.length > 0){
+				Alert.show("Debe capturar el formato del consentimiento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_Certificado.length > 0){
+				Alert.show("Debe capturar el formato del certificado.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxAseguradora.selectedIndex == 0){
+				Alert.show("Debe seleccionar una aseguradora.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var cont:int;
+			for(var i:int = 0; i < ProdMsObj.length; i++){
+				if(ProdMsObj[i].REGISTRO == true){
+					cont++;
+				}
+			}
+			if(cont == 0){
+				Alert.show("Debe seleccionar un producto de microseguro.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}		
+	]]>
+	</mx:Script>       
+	<mx:Button id="btnAceptar" x="393" y="353" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="465" y="353" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
+	<mx:Canvas x="10" y="70" width="518" height="275" styleName="canvasMod">
+		<mx:RadioButtonGroup id="rdgEstatus"/>
+		<Data:RowColorDataGrid id="dgInfo" x="10" y="10" width="496" height="189"> 
+			<Data:columns>
+				<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+		  					<mx:CheckBox change="outerDocument.seleccionaProdMs(event)" width="25" fontSize="10" verticalCenter="0"/>
+		  				</mx:Component> 
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="50"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="DESCRIPCION" width="180"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+		<mx:Label id="lblConsentimiento" x="10" y="212" text="Consentimiento:"/>
+		<mx:Label id="lblCertificado" x="31" y="241" text="Certificado:"/>
+		<mx:TextInput x="93" y="209" width="233" id="txtConsentimiento" editable="true"/>
+		<mx:TextInput x="93" y="238" width="233" id="txtCertificado" editable="true"/>
+	</mx:Canvas>
+	<mx:Label id="lblDatos" x="11" y="10" text="Datos de Formato de Microseguro:" width="199" fontSize="11" fontWeight="normal"/>
+	<mx:Canvas x="10" y="31" width="518" height="35" styleName="canvasMod">
+		<mx:Label id="lblAseguradora" x="122" y="6" text="Aseguradora:"/>
+		<mx:Label id="lblCodigo" x="10" y="6" text="Código:"/>
+		<mx:TextInput x="53" y="4" width="58" id="txtCodigo" editable="false"/>
+		<mx:ComboBox x="198" y="4" width="304" id="cbxAseguradora" labelField="desc"></mx:ComboBox>
+	</mx:Canvas>
+</mx:TitleWindow>

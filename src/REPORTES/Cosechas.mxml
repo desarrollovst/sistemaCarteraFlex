@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="440" 
+	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:control="Controls.*" 
+	creationComplete="initApp()"  >
+
+	<mx:Script>
+		<![CDATA[
+			public function initApp():void{
+				comFiltroRepRSCA.init("1","REPORTE DE COSECHAS", "");			
+			}		
+		]]>
+	</mx:Script>
+	<control:FiltroRepAgrupadoRSCA id="comFiltroRepRSCA" x="0" y="0" height="440" width="300"/>
+</mx:Canvas>

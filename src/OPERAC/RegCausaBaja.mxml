@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="412" height="138" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+
+	<!--Componente que permite registrar el motivo por el cual fue dado de baja un acreditado de la solicitud-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;		
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+
+			private var _xmlCausa:XML = new XML();	
+			
+			public var causaObj:ArrayCollection = new ArrayCollection();
+
+			private var global:Globales;
+			private var du:Utils;
+			public var titulo:String;
+			public var wsMS:WebService; 
+			
+			public function formateaCausa():void{
+				var cont:int = _xmlCausa.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCausa.Table[i].CODIGO;	
+					oItem.descripcion = _xmlCausa.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				causaObj = new ArrayCollection(item);
+			}
+			
+			public function init():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de No Renovación";
+				this.title = titulo;
+				cboCausa.setFocus();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCausa = new XML(evt.result);
+			
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlCausa.elements().length() > 0){	
+						formateaCausa();
+						cboCausa.dataProvider = causaObj;
+					}
+				});
+				wsCat.getListado.send(8);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function obtieneCausa():String{
+				return cboCausa.selectedItem.id;
+			}
+			
+			public function registraCausa():void{
+				if (cboCausa.selectedIndex > 0){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+				else
+					Alert.show("Debe seleccionar la causa de baja del acreditado",titulo,4,null,null,global.iAlert);
+			}	
+		]]>
+	</mx:Script>
+	<mx:Button id="btnAceptar" x="330.5" y="62" label="Aceptar" click="registraCausa()"/>
+	<mx:Canvas x="12.5" y="10" width="387" height="44" styleName="canvasMod">
+		<mx:ComboBox id="cboCausa" labelField="descripcion" x="12.5" y="10" width="362"></mx:ComboBox>
+	</mx:Canvas>
+</mx:TitleWindow>

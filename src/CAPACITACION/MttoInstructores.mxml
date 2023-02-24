@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="371" height="373" 
+	title="INSTRUCTORES DE CAPACITACIÓN" fontWeight="normal">
+	
+	<mx:Validator id="vNombre1" source="{txtNombre1}" property="text" 
+	invalid="{txtNombre1.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="vPrimape" source="{txtPrimape}" property="text" 
+	invalid="{txtPrimape.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de los instructores de capacitación-->
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+				
+		private var vResult:ValidationResultEvent;
+		
+		private var _xmlConsultorias:XML = new XML();
+		
+		public var acConsultoria:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function Edicion(pxmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición de Instructor";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			var wsCatCap:WebService = new WebService();
+			var params:Array = new Array();
+						
+			du.initWsCatCap(wsCatCap);
+		 	du.sCursor();
+		 	
+		 	du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlConsultorias = new XML(event.result);
+				
+				du.closeWs(wsCatCap);
+				du.rCursor();
+				Application.application.desbloquear();
+				
+				if (_xmlConsultorias.elements().length() > 0){
+					formateaConsultoria();
+					cbxConsultoria.dataProvider = acConsultoria;
+					
+					txtCodigo.text = pxmlInfo.CODIGO;
+					txtNombre1.text = pxmlInfo.NOMBRE1;
+					txtNombre2.text = pxmlInfo.NOMBRE2;
+					txtPrimape.text = pxmlInfo.PRIMAPE;
+					txtSegape.text = pxmlInfo.SEGAPE;
+					txtTelefono.text = pxmlInfo.TELEFONO;
+					txtMail.text = pxmlInfo.MAIL;
+					
+					txtNombre1.editable = false;
+					txtNombre2.editable = false;
+					txtPrimape.editable = false;
+					txtSegape.editable = false;
+					cbxConsultoria.enabled = false;
+			
+					if(pxmlInfo.ACTIVO == "S")
+						chkActivo.selected = true;
+					else 
+						chkActivo.selected = false;
+						
+					for(var j:int = 0; j < acConsultoria.length; j++){
+						if (acConsultoria[j].codigo.toString() == pxmlInfo.CDGCONS){
+							cbxConsultoria.selectedIndex = j;
+							break;
+						}
+					}
+				}
+				else
+					Alert.show("Error al cargar los datos del instructor.",titulo,4,null,null,global.iAlert);
+			});
+			
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(2, params);
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mNombre1:String = txtNombre1.text;
+				var mNombre2:String = txtNombre2.text;
+				var mPrimape:String = txtPrimape.text;
+				var mSegape:String = txtSegape.text;
+				var mTelefono:String = txtTelefono.text;
+				var mMail:String = txtMail.text;
+				var mConsultoria:String = cbxConsultoria.selectedItem.codigo;
+				var mActivo:String = ""; 
+				
+				if(chkActivo.selected)
+					mActivo = "S";
+				else
+					mActivo = "N";
+					
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionCpInstructor.send( mCodigo, mConsultoria, mNombre1, mNombre2, mPrimape, mSegape, mTelefono, mMail
+						, mActivo, tipoAccion);
+			}
+		}
+		
+		private function formateaConsultoria():void{
+			var cont:int = _xmlConsultorias.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acConsultoria.removeAll();
+			acConsultoria.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlConsultorias.Table[i].CODIGO;
+				oItem.descripcion = _xmlConsultorias.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acConsultoria = new ArrayCollection(item);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServCap.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function Nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Instructor";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			var wsCatCap:WebService = new WebService();
+			var params:Array = new Array();
+						
+			du.initWsCatCap(wsCatCap);
+		 	du.sCursor();
+		 	
+		 	du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlConsultorias = new XML(event.result);
+				
+				du.closeWs(wsCatCap);
+				du.rCursor();
+				Application.application.desbloquear();
+				
+				if (_xmlConsultorias.elements().length() > 0){
+					formateaConsultoria();
+					cbxConsultoria.dataProvider = acConsultoria;
+					
+				}
+				else
+					Alert.show("Error al cargar las consultorias.",titulo,4,null,null,global.iAlert);
+			});
+			
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(2, params);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function valida():Boolean{
+			var iaNombre1:Array = Validator.validateAll([vNombre1]);
+			var iaPrimape:Array = Validator.validateAll([vPrimape]);	
+		
+			if (iaNombre1.length != 0){
+				Alert.show("Debe capturar el nombre del instructor.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaPrimape.length != 0){
+				Alert.show("Debe capturar el apellido paterno del instructor.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxConsultoria.selectedIndex == 0){
+				Alert.show("Seleccione la consultoria a la que pertenece el instructor.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+
+			return true;
+		}
+	]]>
+	</mx:Script>
+	
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="347" height="258" x="10" y="34" styleName="canvasMod">
+	<mx:Label id="lblCodigo" x="60" y="13" text="Código:"/>
+	<mx:TextInput x="109" y="11" width="78" id="txtCodigo" editable="false" maxChars="3" tabIndex="1"/>
+	<mx:CheckBox x="272" y="10" label="Activo" id="chkActivo" tabIndex="9"/>
+	<mx:Label id="lblNombre1" x="23" y="43" text="Primer Nombre:"/>
+	<mx:TextInput id="txtNombre1" x="109" y="41" width="226" maxChars="50" editable="true" tabIndex="2"/>
+	<mx:Label id="lblNombre2" x="10" y="73" text="Segundo Nombre:"/>
+	<mx:TextInput id="txtNombre2" x="109" y="71" width="226" maxChars="50" editable="true" tabIndex="3"/>
+	<mx:Label id="lblPrimape" x="15" y="103" text="Apellido Paterno:"/>
+	<mx:TextInput id="txtPrimape" x="109" y="101" width="226" maxChars="50" editable="true" tabIndex="4"/>
+	<mx:Label id="lblSegape" x="13" y="133" text="Apellido Materno:"/>
+	<mx:TextInput id="txtSegape" x="109" y="131" width="226" maxChars="50" editable="true" tabIndex="5"/>
+	<mx:Label id="lblConsultoria" x="39" y="223" text="Consultoria:"/>
+	<mx:ComboBox x="109" y="221" width="226" id="cbxConsultoria" labelField="descripcion" tabIndex="8"></mx:ComboBox>
+	<mx:Label id="lblTel" x="51" y="163" text="Teléfono:"/>
+	<mx:TextInput id="txtTelefono" x="109" y="161" width="226" maxChars="20" editable="true" tabIndex="6"/>
+	<mx:Label id="lblMail" x="75" y="193" text="Mail:"/>
+	<mx:TextInput id="txtMail" x="109" y="191" width="226" maxChars="50" editable="true" tabIndex="7"/>
+	
+</mx:Canvas>
+	<mx:Label id="lblDatos" x="11" y="10" text="Datos de Instructor:" width="177" fontSize="11" fontWeight="normal"/>
+	<mx:Button id="btnAceptar" x="225" y="300" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="10"/>
+	<mx:Button id="btnCancelar" x="297" y="300" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="11"/>
+</mx:TitleWindow>

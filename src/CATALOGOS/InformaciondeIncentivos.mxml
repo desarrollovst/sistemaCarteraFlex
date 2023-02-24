@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar la informacion utilizada en el calculo de incentivos-->
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid; 				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		
+			private var _xmlTipo:XML = new XML();
+			private var _xmlAnt:XML = new XML();
+			
+			public var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionTipo:int;
+			private var accionCteAnt:int;
+			private var indTipo:int;
+			private var indCteAnt:int;
+			private var vScroll:Number;
+			private var titulo:String;
+			
+			private function actualizarCteAnt(event:Event):void{
+				buscarCteAnt(1);
+			}
+			
+			private function actualizarTipo(event:Event):void{
+				buscarTipo(1);
+			}
+			
+			private function buscarTipo(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				btnBuscarTipo.setFocus();
+				dgTipo.dataProvider = null;
+				
+				du.initWsCat(wsCat);
+				if(tipo == 1)
+					Application.application.bloquear();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlTipo = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlTipo.elements().length() > 0){
+						dgTipo.dataProvider = _xmlTipo.Table;
+						
+						if(accionTipo == 2){
+							dgTipo.validateNow();
+							dgTipo.verticalScrollPosition = vScroll;
+							dgTipo.selectedIndex = indTipo;
+							this.accionTipo = 0;
+						}
+					}		
+				});
+				//Obtiene informacion del Tipo de Asesor
+				wsCat.getCatalogoGral.send(38, params);
+			}
+			
+			private function buscarCteAnt(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				btnBuscarAnt.setFocus();
+				dgAnt.dataProvider = null;
+			
+				du.initWsCat(wsCat);
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlAnt = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlAnt.elements().length() > 0){
+						dgAnt.dataProvider = _xmlAnt.Table;
+						
+						if(accionCteAnt == 2){
+							dgAnt.validateNow();
+							dgAnt.verticalScrollPosition = vScroll;
+							dgAnt.selectedIndex = indCteAnt;
+							this.accionCteAnt = 0;
+						}
+					}	
+				});
+				//Obtiene informacion de la antigüedad de los clientes
+				wsCat.getCatalogoGral.send(39, params);
+			}
+			
+			private function eliminarAnt():void{
+				Alert.show("¿Desea eliminar el registro de Clientes por Antigüedad?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarCteAnt,global.iQuest);
+			}
+			
+			private function eliminarTipo():void{
+				Alert.show("¿Desea eliminar el Tipo de Asesor?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarTipo,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indTipo = -1;
+				this.indCteAnt = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Información de Incentivos";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function manejadorEliminarCteAnt(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var antMes:String = dgAnt.selectedItem.ANTIGUEDADMESES;
+					initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionCteAnt);
+					wsMS.setAccionCteAnt.send(3, antMes, "", "");
+			    } 
+			}
+			
+			private function manejadorEliminarTipo(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codAnt:String = dgTipo.selectedItem.CODIGOANTIGUEDAD;
+					var codCart:String = dgTipo.selectedItem.CODIGOCARTERA;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
+					wsMS.setAccionTipoAsesor.send(3, codAnt, codCart, "", "",
+									      		  "", "", "");	
+			    } 
+			}
+			
+			public function mostrarFormCteAnt(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO 
+				var comMttoCteAnt:MttoCteAnt = new MttoCteAnt();
+				comMttoCteAnt = MttoCteAnt(PopUpManager.createPopUp(this,MttoCteAnt,true));
+				switch(tipo){
+					case 1: 
+						comMttoCteAnt.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCteAnt);
+						PopUpManager.centerPopUp(comMttoCteAnt);
+						comMttoCteAnt.registraInfoCteAnt();
+						break;
+					case 2: 
+						if (dgAnt.selectedIndex >= 0){
+							accionCteAnt = tipo; 
+							var antMes:int = dgAnt.selectedItem.ANTIGUEDADMESES;
+							var numCtes:int = dgAnt.selectedItem.NUMCLIENTES;
+							var numGpos:int = dgAnt.selectedItem.NUMGRUPOS;
+							var indice:int = dgAnt.selectedIndex;
+							iniVar();
+							this.indCteAnt = indice;
+							this.vScroll = dgAnt.verticalScrollPosition;
+							comMttoCteAnt.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCteAnt);
+							PopUpManager.centerPopUp(comMttoCteAnt);
+							comMttoCteAnt.cargaInfoCteAnt(antMes,numCtes,numGpos);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Clientes por Antigüedad",titulo,4,null,null,global.iAlert);
+					break;
+				}
+			}
+			
+			public function mostrarFormTipo(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoTipo:MttoTipoAsesor = new MttoTipoAsesor();
+				comMttoTipo = MttoTipoAsesor(PopUpManager.createPopUp(this,MttoTipoAsesor,true)); 
+				switch(tipo){
+					case 1: 
+						comMttoTipo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipo);
+						PopUpManager.centerPopUp(comMttoTipo);
+						comMttoTipo.registraInfoTipoAsesor();
+						break;
+					case 2: 
+						if (dgTipo.selectedIndex >= 0){
+							accionTipo = tipo;
+							var codAnt:String = dgTipo.selectedItem.CODIGOANTIGUEDAD;
+							var codCart:String = dgTipo.selectedItem.CODIGOCARTERA;
+							var antMin:Number = dgTipo.selectedItem.ANTIGUEDADMIN;
+							var antMax:Number = dgTipo.selectedItem.ANTIGUEDADMAX;
+							var cartMin:Number = dgTipo.selectedItem.CARTERAMIN;
+							var cartMax:Number = dgTipo.selectedItem.CARTERAMAX;
+							var porc:Number = dgTipo.selectedItem.PORCENTAJE;
+							var indice:int = dgTipo.selectedIndex;
+							iniVar();
+							this.indTipo = indice;
+							this.vScroll = dgTipo.verticalScrollPosition;
+							comMttoTipo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipo);	
+							PopUpManager.centerPopUp(comMttoTipo);
+							comMttoTipo.cargaInfoTipoAsesor(codAnt,codCart,antMin,antMax,cartMin,cartMax,porc);
+						}
+						else
+							Alert.show("Debe seleccionar el registro del Tipo de Asesor",titulo,4,null,null,global.iAlert); 
+						break;
+				}
+			}
+			
+			private function setAccionCteAnt(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCteAnt);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarCteAnt(1);
+				else
+					Alert.show("Error en el proceso: " + res,titulo,4,null,null,global.iAlert);
+			}
+			
+			private function setAccionTipoAsesor(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarTipo(1);
+				else
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="461">
+		<mx:Label x="18" y="26" text="TIPO DE ASESOR" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="10" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarTipo" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarTipo(1)" toolTip="Buscar Tipo Asesor" width="40" />
+			<mx:Button id="btnEditarTipo" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormTipo(2)" toolTip="Editar Tipo Asesor" width="40"/>
+			<mx:Button id="btnAgregarTipo" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormTipo(1)" toolTip="Registrar Tipo Asesor" width="40"/>
+			<mx:Button id="btnEliminarTipo" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarTipo()" enabled="false" toolTip="Eliminar Tipo Asesor" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18" y="55" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgTipo" x="10" y="10" width="700.5" height="143" sortableColumns="false" itemDoubleClick="mostrarFormTipo(2)" 
+				doubleClickEnabled="true" horizontalScrollPolicy="auto"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO ANTIGÜEDAD" dataField="CODIGOANTIGUEDAD" width="140"/>
+					<mx:DataGridColumn headerText="CODIGO CARTERA" dataField="CODIGOCARTERA" width="130"/>
+					<mx:DataGridColumn headerText="ANTIGÜEDAD MINIMA" dataField="ANTIGUEDADMIN" width="140"/>
+					<mx:DataGridColumn headerText="ANTIGÜEDAD MAXIMA" dataField="ANTIGUEDADMAX" width="140"/>
+					<mx:DataGridColumn headerText="CARTERA MINIMA" dataField="CARTERAMIN" width="130"/>
+					<mx:DataGridColumn headerText="CARTERA MAXIMA" dataField="CARTERAMAX" width="130"/>
+					<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="254" text="CLIENTES POR ANTIGÜEDAD" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvTasa" x="18" y="283" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgAnt" x="10" y="10" width="704.5" height="143" sortableColumns="false" doubleClickEnabled="true" itemDoubleClick="mostrarFormCteAnt(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="MESES ANTIGÜEDAD" dataField="ANTIGUEDADMESES" width="120"/>
+					<mx:DataGridColumn headerText="NUMERO CLIENTES" dataField="NUMCLIENTES" width="120"/>
+					<mx:DataGridColumn headerText="NUMERO GRUPOS" dataField="NUMGRUPOS" width="120"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="539.5" y="238" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarAnt" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarCteAnt(1)" toolTip="Buscar Antigüedad" width="40" />
+			<mx:Button id="btnEditarAnt" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormCteAnt(2)" toolTip="Editar Antigüedad" width="40"/>
+			<mx:Button id="btnAgregarAnt" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormCteAnt(1)" toolTip="Registrar Antigüedad" width="40"/>
+			<mx:Button id="btnEliminarAnt" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarAnt()" enabled="false" toolTip="Eliminar Antigüedad" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

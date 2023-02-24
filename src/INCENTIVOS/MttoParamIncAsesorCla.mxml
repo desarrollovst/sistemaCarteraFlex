@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="368" 
+	height="276" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="vClasificacion" source="{txtClasificacion}" property="text" 
+	invalid="{txtClasificacion.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCartPromIni" source="{txtCartPromIni}" property="text" 
+	invalid="{txtCartPromIni.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCartPromFin" source="{txtCartPromFin}" property="text" 
+	invalid="{txtCartPromFin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcIncMax" source="{txtPorcIncMax}" property="text" 
+	invalid="{txtPorcIncMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Clasificación Incentivos Asesor";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtCodigo.text = pXmlInfo.CODIGO;
+			txtClasificacion.text = pXmlInfo.CLASIFICACION;
+			txtCartPromIni.text = pXmlInfo.CART_PROM_INI;
+			txtCartPromFin.text = pXmlInfo.CART_PROM_FIN;
+			txtPorcIncMax.text = pXmlInfo.PORC_INC_MAX;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mClasificacion:String = txtClasificacion.text;
+				var mCartPromIni:Number = Number(txtCartPromIni.text);
+				var mCartPromFin:Number = Number(txtCartPromFin.text);
+				var mPorcIncMax:Number = Number(txtPorcIncMax.text);
+				
+				initConexionIncR();
+				du.sCursor();
+				Application.application.bloquear()
+				
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncAsesor);
+				wsIncR.setAccionParametrosIncAsesorCla.send(mCodigo, mClasificacion, mCartPromIni, mCartPromFin, mPorcIncMax
+					, tipoAccion);
+			}
+		}
+		
+		private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nueva Clasificación Incentivos Asesor";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function setAccionParametrosIncAsesor(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncAsesor);
+			wsIncR = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaClasificacion:Array = Validator.validateAll([vClasificacion]);
+			var iaCartPromIni:Array = Validator.validateAll([vCartPromIni]);	
+			var iaCartPromFin:Array = Validator.validateAll([vCartPromFin]);
+			var iaPorcIncMax:Array = Validator.validateAll([vPorcIncMax]);
+		
+			if (iaClasificacion.length != 0){
+				Alert.show("Debe capturar la clasificación.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaCartPromIni.length != 0){
+				Alert.show("Debe capturar la cartera promedio inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaCartPromFin.length != 0){
+				Alert.show("Debe capturar la cartera promedio fin.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcIncMax.length != 0){
+				Alert.show("Debe capturar el porcentaje de incentivo máximo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+							
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="349" height="46" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="10" y="13" text="Código:" id="lblCodigo"/>
+		<mx:TextInput id="txtCodigo" x="59" y="10" width="45" editable="false"/>
+		<mx:Label x="115" y="13" text="Clasificación:" id="lblClasificacion"/>
+		<mx:TextInput id="txtClasificacion" x="192" y="10" width="138" editable="true"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="64" width="349" height="77" styleName="canvasMod">
+		<mx:Label x="67" y="13" text="Cartera Promedio Inicio:" id="lblCartPromIni"/>
+		<mx:TextInput id="txtCartPromIni" x="193" y="10" width="87" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="77" y="43" text="Cartera Promedio Fin:" id="lblCartPromFin"/>
+		<mx:TextInput id="txtCartPromFin" x="193" y="40" width="87" editable="true" change="validaMonto(event)"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="149" width="349" height="46" styleName="canvasMod">
+		<mx:Label x="43.5" y="13" text="Porcentaje Incentivo Máximo:" id="lblPorcIncMax"/>
+		<mx:TextInput id="txtPorcIncMax" x="195.5" y="10" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="260.5" y="12" text="%" id="lblPorc1" width="43"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="270" y="203" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="318" y="203" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

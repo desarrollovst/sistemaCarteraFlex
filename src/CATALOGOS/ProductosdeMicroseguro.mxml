@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="1110" height="494" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de Productos de Microseguro existentes en la empresa-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.DatosProdMicro;
+			import Data.EventProdMicro;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+			private var info:DatosProdMicro;
+			
+			private var _xmlProdMicro:XML = new XML();
+			private var dPermisos:XML = new XML();
+			
+			private var wsMS:WebService = new WebService();
+			private var titulo:String;	
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var objMtto:Sprite = new Sprite();
+			
+			private var accionProdMicro:int;
+			private var indProdMicro:int;
+			private var vScroll:Number;
+			
+			private var alta:Boolean = new Boolean();
+			private var borrado:Boolean = new Boolean();
+			private var consulta:Boolean = new Boolean();
+			private var edicion:Boolean = new Boolean();
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+			private function iniVar():void{
+				this.indProdMicro = -1;
+				this.vScroll = -1;
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Productos de Microseguros";
+				lblTitulo.text = titulo.toUpperCase();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function activarContProdMicro(band:Boolean):void{
+				if(alta == true)
+				btnAgregar.enabled = band;
+			}
+			
+			private function activarContModProdMicro(band:Boolean):void{
+				if(borrado == true)
+					btnEliminar.enabled = band;
+				if(edicion == true)	
+					btnEditar.enabled = band;
+			}
+			
+			private function actualizarProdMicro(event:Event):void{
+				buscarListaProdMicro(1);
+			}
+			
+			private function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;	*/			
+						}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			private function seleccionaProd():void{
+				if (dgProdMicro.selectedIndex >= 0){
+					activarContModProdMicro(true);
+				}
+				else{
+					activarContModProdMicro(false);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- BUSCAR LISTA -->
+	<mx:Script>
+		<![CDATA[			
+			private function buscarListaProdMicro(tipo:int):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				
+				if (txtCodigo.text != "" || txtDescripcion.text != ""){
+					dgProdMicro.dataProvider = null;
+					dgProdMicro.invalidateList();
+					
+					du.initWsCat(wsCat);
+			 		du.sCursor();
+			 	
+					if (tipo == 1)
+						Application.application.bloquear();	
+						
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlProdMicro = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlProdMicro.elements().length() > 0){
+							dgProdMicro.dataProvider = _xmlProdMicro.Table;
+					
+							if(accionProdMicro == 2){
+								dgProdMicro.validateNow();
+								dgProdMicro.verticalScrollPosition = vScroll;
+								dgProdMicro.selectedIndex = indProdMicro;
+								this.accionProd = 0;
+							}
+							seleccionaProd();
+						}
+					});
+					
+					params[0] = txtCodigo.text;
+					params[1] = txtDescripcion.text;
+					wsCat.getListado.send(58, params);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- ELIMINAR -->
+	<mx:Script>
+		<![CDATA[
+			private function eliminarProdMicro():void{
+				if(dgProdMicro.selectedIndex >= 0){
+					if(dgProdMicro.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el producto de microseguro seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarProdMicro,global.iQuest);
+					else
+						Alert.show("Seleccione producto de microseguro a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			
+			private function manejadorEliminarProdMicro(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					info = new DatosProdMicro();
+					info.codigo = dgProdMicro.selectedItem.CODIGO;
+					info.descripcion = "";
+					info.cdgcms = "";
+					info.plazo = 0;
+					info.periodicidad = "";
+					info.valido_hasta = "";
+					info.importe = 0;
+					info.iva = 0;
+					info.costo = 0;
+					info.edad_max = 0;
+					info.edad_min = 0;
+					info.monto_defuncion = 0;
+					info.bono = 0;
+					info.aseguradora = "";
+					
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionProdMicro);
+					wsMS.setAccionProductoMicroseguro.send(info.codigo, info.descripcion, info.cdgcms, info.plazo, info.periodicidad 
+												, info.valido_hasta, info.importe, info.iva, info.costo, info.edad_max, info.edad_min
+												, info.monto_defuncion, info.bono, info.aseguradora, 3);
+			    } 
+			}
+			
+			private function setAccionProdMicro(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProdMicro);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarListaProdMicro(1);
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- MOSTRAR FORMULARIOS -->
+	<mx:Script>
+		<![CDATA[
+			private function mostrarFormProdMicro(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoProdMicro:MttoProdMicro = new MttoProdMicro(); 
+				if(edicion == true){
+					objMtto = this;					
+					switch(tipo){
+						case 1: 
+							comMttoProdMicro = MttoProdMicro(PopUpManager.createPopUp(objMtto,MttoProdMicro,true));
+							comMttoProdMicro.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProdMicro);
+							PopUpManager.centerPopUp(comMttoProdMicro);
+							comMttoProdMicro.registraInfoProdMicro();
+							break;
+						case 2: 
+							if (dgProdMicro.selectedIndex >= 0){
+								accionProdMicro = tipo;
+								comMttoProdMicro = MttoProdMicro(PopUpManager.createPopUp(objMtto,MttoProdMicro,true));	
+								comMttoProdMicro.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProdMicro);
+								PopUpManager.centerPopUp(comMttoProdMicro);
+								iniVar();
+								this.indProdMicro = dgProdMicro.selectedIndex;
+								this.vScroll = dgProdMicro.verticalScrollPosition;		
+								comMttoProdMicro.cargarInfoProdMicro(_xmlProdMicro.Table[dgProdMicro.selectedIndex]);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de producto de microseguro.",titulo,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:Canvas width="765" height="313" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="219" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgProdMicro" x="10" y="10" width="700.5" height="197"
+				verticalScrollPolicy="on" doubleClickEnabled="true" itemDoubleClick="mostrarFormProdMicro(2)" itemClick="seleccionaProd()"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="DESCRIPCION" width="150"/>
+					<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="60"/>
+					<mx:DataGridColumn headerText="COSTO" dataField="COSTO" width="60"/>
+					<mx:DataGridColumn headerText="MONTO DEFUNCION" dataField="MONTO_DEFUNCION" width="120"/>
+					<mx:DataGridColumn headerText="ASEGURADORA" dataField="ASEGURADORA" width="250"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="440" y="39" width="305" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarListaProdMicro(1)" toolTip="Buscar producto de microseguro"/>
+			<mx:Button id="btnAgregar" x="154" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormProdMicro(1)" toolTip="Registrar producto de microseguro"/>
+			<mx:Button id="btnEliminar" x="229" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarProdMicro()"  enabled="false" toolTip="Eliminar producto de microseguro"/>
+			<mx:Button id="btnEditar" x="82" y="3" icon="@Embed(source='assets/images/edit.png')" click="mostrarFormProdMicro(2)" enabled="false" toolTip="Editar producto de microseguro"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="413.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodTipoProd" x="11" y="7" text="Código:"/>
+			<mx:Label id="lblTipoProd" x="129" y="7" text="Nombre:"/>
+			<mx:TextInput id="txtDescripcion" x="185.5" y="5" width="216" enter="buscarListaProdMicro(1)" tabIndex="2"/>
+			<mx:TextInput id="txtCodigo" x="64" y="5" width="50" maxChars="3" enter="buscarListaProdMicro(1)" tabIndex="1"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="10" text="..." width="413.5" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblTitulo"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%"  height="100%" 
+	horizontalScrollPolicy="off" creationComplete="initApp()" creationPolicy="all"  
+	xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.controls.CheckBox;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.CloseEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var catObj:ArrayCollection =  new ArrayCollection();
+		public var opcObj:ArrayCollection =  new ArrayCollection();
+		
+		private var _xmlCat:XML =  new XML();
+		private var _xmlOpc:XML =  new XML();
+		private var indexElim:int = 0;
+		public var codigoArr:Array;
+        public var nombreArr:Array;
+        public var descripcionArr:Array;
+        public var eliminadosArr:Array;
+        public var estatusArr:Array;
+        public var tipoAccionArr:Array;
+		public var formNuevaOp:MttoExcepcionRechazo; 
+
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Catalogos de Excepciones y Rechazos";
+			lblTitulo.text = titulo.toUpperCase();
+			openEffect.duration = 500;
+			openEffect.play([this]);		
+			formateaCboCatalogos();		
+			eliminadosArr = new Array();	 
+		}
+		
+		private function formateaCboCatalogos():void {
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			catObj.removeAll();
+			catObj.refresh();
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "1";	
+			oItem.nombre = "Catálogo de Excepciones";//getCatalogoGral(26)
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "2";	
+			oItem.nombre = "Catálogo de Rechazos"; //getCatalogoGral(22)
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "3";	
+			oItem.nombre = "Catálogo de Rechazos (sucursal)";//InfoListado(8)
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "4";	
+			oItem.nombre = "Catálogo de Rechazos (Lista Negra)";//getCatalogoGral(30)
+			item.push(oItem);
+						 
+			catObj = new ArrayCollection(item);
+			cboCatalogos.dataProvider = catObj;
+		}
+		
+		private function cargaComboCatalogos():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlCat = XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlCat.elements().length() > 0){
+					formateaCboCatalogos();
+					cboCatalogos.dataProvider = catObj;
+				}
+			});
+			wsCat.getInfoGeneral.send(11, params);
+		}
+		
+		private function cargaOpciones():void{
+			var opcion:String = cboCatalogos.selectedItem.id;
+			if(opcion != "0"){
+				cargaCatalogoGral(opcion);	
+				eliminadosArr = new Array();	
+				indexElim =0; 
+			}	
+			else{
+				dgOpciones.dataProvider = null;
+			}					
+		}
+		
+		private function cargaCatalogoGral(cat:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;	
+					
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOpc = XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlOpc.elements().length() > 0){
+					formateaCboOpciones();
+					dgOpciones.dataProvider = opcObj;
+				}
+			});			
+			params[0] = cat;
+			wsCat.getCatalogoGral.send(56, params);
+		}
+		
+		private function formateaCboOpciones():void{
+			var cont:int = _xmlOpc.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			opcObj.removeAll();
+			opcObj.refresh();
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.ID = _xmlOpc.Table[i].CODIGO;
+				oItem.NOMBRE = _xmlOpc.Table[i].DESCRIPCION;
+				oItem.DESCRIPCION = _xmlOpc.Table[i].OBSERVACION;	
+				oItem.ESTATUS =  _xmlOpc.Table[i].ESTATUS =='A'?true:false;				
+				item.push(oItem);
+			}
+			opcObj = new ArrayCollection(item);
+		}
+		
+		private function cargaInfoListado(opcion:int):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;			
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOpc = XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlOpc.elements().length() > 0){
+					formateaCboOpciones();
+					dgOpciones.dataProvider = opcObj;
+				}
+			});			
+			wsCat.getListado.send(opcion, params);
+		}
+
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function editarOpcion(event:Event):void{
+			var info:ArrayCollection = dgOpciones.dataProvider as ArrayCollection;
+			var i:int = dgOpciones.selectedIndex;
+			var estatus:String = info[i].ESTATUS == true? 'A' : 'I';
+			if(i >= 0){
+				var codigo:String = info[i].ID == undefined? "": info[i].ID;
+				var nombre:String = info[i].NOMBRE == undefined? "": info[i].NOMBRE;		
+				var descripcion:String = info[i].DESCRIPCION == undefined? "": info[i].DESCRIPCION;
+				
+				formNuevaOp = new MttoExcepcionRechazo();
+				formNuevaOp = MttoExcepcionRechazo(PopUpManager.createPopUp(this,MttoExcepcionRechazo, true));
+				formNuevaOp.init(codigo,
+								 catObj[cboCatalogos.selectedIndex].nombre,							     
+								 nombre, 
+								 descripcion,
+								 estatus);					 
+				 				 
+			 	PopUpManager.centerPopUp(formNuevaOp);
+				formNuevaOp.btnAceptar.addEventListener(MouseEvent.CLICK, actualizarGrid); 	
+				formNuevaOp.btnCancelar.addEventListener(MouseEvent.CLICK, cerrarForm);
+			}
+		}
+			
+		private function agregarNuevaOpcion():void{
+			 formNuevaOp = new MttoExcepcionRechazo();
+			 formNuevaOp = MttoExcepcionRechazo(PopUpManager.createPopUp(this,MttoExcepcionRechazo, true));
+			 formNuevaOp.init("0",
+			 				catObj[cboCatalogos.selectedIndex].nombre,			 				 
+			 				 "", 
+			 				 "",
+			 				 "");					 
+			 				 
+			 PopUpManager.centerPopUp(formNuevaOp);
+			 formNuevaOp.btnAceptar.addEventListener(MouseEvent.CLICK, actualizarGrid); 	
+			 formNuevaOp.btnCancelar.addEventListener(MouseEvent.CLICK, cerrarForm);		 			
+		}
+		
+		private function cerrarForm(event:MouseEvent):void{
+				PopUpManager.removePopUp(formNuevaOp);
+		}
+		
+		private function actualizarGrid(event:MouseEvent):void{
+			var nombre:String =formNuevaOp.getNombreOpcion();
+			var descripcion:String = formNuevaOp.getDescipcion();
+			var codigo:String = formNuevaOp.getCodigo();
+			var estatus:String = formNuevaOp.getEstatus();
+			if(nombre != ""){
+				if(codigo == "0"){
+					guardarOpcionIndividual(codigo,nombre, descripcion, 1, estatus );
+				}
+				else {
+					guardarOpcionIndividual(codigo,nombre, descripcion, 2, estatus );
+				}
+			} else {				
+				Alert.show("El nombre de la opción no debe ser vacío.",titulo,4,null,null,global.iAlert);
+			} 
+		}
+		
+		public function guardarOpcionIndividual(codigo:String, nombre:String, descripcion:String, tipoAccion:int, estatus:String):void {
+			if( nombre != ""){
+				var catalogo:int = cboCatalogos.selectedIndex;
+				if(catalogo != 0){
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS); 
+						
+						if (res.substr(0,1) == "1"){
+							if(tipoAccion == 3){
+								Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);	
+							} 
+							else{ 
+								Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							}														
+						}
+						else{
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);
+						}
+						PopUpManager.removePopUp(formNuevaOp);
+						cargaOpciones();
+					
+					});
+					wsMS.setAccionExcepcionesRechazos.send(catalogo, tipoAccion, codigo, nombre, descripcion, estatus, Application.application.U_ID);
+				}
+				else{
+					Alert.show("Seleccione un catálogo.",titulo,4,null,null,global.iAlert);	
+				}  
+			} 	
+			else{
+				Alert.show("No hay información que guardar.",titulo,4,null,null,global.iAlert);	
+			} 
+		}
+		
+		public function eliminarOpcion():void{	
+			var info:ArrayCollection = dgOpciones.dataProvider as ArrayCollection;
+			var opcion:int = dgOpciones.selectedIndex;
+			if(opcion >= 0){		
+				Alert.show("¿Está seguro que desea eliminar la opción seleccionada?", titulo,
+				    Alert.YES|Alert.NO, null, function (event:CloseEvent):void {
+					    if(event.detail == Alert.YES) {
+					       if(info[opcion].ID != null && info[opcion].ID != undefined) {
+								guardarOpcionIndividual(info[opcion].ID,"ELIMINAR", "", 3, "" ); 
+							}
+					    }
+					},global.iQuest);
+			} 
+			else{
+				Alert.show("Debe seleccionar una opción de la lista.",titulo,4,null,null,global.iAlert);
+			}
+		}
+		
+		public function limpiar():void{
+			cboCatalogos.selectedIndex = 0;
+			dgOpciones.dataProvider = null;		
+			eliminadosArr = new Array();
+			indexElim = 0;
+		} 
+		
+		public function setHabilitar(event:Event):void{
+			var cb:CheckBox = event.target as CheckBox;
+			var opcion:int = dgOpciones.selectedIndex;
+			ArrayCollection(dgOpciones.dataProvider).getItemAt(opcion).ESTATUS = cb.selected;
+			ExternalInterface.call("console.log", cb.selected );		
+   			
+		}
+		
+		public function eliminaVaciosGrid():void{
+           var info:ArrayCollection = dgOpciones.dataProvider as ArrayCollection;
+           var max:int;     
+			
+			if (info.length > 0){
+				max = info.length;
+			 	for(var i:int = 0; i < max ; i++){
+			 		if(info[i].ID == undefined  && info[i].NOMBRE == undefined){
+				 	   	ArrayCollection(dgOpciones.dataProvider).removeItemAt(i);
+				 	   	max = ArrayCollection(dgOpciones.dataProvider).length;
+				 	   	i = i - 1;
+	        		}
+             	}		 
+			}	      		             				 
+		}
+		
+		public function formateaInfo():Boolean{
+           var info:ArrayCollection = dgOpciones.dataProvider as ArrayCollection;
+           var max:int;
+         
+            codigoArr = new Array; 
+            nombreArr = new Array; 
+            descripcionArr = new Array; 
+            estatusArr = new Array; 
+            tipoAccionArr = new Array;
+			
+			if (info.length > 0) {
+				max = info.length;
+				for (var i:int = 0; i < max ; i++){
+ 					if(info[i].NOMBRE != null && info[i].NOMBRE != "" && info[i].NOMBRE != undefined ) {
+				 		if(info[i].ID !=  undefined){
+				 		  codigoArr[i] = info[i].ID;	
+				 		  tipoAccionArr[i] = "2" ; 
+				 		}						
+        				nombreArr[i] = info[i].NOMBRE;
+				        descripcionArr[i] = info[i].DESCRIPCION == undefined ? "" : info[i].DESCRIPCION ;
+				        estatusArr[i] = info[i].ESTATUS == true? 'A' : 'I' ;
+ 					}
+ 				}	 
+				return true;          	             		             				
+			}
+			return false
+		}
+		
+		public function guardaOpcion():void{
+			eliminaVaciosGrid();
+			if( formateaInfo() == true){
+				var catalogo:int = cboCatalogos.selectedIndex;
+				if(catalogo != 0){
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS); 
+						
+						if (res.substr(0,1) == "1"){
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);							
+						}
+						else {
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);
+						}
+						cargaOpciones();
+					});
+					wsMS.setAccionCambiaEstatusExcepRech.send(catalogo, tipoAccionArr, codigoArr, nombreArr, descripcionArr, estatusArr, Application.application.U_ID);
+				}
+				else{
+					Alert.show("Seleccione un catálogo.",titulo,4,null,null,global.iAlert);	
+				}  
+			} 	
+			else{
+				Alert.show("No hay información que guardar.",titulo,4,null,null,global.iAlert);	
+			} 
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="717" height="360">
+		<mx:Canvas y="41" width="693" height="277" styleName="canvasMod" id="canvasM" x="14">
+			<mx:Label id="lblCatalogo" x="36" y="17" text="Catálogo:"  textAlign="right"/>
+			<mx:ComboBox id="cboCatalogos" x="94" y="14" change="cargaOpciones()" labelField="nombre" width="347"/>
+			<mx:Canvas x="573" y="10" width="108" height="40" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+				<mx:Button id="btnAgregar" x="10" y="4" icon="@Embed(source='assets/images/add.png')" click="agregarNuevaOpcion()" toolTip="Agrega una nueva Opción" width="40"/>
+				<mx:Button id="btnEliminar" x="59" y="4" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarOpcion()" toolTip="Eliminar Opción" width="40"/>
+			</mx:Canvas>
+			<mx:Canvas id="cnvDetalle" x="10" y="58" width="671" height="207" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+				<Data:RowColorDataGrid id="dgOpciones" x="10" y="10" width="648.5" height="185" sortableColumns="true"
+				  	draggableColumns="true"  resizableColumns="true" verticalScrollPolicy="on" doubleClickEnabled="true" 
+				  	itemDoubleClick="editarOpcion(event)" > 
+					<Data:columns>
+						<mx:DataGridColumn headerText="CODIGO" dataField="ID" width="50"/>
+						<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="180">
+							<mx:itemEditor>
+								<mx:Component>
+									<mx:TextInput x="187" y="5" width="351.5" maxChars="150"/>
+								</mx:Component>
+							</mx:itemEditor>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="100">
+							<mx:itemEditor>
+								<mx:Component>
+									<mx:TextInput x="187" y="5" width="351.5" maxChars="150"/>
+								</mx:Component>
+							</mx:itemEditor>
+						</mx:DataGridColumn>			
+						<mx:DataGridColumn headerText="HABILITADO" textAlign="center" rendererIsEditor="true" dataField="ESTATUS" width="50" editorDataField="selected" editable="false">
+							<mx:itemRenderer>
+								<mx:Component>
+									<mx:CheckBox change="outerDocument.setHabilitar(event)" /> 
+								</mx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Button x="561" y="326" click="guardaOpcion()" label="Guardar" id="btnGuardar" enabled="true"/>
+		<mx:Button x="639" y="326" click="limpiar()" label="Limpiar" id="btnLimpiar"/>
+		<mx:Label id="lblTitulo" x="14" y="12" width="452.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

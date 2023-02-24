@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="310" 
+	height="180" creationPolicy="all">
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var info:Object;	
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function enviar():void{
+				if(valida()){
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setSeguimientoVehiculo);
+					wsMS.setSeguimientoVehiculo.send(info.region, info.sucursal, info.codigo, info.usuAsig, dtfFecha.text, txtKm.text, info.fecAsig, Application.application.U_ID);
+				}
+			}
+			
+			public function init(item:Object):void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Seguimiento de Vehículo";
+				this.title = titulo;
+				this.info = item;
+				
+				var fec:Date = Application.application._Current_Fecha;
+				fec = global.seleccionaDiaHabil(new Date(fec.fullYear, fec.month, fec.date - 1));
+				dtfFecha.selectedDate = fec;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function setSeguimientoVehiculo(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setSeguimientoVehiculo);
+				wsMS = null;
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){	
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					PopUpManager.removePopUp(this);
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Debe seleccionar la fecha de registro.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtKm.text == ""){
+					Alert.show("Debe capturar la información de kilometraje.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Button id="btnCerrar" x="241" y="108" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="193" y="108" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Canvas id="cnvFecha" x="21" y="10" width="260" height="90" styleName="canvasMod">
+		<mx:Label id="lblFecha" textAlign="right" x="55.75" y="21" width="50.5" text="Fecha:"/>
+		<mx:Label id="lblKm" textAlign="left" x="33.25" y="51" text="Kilometraje:"/>
+		<mx:DateField id="dtfFecha" x="114" y="19" width="105"/>
+		<mx:TextInput id="txtKm" x="114.25" y="49" width="89" restrict="0-9;." change="{global.validaMonto(event)}"/>
+	</mx:Canvas>
+</mx:TitleWindow>

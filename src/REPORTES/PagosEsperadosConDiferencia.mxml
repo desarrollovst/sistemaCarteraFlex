@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="670" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:control="Controls.*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var fecIni:String;
+			public var fecFin:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);		
+			}
+			
+			private function generar():void{
+				if(comFiltroRep.valida()){
+					var region:String = comFiltroRep.obtieneRegion();
+					var sucursal:String = comFiltroRep.obtieneSucursal();
+					var coord:String = comFiltroRep.obtieneCoord();	
+					var asesor:String = comFiltroRep.obtieneAsesor();
+					var fecha:String = comFiltroRep.obtieneFechaIni();
+					var fecha1:String = comFiltroRep.obtieneFechaFin();
+					
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						Application.application.desbloquear();
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+													
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							fecIni = fecha;
+							fecFin = fecha1;
+							btnExportar.enabled=true;
+							var cont:int = _xmlRep.elements().length();
+							lblTotal.text = cont + " Registrso Encontrados "; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					wsMS.getRepPagosEsperadosDif.send(fecha, fecha1 , region, sucursal, coord, asesor);
+				}	
+			}	
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Pagos Esperados Con Diferencia";
+				comFiltroRep.init("2",titulo, "");
+				btnExportar.enabled=false;
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function limpiar():void{
+				dgReporte.dataProvider = null;
+				btnExportar.enabled=false
+				lblTotal.text = "";
+				comFiltroRep.limpiar();
+			}
+
+		]]>
+	</mx:Script>
+	<control:FiltroRepAgrupadoIniFin id="comFiltroRep"/>
+	<mx:Button x="80" y="377" label="Generar" click="generar()" id="btnGenerar"/>
+	<mx:Button x="159" y="377" label="Limpiar" click="limpiar()" id="btnLimpiar"/>
+	<mx:Button x="677.4" y="377" label="Exportar Excel"  id="btnExportar" click="exportar()"/>
+	<mx:DataGrid id="dgReporte" x="19.55" y="409" width="760.9" height="224" horizontalScrollPolicy="auto">
+		<mx:columns>
+			<mx:DataGridColumn headerText="FECHA DE PAGO" dataField="FPAGO" width="150"/>
+			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="100"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="110"/>
+			<mx:DataGridColumn headerText="COORDINADOR" dataField="NOMBRE_COORDINADOR" width="180"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="NOMBRE_ASESOR" width="180"/>
+			<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="60"/>
+			<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD" width="100"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="COD_GPO" width="170"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMBRE_GRUPO" width="150"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="NUM PAGO" dataField="NO_PAGO" width="90"/>
+			<mx:DataGridColumn headerText="PAGOS ATRASADOS" dataField="PAGOS_ATRASADOS" width="130"/>
+			<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD" width="120"/>
+			<mx:DataGridColumn headerText="PAGO REAL PERIODO" dataField="PAGO_REAL_PERIODO" width="150"/>
+			<mx:DataGridColumn headerText="DIFERENCIA" dataField="DIFERENCIA" width="100"/>
+			<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="MONTO_ENTREGADO" width="150"/>
+			<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL" width="100"/>
+			<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES" width="100"/>
+			<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL" width="110"/>
+			<mx:DataGridColumn headerText="DIAS MORA" dataField="DIAS_MORA" width="100"/>
+			<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL" width="120"/>
+			<mx:DataGridColumn headerText="SALDO INTERES" dataField="SDO_INTERES" width="125"/>
+			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" width="150"/>
+			<mx:DataGridColumn headerText="TOTAL PAGADO" dataField="TOTAL_PAGADO" width="120"/>
+			<mx:DataGridColumn headerText="SALDO GL" dataField="SALDO_GL" width="125"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
+			<mx:DataGridColumn headerText="FIN" dataField="FFIN" width="80"/>
+			<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="80"/>
+			<mx:DataGridColumn headerText="FECHA DE ACUERDO" dataField="FAC" width="120"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="80"/>
+			<mx:DataGridColumn headerText="NOMBRE DEL RECUPERADOR" dataField="NOMBRE_RECUPERADOR" width="180"/>
+			<mx:DataGridColumn headerText="OBSERVACIONES" dataField="OBSERV" width="250"/>
+			<mx:DataGridColumn headerText="DIFICIL" dataField="DIFIC" width="80"/>
+			<mx:DataGridColumn headerText="FECHA DE REGISTRO" dataField="FREGISTRO" width="125"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label id="lblTotal" x="19.55" y="641" width="290.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

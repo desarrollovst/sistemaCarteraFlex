@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="604" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="280">
+	
+	<!--Componente que permite observar el seguimiento de las defunciones y sus beneficiarios-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.DatosCalifAcreABC;
+			import Data.EventCalifAcreABC;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+			private var info:DatosCalifAcreABC;
+			
+			private var _xmlDatos:XML = new XML();
+			private var dPermisos:XML = new XML();
+			
+			private var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var objMtto:Sprite = new Sprite();
+			
+			private var titulo:String;
+			private var accion:int;
+			private var ind:int;
+			private var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			private var alta:Boolean = new Boolean();
+			private var borrado:Boolean = new Boolean();
+			private var consulta:Boolean = new Boolean();
+			private var edicion:Boolean = new Boolean();
+		]]>
+	</mx:Script>
+			
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+			private function activarContMod(band:Boolean):void{
+				btnEliminar.enabled = band;
+				btnEditar.enabled = band;
+			}
+			private function actualizar(event:Event):void{
+				buscarLista();
+			}
+			private function iniVar():void{
+				this.ind = -1;
+				this.vScroll = -1;
+			}
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Calificación de Acreditado ABC";
+				lblTitulo.text = titulo.toUpperCase();
+				permisos();
+			}
+			private function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/				
+						}
+					}
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			private function selecciona():void{
+				activarContMod(true);
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- BUSCAR LISTAS -->
+	<mx:Script>
+		<![CDATA[
+			private function buscarLista():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				dgDatos.dataProvider = null;
+				activarContMod(false);
+												
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlDatos = new XML(event.result);
+					
+					if(_xmlDatos.elements().length() >0){
+						dgDatos.dataProvider = _xmlDatos.Table;
+						
+						if(accion == 2){
+							dgDatos.validateNow();
+							dgDatos.verticalScrollPosition = vScroll;
+							dgDatos.selectedIndex = ind;
+							accion = 0;
+							activarContMod(true);			
+						}
+					}
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+				});
+				wsCat.getCatalogoGral.send(43, params);
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- MUESTRA FORMULARIOS -->
+	<mx:Script>
+		<![CDATA[
+			private function mostrarForm(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoCalAcreABC:MttoCalAcreABC = new MttoCalAcreABC(); 
+				if(edicion == true){
+					objMtto = this;	
+					accion = tipo;
+									
+					switch(tipo){
+						case 1: 
+							comMttoCalAcreABC = MttoCalAcreABC(PopUpManager.createPopUp(objMtto,MttoCalAcreABC,true));
+							comMttoCalAcreABC.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+							PopUpManager.centerPopUp(comMttoCalAcreABC);							
+							comMttoCalAcreABC.nuevo();
+							break;
+						case 2:
+							if(dgDatos.selectedIndex >= 0){		
+								comMttoCalAcreABC = MttoCalAcreABC(PopUpManager.createPopUp(objMtto,MttoCalAcreABC,true));	
+								comMttoCalAcreABC.addEventListener(Event.REMOVED_FROM_STAGE, actualizar);
+								PopUpManager.centerPopUp(comMttoCalAcreABC);
+								iniVar();
+								ind = dgDatos.selectedIndex;
+								vScroll = dgDatos.verticalScrollPosition;
+								comMttoCalAcreABC.cargarInfo(_xmlDatos.Table[dgDatos.selectedIndex]);
+							}	
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- ELIMINAR -->
+	<mx:Script>
+		<![CDATA[
+			private function eliminar():void{
+				if(dgDatos.selectedIndex >= 0){
+					if(dgDatos.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el párametro de calificación seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+					else
+						Alert.show("Seleccione el párametro de calificación a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			private function manejadorEliminar(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					info = new DatosCalifAcreABC();
+					info.codigo = dgDatos.selectedItem.CODIGO;
+					info.atrasomin = 0;
+					info.atrasomax = 0;
+					info.calificacion = "";
+										
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					
+					wsMS.addEventListener(ResultEvent.RESULT, setAccion);
+					wsMS.setAccionCatCalifClABC.send(info.codigo, info.atrasomin, info.atrasomax, info.calificacion, 3);
+			    } 
+			}
+			private function setAccion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccion);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarLista();
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="604" height="280">
+		<mx:Canvas x="384.75" y="9" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar defunción" width="40" click="mostrarForm(2)"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar defunción" width="40" click="mostrarForm(1)"/>
+			<mx:Button id="btnEliminar" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminar()" enabled="false" toolTip="Eliminar defunción" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista()" toolTip="Buscar Acreditado" width="40" />
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="18.25" y="52" width="571.5" height="211" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgDatos" x="10" y="10" width="548" height="189" itemClick="selecciona()" itemDoubleClick="mostrarForm(2)" doubleClickEnabled="true"
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on">									
+				<mx:columns>
+					<mx:DataGridColumn headerText="ATRASO MÍNIMO" dataField="ATRASOMIN" width="150" />
+					<mx:DataGridColumn headerText="ATRASO MÁXIMO" dataField="ATRASOMAX" width="150" />
+					<mx:DataGridColumn headerText="CALIFICACIÓN" dataField="CALIFICACION" width="150" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="25" text="..." fontWeight="bold" fontSize="12" fontStyle="italic" id="lblTitulo" width="358.75"/>
+	</mx:Canvas>
+</mx:Canvas>

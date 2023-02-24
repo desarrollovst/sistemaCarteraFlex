@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:Data="Data.*"
+	 layout="absolute" width="412" height="308" title="Agrega nueva opción" showCloseButton="true" close="cerrar()"> 
+
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="412" height="268" creationPolicy="all" y="0">
+		<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.events.IndexChangedEvent;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+        	import mx.events.*;
+            
+            [Bindable]
+            private var _xmlInfo:XML = new XML();
+
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var codigoOp:String;
+			
+			public function activaControles(_xmlControl:XML):void{
+			}
+			
+			public function desactivaControles():void{
+				cnvAnalisis.enabled = false;
+			}			
+			
+			public function init(codigo:String, nombreCatalogo:String, nombreOp:String, descripcionOp:String, estatus:String):void{
+				this.codigoOp = codigo;
+				this.estatus = estatus;
+				lblNombreCatalogo.text = nombreCatalogo + "-Estatus:"+ estatus;
+				txtNombreOpcion.text = nombreOp
+				txtAreaDexcripcion.text = descripcionOp;							
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);				
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function getNombreOpcion():String{
+				var nombre:String = txtNombreOpcion.text;
+				if(nombre == "") 
+					return "";
+				else 
+					return nombre;
+			}
+			
+			public function getDescipcion():String{
+				var descrip:String = txtAreaDexcripcion.text;
+				if(descrip == "") 
+					return "";
+				else 
+					return descrip; 
+			}
+			
+			public function getCodigo():String{
+				return this.codigoOp;
+			}
+			
+			public function getEstatus():String{
+				return this.estatus;
+			}
+		]]>
+		</mx:Script>
+		<mx:Canvas id="cnvAnalisis" x="10" y="38" width="392" height="184.7" styleName="canvasMod">
+			<mx:TextInput x="10" y="35" width="370" id="txtNombreOpcion"/>
+			<mx:TextArea x="10" y="95" width="370" height="77.7" id="txtAreaDexcripcion"/>
+			<mx:Text x="10" y="10" text="Nombre:" width="57"/>
+			<mx:Text x="10" y="67" text="Descripción:" width="89"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="10" text="" width="392" id="lblNombreCatalogo"/>
+		<mx:Button id="btnCancelar" x="338" y="230.7" icon="@Embed(source='assets/images/iconCancel.png')"  visible="true"/>
+		<mx:Button id="btnAceptar" x="266" y="230.7" icon="@Embed(source='assets/images/iconAccept.png')"   visible="true"/>
+	</mx:Canvas>
+</mx:TitleWindow>

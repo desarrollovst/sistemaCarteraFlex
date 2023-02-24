@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="367" height="549" 
+	title="CONSULTORIAS" fontWeight="normal">
+	
+	<mx:Validator id="vNombre" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vRazonSoc" source="{txtRazonSoc}" property="text" 
+	invalid="{txtRazonSoc.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vRFC" source="{txtRFC}" property="text" 
+	invalid="{txtRFC.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de las consultorias-->
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+				
+		private var vResult:ValidationResultEvent;
+		
+		private var _xmlBancos:XML =  new XML();
+		private var acBancos:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function Edicion(pxmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición de Consultorias";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+		 	du.sCursor();
+		 	Application.application.bloquear();
+		 		
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+				_xmlBancos = new XML(event.result);
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+					
+				if (_xmlBancos.elements().length() > 0){
+					formateaBancos();
+					
+					for(var i:int = 0; i < acBancos.length; i++){   
+						if (acBancos[i].nombre.toString() == pxmlInfo.BANCO){
+							cbxBanco.selectedIndex = i;
+							break;
+						}
+					}
+					
+					txtCodigo.text = pxmlInfo.CODIGO;
+					txtNombre.text = pxmlInfo.NOMBRE;
+					txtRazonSoc.text = pxmlInfo.RAZON_SOCIAL;
+					txtTelefono.text = pxmlInfo.TELEFONO;
+					txtMail.text = pxmlInfo.MAIL;
+					txtRFC.text = pxmlInfo.RFC;
+					txtCuenta.text = pxmlInfo.CUENTA;
+					txtClabe.text = pxmlInfo.CLABE;
+					txtNombre1.text = pxmlInfo.NOMBRE1;
+					txtNombre2.text = pxmlInfo.NOMBRE2;
+					txtPrimape.text = pxmlInfo.PRIMAPE;
+					txtSegape.text = pxmlInfo.SEGAPE
+					
+					txtNombre.editable = false;
+					txtRazonSoc.editable = false;
+					txtRFC.editable = false;
+					
+					if(pxmlInfo.ACTIVO == "S")
+						chkActivo.selected = true;
+					else 
+						chkActivo.selected = false;
+				}
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(42, params);
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mNombre:String = txtNombre.text;
+				var mRazonSocial:String = txtRazonSoc.text;
+				var mTelefono:String = txtTelefono.text;
+				var mMail:String = txtMail.text;
+				var mRFC:String = txtRFC.text;
+				var mBanco:String = cbxBanco.selectedItem.nombre;
+				var mCuenta:String = txtCuenta.text;
+				var mClabe:String = txtClabe.text;
+				var mNombre1:String = txtNombre1.text;
+				var mNombre2:String = txtNombre2.text;
+				var mPrimape:String = txtPrimape.text;
+				var mSegape:String = txtSegape.text;
+				var mActivo:String = "";
+				
+				if(chkActivo.selected)
+					mActivo = "S";
+				else
+					mActivo = "N";
+					
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionCpConsultoria.send(mCodigo, mNombre, mRazonSocial, mTelefono, mMail
+					, mRFC, mBanco, mCuenta, mClabe, mNombre1, mNombre2, mPrimape, mSegape, mActivo, tipoAccion);
+			}
+		}
+		
+		private function formateaBancos():void{
+			var cont:int = _xmlBancos.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlBancos.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acBancos = new ArrayCollection(item);
+			cbxBanco.dataProvider = acBancos;
+			cbxBanco.selectedIndex = 0;
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServCap.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function Nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nueva Consultoria";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			var wsCat:WebService = new WebService();
+			var params:Array = new Array();
+			
+			du.initWsCat(wsCat);
+		 	du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+				_xmlBancos = new XML(event.result);
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+					
+				if (_xmlBancos.elements().length() > 0){
+					formateaBancos();
+					
+				}
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(42, params);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function valida():Boolean{
+			var iaNombre:Array = Validator.validateAll([vNombre]);
+			var iaRazonSoc:Array = Validator.validateAll([vRazonSoc]);	
+			var iaRFC:Array = Validator.validateAll([vRFC]);
+		
+			if (iaNombre.length != 0){
+				Alert.show("Debe capturar el nombre de la consultoria.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaRazonSoc.length != 0){
+				Alert.show("Debe capturar la razón social de la consultoria.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaRFC.length != 0){
+				Alert.show("Debe capturar el RFC de la consultoria.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			return true;
+		}
+	]]>
+	</mx:Script>
+	
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="347" height="226" x="10" y="22" styleName="canvasMod">
+	<mx:Label id="lblCodigo" x="40" y="12" text="Código:"/>
+	<mx:TextInput x="89" y="10" width="78" id="txtCodigo" editable="false" maxChars="3" tabIndex="1"/>
+	<mx:Label id="lblNombre" x="36" y="42" text="Nombre:"/>
+	<mx:CheckBox x="279" y="10" label="Activo" id="chkActivo" tabIndex="14"/>
+	<mx:TextInput id="txtNombre" x="89" y="40" width="246" maxChars="100" editable="true" tabIndex="2"/>
+	<mx:Label id="lblRazonSoc" x="10" y="72" text="Razon Social:"/>
+	<mx:TextInput id="txtRazonSoc" x="89" y="70" width="246" maxChars="100" editable="true" tabIndex="3"/>
+	<mx:Label id="lblRfc" x="53" y="102" text="RFC:"/>
+	<mx:TextInput id="txtRFC" x="89" y="100" width="246" maxChars="20" editable="true" tabIndex="4"/>
+	<mx:Label id="lblBanco" x="42" y="132" text="Banco:"/>
+	<mx:Label id="lblCuenta" x="39" y="162" text="Cuenta:"/>
+	<mx:Label id="lblClabe" x="46" y="192" text="Clabe:"/>
+	<mx:TextInput id="txtCuenta" x="89" y="160" width="246" maxChars="30" editable="true" tabIndex="6"/>
+	<mx:TextInput id="txtClabe" x="89" y="190" width="246" maxChars="30" editable="true" tabIndex="7"/>
+	<mx:ComboBox x="89" y="130" width="246" labelField="nombre" id="cbxBanco" tabIndex="5"></mx:ComboBox>
+	
+</mx:Canvas>
+	<mx:Label id="lblDatos" x="11" y="4" text="Datos de Consultoria:" width="177" fontSize="11" fontWeight="normal"/>
+	<mx:Button id="btnAceptar" x="221" y="477" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="15"/>
+	<mx:Button id="btnCancelar" x="293" y="477" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="16"/>
+	<mx:Label id="lblDatos1" x="11" y="254" text="Datos del Contacto:" width="177" fontSize="11" fontWeight="normal"/>
+	<mx:Canvas x="10" y="272" width="347" height="197" styleName="canvasMod">
+		<mx:Label id="lblNombre1" x="23" y="12" text="Primer Nombre:"/>
+		<mx:TextInput id="txtNombre1" x="109" y="10" width="226" maxChars="50" editable="true" tabIndex="8"/>
+		<mx:Label id="lblNombre2" x="10" y="42" text="Segundo Nombre:"/>
+		<mx:TextInput id="txtNombre2" x="109" y="40" width="226" maxChars="50" editable="true" tabIndex="9"/>
+		<mx:Label id="lblPrimape" x="15" y="72" text="Apellido Paterno:"/>
+		<mx:TextInput id="txtPrimape" x="109" y="70" width="226" maxChars="50" editable="true" tabIndex="10"/>
+		<mx:Label id="lblSegape" x="13" y="102" text="Apellido Materno:"/>
+		<mx:TextInput id="txtSegape" x="109" y="100" width="226" maxChars="50" editable="true" tabIndex="11"/>
+		<mx:Label id="lblTelefono" x="51" y="132" text="Teléfono:"/>
+		<mx:TextInput id="txtTelefono" x="109" y="130" width="226" maxChars="20" editable="true" tabIndex="12"/>
+		<mx:Label id="lblMail" x="75" y="162" text="Mail:"/>
+		<mx:TextInput id="txtMail" x="109" y="160" width="226" maxChars="50" editable="true" tabIndex="13"/>
+	</mx:Canvas>
+</mx:TitleWindow>

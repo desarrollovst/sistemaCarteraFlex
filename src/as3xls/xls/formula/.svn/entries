@@ -1,0 +1,52 @@
+8
+
+dir
+23
+http://desarrollo-pc:18080/svn/EMP_ADMIN/trunk/EMP_ADMIN/src/as3xls/xls/formula
+http://desarrollo-pc:18080/svn/EMP_ADMIN
+
+
+
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+
+svn:special svn:externals svn:needs-lock
+
+Tokens.as
+file
+
+
+
+
+2010-06-28T21:37:56.000000Z
+3093ce909071e3db199bae317cd73565
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+Formula.as
+file
+
+
+
+
+2010-06-28T21:39:36.000000Z
+5605fbf198a3429ed34750876a4577d2
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+Functions.as
+file
+
+
+
+
+2010-06-28T21:38:24.000000Z
+216ae50a60296b37672486b978bee476
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+

@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="initApp()">
+	<mx:states>
+		<mx:State name="Sucursal">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="837"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="473"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="817" height="369" styleName="canvasMod" id="cvGeneralS">
+					<mx:Canvas x="8" y="75" width="796" height="282" styleName="canvasMod">
+						<mx:DataGrid id="dgCS" x="10" y="10" width="774" height="260" horizontalScrollPolicy="on"
+							sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+							itemClick="seleccionaSucursalCart()" doubleClickEnabled="true" itemDoubleClick="mostrarFormCart(2)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="100" />
+								<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300" />
+								<mx:DataGridColumn headerText="CARTERA INICIO" dataField="CART_INI" width="120" />
+								<mx:DataGridColumn headerText="CARTERA FINAL" dataField="CART_FIN" width="120" />
+								<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="90" />
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					<mx:Canvas x="600" y="10" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Button id="btnEditarS" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarFormCart(2)"/>
+						<mx:Button id="btnAgregarS" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarFormCart(1)"/>
+						<mx:Button id="btnEliminarS" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" enabled="false" toolTip="Eliminar" width="40" click="eliminarIncentivo()"/>
+						<mx:Button id="btnDatosS" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" enabled="true" toolTip="Listado" width="40" click="buscarLista();"/>
+					</mx:Canvas>
+					<mx:Canvas x="10" y="10" width="581" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Label id="lblNombre1" x="139" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+						<mx:TextInput id="txtNombreS" x="197.5" y="5" width="371.5" enter="buscarLista()" tabIndex="2"/>
+						<mx:Label id="lblCod1" x="6" y="7" text="CODIGO:" width="53"/>
+						<mx:TextInput id="txtCodigoS" x="58" y="5" width="73" maxChars="3" enter="buscarLista()" tabIndex="1"/>
+					</mx:Canvas>
+					<mx:Label x="10" y="55" text="PARÁMETROS DE CARTERA POR SUCURSAL:" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="Region">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="837"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="473"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="817" height="369" styleName="canvasMod" id="cvGeneralR">
+					<mx:Canvas x="10" y="73" width="796" height="282" styleName="canvasMod">
+						<mx:DataGrid id="dgCR" x="10" y="10" width="774" height="260" horizontalScrollPolicy="on"
+							sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+							itemClick="seleccionaRegionCart()" doubleClickEnabled="true" itemDoubleClick="mostrarFormCart(2)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="100" />
+								<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300" />
+								<mx:DataGridColumn headerText="CARTERA INICIO" dataField="CART_INI" width="120" />
+								<mx:DataGridColumn headerText="CARTERA FINAL" dataField="CART_FIN" width="120" />
+								<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="90" />
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					<mx:Canvas x="600" y="10" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Button id="btnEditarR" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarFormCart(2)"/>
+						<mx:Button id="btnAgregarR" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarFormCart(1)"/>
+						<mx:Button id="btnEliminarR" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" enabled="false" toolTip="Eliminar" width="40" click="eliminarIncentivo()"/>
+						<mx:Button id="btnDatosR" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" enabled="true" toolTip="Listado" width="40" click="buscarLista();"/>
+					</mx:Canvas>
+					<mx:Label x="10" y="53" text="PARÁMETROS DE CARTERA POR REGIÓN:" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+					<mx:Canvas x="10" y="8" width="581" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Label id="lblNombre2" x="143" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+						<mx:TextInput id="txtNombreR" x="201.5" y="5" width="367.5" enter="buscarLista()" tabIndex="2"/>
+						<mx:Label id="lblCod2" x="6" y="7" text="CODIGO:" width="53"/>
+						<mx:TextInput id="txtCodigoR" x="58" y="5" width="77" maxChars="3" enter="buscarLista()" tabIndex="1"/>
+					</mx:Canvas>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cvGeneral}"/> 
+				<mx:AddChildAction duration="500" target="{cvGeneralS}"/>
+				<mx:AddChildAction duration="500" target="{cvGeneralR}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+    <![CDATA[
+    	
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.events.CloseEvent;
+		import mx.events.DataGridEvent;				
+		import mx.events.FlexEvent;
+		import mx.events.ListEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent
+		import mx.rpc.Fault;
+		import mx.rpc.soap.WebService;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+			
+    	private var _xmlCart:XML = new XML();
+    	
+    	private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+    	private var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var objMtto:Sprite = new Sprite();
+		
+		private var indSucursal:int;
+		private var indRegion:int;
+		
+		private var vScrollSucursal:Number;
+		private var vScrollRegion:Number;
+		
+		private function activarBotonEditar(pActivo:Boolean, pTipo:String):void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "S"){
+				if(pTipo == "C")
+					btnEditarS.enabled = pActivo;
+			}
+			else if(pPuesto == "R"){
+				if(pTipo == "C")
+					btnEditarR.enabled = pActivo;
+			}
+		}
+		
+		private function activarBotonEliminar(pActivo:Boolean, pTipo:String):void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "S"){
+				if(pTipo == "C")
+					btnEliminarS.enabled = pActivo;
+			}
+			else if(pPuesto == "R"){
+				if(pTipo == "C")
+					btnEliminarR.enabled = pActivo;
+			}
+		}
+		
+		private function buscarLista():void{
+			var pPuesto:String = obtienePuesto();
+			var pCodigo:String = "";
+			var pNombre:String = "";
+			
+			wsIncC = new WebService;
+			
+			_xmlCart = null;
+			
+			if(pPuesto == "S"){ //Sucursal
+				pCodigo = txtCodigoS.text;
+				pNombre = txtNombreS.text;
+				
+				initConexionIncC();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgCS.dataProvider = null;
+				
+				activarBotonEditar(false, "C");
+				activarBotonEliminar(false, "C");
+				
+				du.ejecutaWsMethod(wsIncC,function(evt:ResultEvent):void {											
+					_xmlCart = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsIncC);	
+					Application.application.desbloquear();
+						
+					if (_xmlCart.elements().length() > 0)
+						dgCS.dataProvider = _xmlCart.Table;
+				});
+					wsIncC.getParametrosIncCart.send(pCodigo, pNombre, pPuesto);
+			}
+			else if(pPuesto == "R"){ //Region
+				pCodigo = txtCodigoR.text;
+				pNombre = txtNombreR.text;
+				
+				initConexionIncC();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgCR.dataProvider = null;
+				
+				activarBotonEditar(false, "C");				
+				activarBotonEliminar(false, "C");
+				
+				du.ejecutaWsMethod(wsIncC,function(evt:ResultEvent):void {											
+					_xmlCart = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsIncC);	
+					Application.application.desbloquear();
+						
+					if (_xmlCart.elements().length() > 0)
+						dgCR.dataProvider = _xmlCart.Table;
+				});
+				wsIncC.getParametrosIncCart.send(pCodigo, pNombre, pPuesto);
+			}
+		}
+		
+		private function eliminarIncentivo():void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "S"){
+				if(dgCS.selectedIndex >= 0){
+					if(dgCS.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el parámetro de cartera seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarIncentivo,global.iQuest);
+					else
+						Alert.show("Seleccione el parámetro de cartera a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			else if(pPuesto == "R"){
+				if(dgCR.selectedIndex >= 0){
+					if(dgCR.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el parámetro de cartera seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarIncentivo,global.iQuest);
+					else
+						Alert.show("Seleccione el parámetro de cartera a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+		}
+			
+		private function manejadorEliminarIncentivo(e:CloseEvent):void{
+			var pPuesto:String = obtienePuesto();
+			
+			var mCodigo:String;
+			var mCartIni:Number;
+			var mCartFin:Number;
+			var mPorcentaje:Number;
+			
+			if(e.detail==Alert.YES){
+				if(pPuesto == "S"){
+					mCodigo = dgCS.selectedItem.CODIGO;
+					mCartIni = dgCS.selectedItem.CART_INI;
+					mCartFin = dgCS.selectedItem.CART_FIN;
+					mPorcentaje = dgCS.selectedItem.PORCENTAJE;
+				}
+				else if(pPuesto == "R"){
+					mCodigo = dgCR.selectedItem.CODIGO;
+					mCartIni = dgCR.selectedItem.CART_INI;
+					mCartFin = dgCR.selectedItem.CART_FIN;
+					mPorcentaje = dgCR.selectedItem.PORCENTAJE;
+				}
+				
+		    	initConexionIncR();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
+					wsIncR.setAccionParametrosIncCartera.send(mCodigo, pPuesto, mCartIni, mCartFin, mPorcentaje, 3);
+			}
+		}
+			
+		private function setAccionElimina(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionElimina);
+			var res:String = new String(event.result.toString());
+			
+			if (res.substr(0,1) == "1")
+				buscarLista();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+		}
+		
+		private function initApp():void{
+    		global = new Globales();
+	    	du = new Utils();
+	        titulo = "Parámetros de Incentivos de Cartera";
+	      	lblTitulo.text = titulo.toUpperCase();
+
+	      	var oItem:Object;
+			var item:Array = new Array();
+			var acPuesto:ArrayCollection;
+
+			oItem = new Object();
+			oItem.id = "0";
+			oItem.nombre = "--Seleccionar--";
+			oItem.puesto = "N";
+			item.push(oItem);
+
+			oItem = new Object();
+			oItem.id = "1";
+			oItem.nombre = "Sucursal";
+			oItem.puesto = "S";
+			item.push(oItem);
+
+			oItem = new Object();
+			oItem.id = "2";
+			oItem.nombre = "Región";
+			oItem.puesto = "R";
+			item.push(oItem);
+
+			acPuesto = new ArrayCollection(item);
+			cbxPuesto.dataProvider = acPuesto;
+			cbxPuesto.selectedIndex = 0;
+    	}
+    	
+    	private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		private function iniVar():void{
+			this.indSucursal = -1;
+			this.vScrollSucursal = -1;
+			
+			this.indRegion = -1;
+			this.vScrollRegion= -1;
+		}
+			
+    	private function modificarEstado():void{
+			var id:Number = cbxPuesto.selectedItem.id;
+			
+			if(id == 1){ //Sucursal
+				currentState = "Sucursal"
+				
+				dgCS.dataProvider = null;
+				
+				activarBotonEditar(false, "C");
+				activarBotonEliminar(false, "C");
+				txtCodigoS.text = "";
+				txtNombreS.text = "";
+			}
+			else if(id == 2){ //Region
+				currentState = "Region"
+				
+				dgCR.dataProvider = null;
+				
+				activarBotonEditar(false, "C");
+				activarBotonEliminar(false, "C");
+				txtCodigoR.text = "";
+				txtNombreR.text = "";
+			}
+			else
+				currentState = null;
+		}
+		
+		private function actualiza(event:Event):void{
+			buscarLista();
+		}
+		
+		private function mostrarFormCart(tipo:int):void{
+			//tipo = 1 NUEVO REGISTRO
+			//tipo = 2 MODIFICA REGISTRO
+			var pPuesto:String = obtienePuesto();
+			var comMttoParamsIncCart:MttoParamIncCartera = new MttoParamIncCartera();						
+			objMtto = this;
+			switch(tipo){
+				case 1: 
+					comMttoParamsIncCart = MttoParamIncCartera(PopUpManager.createPopUp(objMtto,MttoParamIncCartera,true));
+					comMttoParamsIncCart.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+					PopUpManager.centerPopUp(comMttoParamsIncCart);							
+					comMttoParamsIncCart.nuevo(pPuesto);
+					break;
+				case 2:
+					if(pPuesto == "S"){
+						if (dgCS.selectedIndex >= 0){
+							comMttoParamsIncCart = MttoParamIncCartera(PopUpManager.createPopUp(objMtto,MttoParamIncCartera,true));	
+							comMttoParamsIncCart.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+							PopUpManager.centerPopUp(comMttoParamsIncCart);
+							iniVar();
+							
+							this.indSucursal = dgCS.selectedIndex;
+							this.vScrollSucursal = dgCS.verticalScrollPosition;
+							comMttoParamsIncCart.edicion(_xmlCart.Table[dgCS.selectedIndex], pPuesto);	
+						}
+						else
+							Alert.show("Debe seleccionar el registro de cartera.",titulo,4,null,null,global.iAlert);		
+					}
+					else if(pPuesto == "R"){
+						if (dgCR.selectedIndex >= 0){
+							comMttoParamsIncCart = MttoParamIncCartera(PopUpManager.createPopUp(objMtto,MttoParamIncCartera,true));	
+							comMttoParamsIncCart.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+							PopUpManager.centerPopUp(comMttoParamsIncCart);
+							iniVar();
+							
+							this.indRegion = dgCR.selectedIndex;
+							this.vScrollRegion = dgCR.verticalScrollPosition;
+							comMttoParamsIncCart.edicion(_xmlCart.Table[dgCR.selectedIndex], pPuesto);		
+						}
+						else
+							Alert.show("Debe seleccionar el registro de cartera.",titulo,4,null,null,global.iAlert);
+					}
+			}
+		}
+		
+		private function obtienePuesto():String{
+			var pPuesto:String = cbxPuesto.selectedItem.puesto;
+			return pPuesto;
+		}
+		
+		private function seleccionaSucursalCart():void{
+			if (dgCS.selectedIndex >= 0){
+				activarBotonEditar(true, "C");
+				activarBotonEliminar(true, "C");
+			}
+			else{
+				activarBotonEditar(false, "C");
+				activarBotonEliminar(false, "C");
+			}
+		}
+		
+		private function seleccionaRegionCart():void{
+			if (dgCR.selectedIndex >= 0){
+				activarBotonEditar(true, "C");
+				activarBotonEliminar(true, "C");
+			}
+			else{
+				activarBotonEditar(false, "C");
+				activarBotonEliminar(false, "C");
+			}
+		}
+	]]>
+  	</mx:Script>
+	<mx:Canvas x="0" y="0" width="346" height="93" id="cvGeneral" backgroundColor="#FFFFFF">
+		<mx:Canvas x="10" y="39" width="247" height="43" styleName="canvasMod" id="cvBusqueda">
+			<mx:Label x="13" y="10" text="Puesto:"/>
+			<mx:ComboBox x="62" y="8" id="cbxPuesto" labelField="nombre" change="modificarEstado()"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="326" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

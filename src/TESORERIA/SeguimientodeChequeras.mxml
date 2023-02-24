@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:local="*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			import OPERAC.MttoCuenta;
+			
+			private var _xmlRep:XML = new XML();
+			private var _xmlCta:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			private var codCuenta:String;
+			private var global:Globales;
+						
+			private function actualizarCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
+				codCuenta = txtCodCuenta.text;
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
+			}			
+						
+			private function buscaCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodCuenta.text != ""){
+					txtCuenta.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {											
+						_xmlCta = new XML(event.result);
+								
+						du.rCursor();
+						du.closeWs(wsCat);
+								
+						if (_xmlCta.elements().length() > 0){
+							txtCodCuenta.text = _xmlCta.Table[0].CODIGO;
+							codCuenta = txtCodCuenta.text;
+							txtCuenta.text = _xmlCta.Table[0].BANCO + " - " + _xmlCta.Table[0].NUMERO;	
+						}
+						else{
+							txtCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);	
+						}
+					});
+					params[0] = txtCodCuenta.text;
+					wsCat.getInfoRegistro.send(14, params);	
+				}	
+			}			
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}			
+						
+			private function generar():void{
+				if(valida()){
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length();
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}	
+					});
+					wsMS.getRepSegChequera.send(txtCodCuenta.text, Application.application.U_ID);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Seguimiento de Chequeras";
+				lblTitulo.text = titulo.toUpperCase();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpiar():void{
+				txtCuenta.text = "";
+				txtCodCuenta.text = "";
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+			
+			private function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizarCta);
+				PopUpManager.centerPopUp(comMttoCta);	
+			}
+			
+			private function valida():Boolean{
+				if(txtCodCuenta.text != "" && txtCuenta.text == ""){
+					Alert.show("Seleccione la cuenta bancaria que desea consultar.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;	
+			}
+			
+		]]>
+	</mx:Script>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="18.45" y="132" width="763.05" visible="true" height="199" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="80"/>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="NOMIB" width="160"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE CUENTA" dataField="NOMCB" width="220"/>
+			<mx:DataGridColumn headerText="NÚMERO CUENTA" dataField="NUMCB" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUE SIGUIENTE" dataField="CHQSIG" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUE FINAL" dataField="CHQFINAL" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUES DISPONIBLES" dataField="CHQDISP" width="120"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="btnExportar" x="678.5" y="100" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="339" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<mx:Canvas styleName="canvasMod" x="18" y="39" width="405" height="85">
+		<mx:Button id="btnGenerar" x="126.5" y="49" label="Generar" click="generar()"/>
+		<mx:Button x="205.5" y="49" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+		<mx:TextInput id="txtCodCuenta" x="60" y="14" width="45.5" enter="buscaCuenta()"/>
+		<mx:Label x="10" y="16" text="Cuenta:" id="lblFecha" textAlign="right"/>
+		<mx:TextInput id="txtCuenta" x="113.5" y="14" width="225.5" editable="false"/>
+		<mx:Button id="btnBuscar" x="350" y="12" icon="@Embed(source='assets/images/iconBusq.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

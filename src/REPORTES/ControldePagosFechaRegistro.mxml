@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="520" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlReg:XML =  new XML();
+			private var _xmlCoord:XMLList = new XMLList;
+			private var _xmlAsesor:XML =  new XML();
+			private var _xmlRep:XML =  new XML();
+			
+			public var regObj:ArrayCollection = new ArrayCollection();
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var asesorObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var titulo:String;
+			public var rep:String;
+			private var global:Globales;
+		
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			public function cargaAsesor():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAsesor = new XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);	
+						
+					asesorObj.removeAll();
+					asesorObj.refresh();
+					asesorObj.addItem(agregaInicial("000000", "--Todos--"))	
+						
+					if(_xmlAsesor.elements().length() > 0){
+						formateaAsesor();
+						if(_xmlAsesor.elements().length() == 1){
+							cboAsesor.selectedIndex = 1;
+							cboAsesor.enabled = false;
+						}
+						else{
+							if(Application.application.PUESTO == 'A'){
+								var i:int;
+								i = _xmlAsesor.Table.(CODIGO.toString() == Application.application.U_ID.toString()).childIndex();
+								cboAsesor.selectedIndex = i + 1;
+								cboAsesor.enabled = false;
+							}
+						}
+					}
+					wsCat = null;
+				});
+				params[0] = cboCoord.selectedItem.codigo;
+				wsCat.getCatalogoGral.send(8, params);
+			}		
+			
+			public function cargaCoord():void{
+				_xmlCoord = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+					
+				coordObj.removeAll();
+				coordObj.refresh();	
+				coordObj.addItem(agregaInicial("000", "--Todas--"))
+				asesorObj.removeAll();
+				asesorObj.refresh();
+				asesorObj.addItem(agregaInicial("000000", "--Todos--"))
+					
+				cboCoord.enabled = true;	
+				formateaCoord();
+				if(_xmlCoord.length() == 1){
+					cboCoord.selectedIndex = 1;
+					cboCoord.enabled = false;
+					cargaAsesor();
+				}
+			}			
+						
+			public function cargaRegion():void{ 				  
+				_xmlReg = Application.application._xmlReg;
+						
+				formateaRegion();
+				if(_xmlReg.elements().length() == 1){
+					cboRegion.selectedIndex = 1;
+					cboRegion.enabled = false;
+				}
+				cargaCoord();
+			}
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecIni);		
+			}
+			
+			private function formateaAsesor():void{
+				var i:int;
+				var cont:int = _xmlAsesor.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlAsesor.Table[i].CODIGO;
+					oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
+					item.push(oItem);
+				}
+				asesorObj.source = asesorObj.source.concat(item);
+			}			
+						
+			private function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlCoord.CODIGO[i].toString();
+					oItem.nombre = _xmlCoord.NOMBRE[i].toString();
+					item.push(oItem);
+				}
+				coordObj.source = coordObj.source.concat(item);
+			}			
+			
+			private function formateaRegion():void{
+				var i:int;
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlReg.Table[i].CODIGO;
+					oItem.nombre = _xmlReg.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				regObj.source = regObj.source.concat(item);
+			}
+		
+			public function generar():void{
+				if(valida() == true){		
+					var region:String = cboRegion.selectedItem.codigo;
+					var coord:String = cboCoord.selectedItem.codigo;
+					var asesor:String = cboAsesor.selectedItem.codigo;
+					
+					Application.application.bloquear();
+					initConexionRep();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						Application.application.desbloquear();
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+														
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();   
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							fecIni = dtfFecha.text;
+							lblTotal.text = cont.toString() + " Registro(s)";
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+						wsMS = null;
+					});
+					wsMS.getRepControlPagosFechaReg.send(region, coord, asesor, dtfFecha.text, Application.application.U_ID, Application.application.PUESTO);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "30";
+				titulo = "Control de Pagos Fecha Registro";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function initConexionRep():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboRegion.enabled = true;
+				cboCoord.enabled = true;
+				cboAsesor.enabled = true;
+				regObj.removeAll();
+				regObj.refresh();
+				regObj.addItem(agregaInicial("000", "--Todas--"));
+				cboRegion.dataProvider = regObj;		
+				cboCoord.dataProvider = coordObj;
+				cboAsesor.dataProvider = asesorObj;
+				cargaRegion();		
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="227" width="264.05" height="40.5" styleName="canvasMod">
+		<mx:Label x="49.5" y="10" text="Fecha:" width="44" height="20" textAlign="right"/>
+		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="68.25" y="279.5" label="Generar" click="generar()"/>
+	<mx:Button x="160.75" y="279.5" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="165.5" styleName="canvasMod" id="canvas2">
+		<mx:ComboBox id="cboRegion" x="10" y="27.5" labelField="nombre" change="cargaCoord()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboCoord" x="10" y="80" labelField="nombre" change="cargaAsesor()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboAsesor" x="10" y="129.5" labelField="nombre" width="242.05"/>
+		<mx:Label x="10" y="111" text="Asesor"/>
+		<mx:Label x="10" y="9" text="Región"/>
+		<mx:Label x="10" y="61.5" text="Sucursal"/>
+	</mx:Canvas>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="false" x="17.95" y="311.5" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMNS" width="180"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+			<mx:DataGridColumn headerText="FECHA PAGO" dataField="FPAGO"/>
+			<mx:DataGridColumn headerText="FECHA REGISTRO" dataField="FREG" width="120"/>
+			<mx:DataGridColumn headerText="DIA REGISTRO" dataField="DIAREG"/>
+			<mx:DataGridColumn headerText="HORA REGISTRO" dataField="HORAREG" width="110"/>
+			<mx:DataGridColumn headerText="FECHA REUNION" dataField="FECHAREUNION" width="120"/>
+			<mx:DataGridColumn headerText="DIA REUNION" dataField="DIAREUNION"/>
+			<mx:DataGridColumn headerText="HORA REUNION" dataField="HORARIO"/>
+			<mx:DataGridColumn headerText="TIEMPO TRANSCURRIDO" dataField="TIEMPOTRANS" width="150"/>
+			<mx:DataGridColumn headerText="USUARIO" dataField="CDGPE"/>
+			<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMPE"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="btnExportar" x="678" y="279.5" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="17.95" y="484.5" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="305"
+	horizontalScrollPolicy="off" backgroundAlpha="1.0" backgroundColor="#FFFFFF" 
+	creationPolicy="all" creationComplete="initApp()" xmlns:control="Controls.*" height="435">
+		 
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.formatters.DateFormatter;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;		
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			private var _xmlTipoProd:XML = new XML();
+			
+			private var acDesde:ArrayCollection = new ArrayCollection();
+			private var acHasta:ArrayCollection = new ArrayCollection();
+			
+			private var tipoProdObj:ArrayCollection;
+			
+			private var wsMS:WebService;
+			private var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var titulo:String;
+			
+			private function cargaAnios():void{
+				var oItem:Object;
+				var item:Array = new Array();
+				var anioObj:ArrayCollection;
+				var i:int;
+				var Fecha:Date = new Date();
+				var anioInicio:String = "2016";
+				var anioFin:String = Fecha.getFullYear().toString();
+				
+				oItem = new Object();
+				oItem.id = "----";	
+				item.push(oItem);			
+				
+				for(i = Number(anioInicio); i <= Number(anioFin); i++){
+					oItem = new Object();
+					oItem.id = i.toString();	
+					item.push(oItem);
+				}
+												
+				acDesde = new ArrayCollection(item);
+				cboDesde.dataProvider = acDesde;
+				for(i = 0; i < acDesde.length; i++){
+					if(acDesde[i].id == anioFin){
+						cboDesde.selectedIndex = i;
+						break;	
+					}
+				}
+				
+				acHasta = new ArrayCollection(item);
+				cboHasta.dataProvider = acHasta;
+				for(i = 0; i < acHasta.length; i++){
+					if(acHasta[i].id == anioFin){
+						cboHasta.selectedIndex = i;
+						break;	
+					}
+				}
+				
+				if(Application.application.PUESTO != "D"){
+					cboDesde.selectedIndex = cboHasta.selectedIndex -1;
+					cboDesde.enabled = false;
+					cboHasta.enabled = false;
+				}
+				else
+					cboDesde.selectedIndex = 1;
+			}
+								
+			private function generar():void{
+				if(valida()){
+					if(rep != "-1"){
+						var formato:DateFormatter = new DateFormatter();
+						formato.formatString ="DD/MM/YYYY";
+						
+						var consulta:String = global.urlInf;
+						var id:String = "&id=" + rep;
+						var anioI:String = "&anioI=" + cboDesde.selectedItem.id.toString();
+						var anioF:String = "&anioF=" + cboHasta.selectedItem.id.toString();
+						var mes:String = "&mes=" + formato.format(Application.application._Current_Fecha).substr(3,2);
+						var region:String = "&re=" + ctrlFiltro.obtieneRegion();
+						var sucursal:String = "&su=" + ctrlFiltro.obtieneSucursal();
+						var coord:String = "&co=" + ctrlFiltro.obtieneCoord();
+						var asesor:String = "&as=" + ctrlFiltro.obtieneAsesor();
+						var puesto:String = "&pu=" + Application.application.PUESTO;
+						var fecha:String = "&fe=" + formato.format(Application.application._Current_Fecha);
+						consulta = consulta + id + anioI + anioF + mes + region + sucursal + coord + asesor + puesto + fecha;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}
+			}
+												
+			public function init(rep:String, titulo:String, estado:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.rep = rep;
+				this.titulo = titulo;
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;
+				
+				limpiar();
+				cargaAnios();
+				
+				var formato:DateFormatter = new DateFormatter();
+				formato.formatString ="DD/MM/YYYY";
+				lblFecha.text = "INFORME A FECHA DEL " + formato.format(new Date());
+			}		
+						
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			private function initConexionRep():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}		
+		
+			private function limpiar():void{
+				var fec:Date;
+				ctrlFiltro.limpiar();
+				cargaAnios();
+			}
+							
+			private function valida():Boolean{
+				if(cboDesde.selectedIndex == 0){
+					Alert.show("Seleccione el año de inicio del proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboHasta.selectedIndex == 0){
+					Alert.show("Seleccione el año final del proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				var anioI:int = Number(cboDesde.selectedItem.id);
+				var anioF:int = Number(cboHasta.selectedItem.id);
+				
+				if(anioF < anioI){
+					Alert.show("El año final no puede ser menor al año inicio.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}		
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="271.05" height="220" styleName="canvasMod" id="canvas2">
+		<control:CtrlFiltroInfoRSCG id="ctrlFiltro" x="6" y="10" width="255"/>
+	</mx:Canvas>
+	<mx:Canvas x="18" y="281.5" width="271" height="73" styleName="canvasMod" id="canvas1">
+		<mx:Label x="67.5" y="9" text="Desde:" id="label1"/>
+		<mx:Label x="67.5" y="42" text="Hasta:" id="label0"/>
+		<mx:ComboBox x="111.5" y="7" width="93" id="cboDesde" labelField="id"/>
+		<mx:ComboBox x="111.5" y="39" width="93" id="cboHasta" labelField="id"/>
+	</mx:Canvas>
+	<mx:Button x="67.1" y="392" label="Generar" click="generar()" id="btnEnviar"/>
+	<mx:Button x="166.85" y="392" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+	<mx:Label id="lblFecha" x="22.95" y="365" width="262.05" fontStyle="italic" fontWeight="bold" textAlign="center"/>
+</mx:Canvas>

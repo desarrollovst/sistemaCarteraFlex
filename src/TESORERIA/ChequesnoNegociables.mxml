@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" 
+	width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="Devolucion">
+			<mx:SetProperty target="{txtCiclo}" name="enabled" value="false"/>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente de registro de cheques sin la leyenda NO NEGOCIABLE-->
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ICollectionView;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.controls.CheckBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;  
+
+			private var _xmlAcred:XML = new XML();
+			private var _xmlNoNeg:XML = new XML();
+			
+			private var wsMS:WebService;	
+			private var titulo:String;
+			private var grupo:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			private var ciclo:Array;
+			private var acred:Array;
+			private var fpago:Array;
+			private var sec:Array;
+			private var marca:Array;
+			
+			private var acredObj:ArrayCollection = new ArrayCollection();
+			private var noNegObj:ArrayCollection = new ArrayCollection();
+			
+			private function buscarChequesNoNeg():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var grupo:String = txtCodGrupo.text;
+				var ciclo:String = txtCiclo.text;
+				
+			 	du.initWsCat(wsCat);
+			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+			 		_xmlNoNeg = new XML(event.result);
+			 		du.closeWs(wsCat);
+			 		
+					if(_xmlNoNeg.elements().length() > 0){
+						 formateaChequeNoNeg()
+					}
+					dgAcred.dataProvider = acredObj;
+			 	});
+				params[0] = grupo;
+				params[1] = ciclo;
+				params[2] = tipoCheque.selectedValue.toString();
+				wsCat.getListado.send(78, params);	
+			}
+			
+			private function buscarListaAcred():void{
+				if(valida()){
+					var tipo:String = tipoCheque.selectedValue.toString();
+					
+					if(tipo == "D")
+						buscarListaDesembolso();
+					else if (tipo == "G")
+						buscarListaGarantia();
+					else if (tipo == "E")
+						buscarListaExcedente();	
+				}
+			}
+			
+			private function buscarListaDesembolso():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.grupo = txtCodGrupo.text;
+				
+				dgAcred.dataProvider = null;
+				du.initWsCat(wsCat);
+			 	du.rCursor();
+			 	Application.application.bloquear();
+			 	
+			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+			 		_xmlAcred = new XML(event.result);
+			 		
+			 		du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+			 		
+					if(_xmlAcred.elements().length() > 0){
+						formateaListaAcred();
+						buscarChequesNoNeg(); 
+					}
+					else
+						Alert.show("No se han encontrado cheques pendientes. Verifique la información capturada.",titulo,4,null,null,global.iAlert);
+			 	});
+				params[0] = grupo;
+				params[1] = txtCiclo.text;
+				wsCat.getListado.send(18, params);	
+			}
+			
+			private function buscarListaGarantia():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.grupo = txtCodGrupo.text;
+ 							
+				dgAcred.dataProvider = null;
+				du.initWsCat(wsCat);
+			 	du.rCursor();
+			 	Application.application.bloquear();
+			 	
+			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+			 		_xmlAcred = new XML(event.result);
+			 		
+			 		du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+			 		
+					if(_xmlAcred.elements().length() > 0){
+						formateaListaAcredDev();
+						buscarChequesNoNeg(); 
+					}
+					else
+						Alert.show("No se han encontrado cheques pendientes. Verifique la información capturada.",titulo,4,null,null,global.iAlert);
+			 	});
+				params[0] = grupo;
+				wsCat.getListado.send(81, params);	
+			}
+			
+			private function buscarListaExcedente():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.grupo = txtCodGrupo.text;
+				
+				dgAcred.dataProvider = null;
+				du.initWsCat(wsCat);
+			 	du.rCursor();
+			 	Application.application.bloquear();
+			 	
+			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
+			 		_xmlAcred = new XML(event.result);
+			 		
+			 		du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+			 		
+					if(_xmlAcred.elements().length() > 0){
+						formateaListaAcredDev();
+						buscarChequesNoNeg(); 
+					}
+					else
+						Alert.show("No se han encontrado cheques pendientes. Verifique la información capturada.",titulo,4,null,null,global.iAlert);
+			 	});
+				params[0] = grupo;
+				wsCat.getListado.send(82, params);	
+			}
+			
+			private function desabilitaEdicion(event:DataGridEvent):void{
+				event.preventDefault();
+			} 
+			
+			private function enviar():void{
+				var cont:Number = (dgAcred.dataProvider as ICollectionView).length;
+				
+				if(cont > 0){
+	 				formateaRegAcred()
+	 				initConexion();
+					du.sCursor();
+					
+					var tipo:String = tipoCheque.selectedValue.toString();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var resp:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);	
+						
+						if(resp.substr(0,1) == "1"){			
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}	
+						else
+							Alert.show(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.setAccionChequeNoNegociable.send(grupo, ciclo, acred, fpago, sec, marca, tipo,Application.application.U_ID);
+				}
+				else
+					Alert.show("Realice la búsqueda de los cheques.",titulo,4,null,null,global.iAlert);
+			}
+			
+		 	private function formateaChequeNoNeg():void{
+				var contNoNeg:int = _xmlNoNeg.elements().length();
+				var tipo:String = tipoCheque.selectedValue.toString();
+				var i:int = 0;
+				var j:int = 0;
+				var cdgcl:String;
+				var fPago:String;
+			    var sec:Number;
+				
+				if(tipo == "D"){
+					for (i = 0; i < contNoNeg; i++){
+					 	for (j = 0; j < acredObj.length; j++){
+					 		cdgcl = _xmlNoNeg.Table[i].CDGCL;
+					 		
+					 		if(cdgcl == acredObj[j].CDGCL){
+					 			acredObj[j].NO_NEGOCIABLE = false;
+					 			break;
+					 		}
+					 	}
+					}
+				}
+				else if(tipo == "G"){
+					for (i = 0; i < contNoNeg; i++){
+					 	for (j = 0; j < acredObj.length; j++){
+					 		fPago = _xmlNoNeg.Table[i].FPAGO;
+					 		sec = Number(_xmlNoNeg.Table[i].SEC);
+					 		
+					 		if(fPago == acredObj[j].FPAGO && sec == acredObj[j].SEC){
+					 			acredObj[j].NO_NEGOCIABLE = false;
+					 			break;
+					 		}
+					 	}
+					}
+				}
+				else if(tipo == "E"){
+					for (i = 0; i < contNoNeg; i++){
+					 	for (j = 0; j < acredObj.length; j++){
+					 		fPago = _xmlNoNeg.Table[i].FPAGO;
+					 		sec = Number(_xmlNoNeg.Table[i].SEC);
+					 		
+					 		if(fPago == acredObj[j].FPAGO && sec == acredObj[j].SEC){
+					 			acredObj[j].NO_NEGOCIABLE = false;
+					 			break;
+					 		}
+					 	}
+					}
+				}
+			}
+			
+			private function formateaListaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				if(cont > 0 ){
+					for(var i:int = 0; i < cont; i++){
+						oItem = new Object();
+						oItem.NO_NEGOCIABLE = true;
+						oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+						oItem.NOMBREC = _xmlAcred.Table[i].NOMBREC;
+						oItem.NOMBRE_GPO = _xmlAcred.Table[i].NOMBRE_GPO;
+						oItem.CANTAUTOR = _xmlAcred.Table[i].CANTAUTOR;
+						oItem.CDGCLNS = _xmlAcred.Table[i].CDGCLNS;
+						oItem.CICLO = _xmlAcred.Table[i].CICLO;
+						item.push(oItem);
+					}
+					acredObj = new ArrayCollection(item);
+				} 
+				else{
+					Alert.show("No se encontraron resultados",titulo,4,null,null,global.iAlert);	
+				}
+			}
+			
+			private function formateaListaAcredDev():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				var tipo:String = tipoCheque.selectedValue.toString();
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				if(cont > 0 ){
+					for(var i:int = 0; i < cont; i++){
+						oItem = new Object();
+						oItem.NO_NEGOCIABLE = true;
+						oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+						oItem.NOMBREC = _xmlAcred.Table[i].NOMBREC;
+						oItem.NOMBRE_GPO = _xmlAcred.Table[i].NOMBRE_GPO;
+						oItem.CANTAUTOR = _xmlAcred.Table[i].MONTO;
+						oItem.CDGCLNS = _xmlAcred.Table[i].CDGCLNS;
+						oItem.FPAGO = _xmlAcred.Table[i].FPAGO;
+						oItem.SEC = _xmlAcred.Table[i].SEC;
+						oItem.CICLO = _xmlAcred.Table[i].CICLO;		
+						
+						item.push(oItem);
+					}
+					acredObj = new ArrayCollection(item);
+				} 
+				else{
+					Alert.show("No se encontraron resultados",titulo,4,null,null,global.iAlert);	
+				}
+			}
+			
+			private function formateaRegAcred():void {
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var tipo:String = tipoCheque.selectedValue.toString();
+					
+				ciclo = new Array;
+				acred = new Array;
+				fpago = new Array;
+				sec = new Array;
+				marca = new Array;
+				 				
+				for(var i:int = 0; i < listaAcred.length ; i++){
+					if(tipo == "D"){
+						acred[i] = listaAcred[i].CDGCL;
+						ciclo[i] = listaAcred[i].CICLO;
+						fpago[i] = "";
+						sec[i] = "";	
+					}
+					else if(tipo == "G"){
+						acred[i] = "";
+						ciclo[i] = listaAcred[i].CICLO;
+						fpago[i] = listaAcred[i].FPAGO;
+						sec[i] = listaAcred[i].SEC;	
+					}
+					else if(tipo == "E"){
+						acred[i] = "";
+						ciclo[i] = listaAcred[i].CICLO;
+						fpago[i] = listaAcred[i].FPAGO;
+						sec[i] = listaAcred[i].SEC;	
+					}
+					if(listaAcred[i].NO_NEGOCIABLE == false)
+						marca[i] = "S";
+					else
+						marca[i] = "N";	
+				} 
+			}
+		
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			
+				titulo = "Cheques no Negociables";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();				
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			 
+			private function limpiar():void{
+				dgAcred.dataProvider = null;
+				txtCodGrupo.text = "";
+				txtCiclo.text = "";	
+				acred = new Array;	
+				currentState = null;
+				rdbDesembolso.selected = false;
+				rdbGarantia.selected = false;
+				rdbExcedente.selected = false;
+			}
+			
+			public function seleccionaRegAcred(event:Event):void{
+				var ind:int = dgAcred.selectedIndex;
+				var vScroll:Number = dgAcred.verticalScrollPosition;
+				acredObj[ind].NO_NEGOCIABLE = CheckBox(event.currentTarget).selected;
+			}
+			
+			public function seleccionarTipo(event:Event):void{
+				txtCodGrupo.text = "";
+				txtCiclo.text = "";
+				this.grupo = "";
+				dgAcred.dataProvider = null;
+				
+				var tipo:String = event.currentTarget.selectedValue.toString();
+				
+				if(tipo == "D")
+					currentState = null;
+				else if(tipo == "G")
+					currentState = "Devolucion";
+				else if(tipo == "E")
+					currentState = "Devolucion";
+			}
+			
+			private function valida():Boolean{
+				if(txtCodGrupo.text == ""){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				var tipo:String = tipoCheque.selectedValue.toString();
+				if(tipo == "D"){
+					if(txtCiclo.text == ""){
+						Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="732" height="473" y="0">
+		<mx:Canvas x="526.1" y="59" width="61" height="37" styleName="canvasMod" visible="true" id="canvas2">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarListaAcred()" toolTip="Buscar Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="144.85" y="38" width="373.25" height="75" styleName="canvasMod" visible="true" id="canvas1">
+			<mx:Label id="lblCodGrupo" x="63.5" y="43" text="Grupo:"/>
+			<mx:Label id="lblCiclo" x="193.5" y="43" text="Ciclo:"/>
+			<mx:TextInput id="txtCodGrupo" x="109.5" y="41" width="68" maxChars="6" restrict="0-9" enter="buscarListaAcred()"/>
+			<mx:TextInput id="txtCiclo" x="232.5" y="41" width="50.5" maxChars="2" enter="buscarListaAcred()"/>
+			<mx:RadioButtonGroup id="tipoCheque" change="seleccionarTipo(event)" />			
+			<mx:RadioButton x="23.1" y="10" label="Desembolso" groupName="tipoCheque" value="D" selected="true" id="rdbDesembolso"/>
+			<mx:RadioButton x="133.1" y="10" label="Dev. Garantía" groupName="tipoCheque" value="G" id="rdbGarantia"/>
+			<mx:RadioButton x="248.1" y="10" label="Dev. Excedente" groupName="tipoCheque" value="E" id="rdbExcedente"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvAcred" x="11.9" y="124" width="710.05" height="302" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="687.05" height="280" editable="true" sortableColumns="false" 
+				resizableColumns="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NO NEGOCIABLE" dataField="NO_NEGOCIABLE" textAlign="center" rendererIsEditor="true" width="110" editorDataField="selected">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.seleccionaRegAcred(event)" width="25" fontSize="10" verticalCenter="0"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="70" editable="false"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="200" editable="false"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO"  dataField="CANTAUTOR" width="130" editable="false"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMBRE_GPO" width="180" editable="false"/>
+					<mx:DataGridColumn headerText="FPAGO" dataField="FPAGO" width="180" visible="false"/>
+					<mx:DataGridColumn headerText="SEC" dataField="SEC" width="180" visible="false"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="180" visible="false"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button x="571" y="434" label="Guardar" id="btnGuardar" height="24" click="enviar()"/>
+		<mx:Button x="651" y="434" label="Limpiar" id="btnLimpiar" width="71" height="24" click="limpiar()"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="408" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:local="*" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var titulo:String;
+			public var rep:String;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecIni);		
+			}
+		
+			public function generar(event:Event):void{	
+				if(comFiltroFecha.valida() == true){
+					grupo = comFiltroGrupoCiclo.txtGrupo.text;
+					ciclo = comFiltroGrupoCiclo.txtCiclo.text;
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length()
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepCierreDia.send(fecha);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "0";
+				titulo = "Histórico de Prestamos";
+				comFiltroGrupoCiclo.titulo = titulo.toUpperCase();
+				comFiltroFecha.addEventListener("enviar",generar);
+				comFiltroFecha.addEventListener("limpiar",limpiar);
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="false" height="165" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORD" width="160"/>
+			<mx:DataGridColumn headerText="GRUPO + CICLO" dataField="CONTRATO" width="100"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="200"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="ACRED" width="200"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
+			<mx:DataGridColumn headerText="FIN" dataField="FFIN" width="80"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125"/>			
+			<mx:DataGridColumn headerText="SEMANAL" dataField="PAGOSEM" width="100"/>
+			<mx:DataGridColumn headerText="EXTEMPORANEO" dataField="PAGOEXT" width="110"/>
+			<mx:DataGridColumn headerText="PAGO REAL" dataField="PAGO_REAL" width="100"/>
+			<mx:DataGridColumn headerText="PAGO TEORICO" dataField="PAGO_TEO" width="100"/>
+			<mx:DataGridColumn headerText="APORTACION" dataField="APORT_ACRED" width="100"/>
+			<mx:DataGridColumn headerText="DEVOLUCION" dataField="DEV_ACRED" width="100"/>
+			<mx:DataGridColumn headerText="AHORRO" dataField="AHORRO_ACRED" width="100"/>
+			<mx:DataGridColumn headerText="MULTA" dataField="MULTA_ACRED" width="100"/>
+			<mx:DataGridColumn headerText="SITUACION" dataField="SITUA" width="90"/>					
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="670" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="9.95" y="377" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<local:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+	<Data:RowColorDataGrid id="dgReporte0" sortableColumns="false" x="18.45" y="188" width="763.05" visible="true" height="181" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="FECHA VALOR" dataField="FECHA"/>
+			<mx:DataGridColumn headerText="FEC OPERACION" dataField="FECHA_OPERA"/>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+			<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
+			<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="INTERES"/>
+			<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
+			<!--<mx:DataGridColumn headerText="CDGCB" dataField="CDGCB"/>-->
+			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA"/>
+			<mx:DataGridColumn headerText="USUARIO" dataField="USUARIO"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR"/>
+			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMASESOR"/>
+			<!--<mx:DataGridColumn headerText="SECUENCIA" dataField="SECUENCIA"/>-->
+		</Data:columns>
+	</Data:RowColorDataGrid>
+</mx:Canvas>

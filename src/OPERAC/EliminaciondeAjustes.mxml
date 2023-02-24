@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:Data="Data.*" creationComplete="initApp()">
+
+	<!--Componente que permite eliminar los ajustes del grupo seleccionado-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.formatters.DateFormatter;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import mx.managers.PopUpManager;	
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;	
+			import mx.events.ValidationResultEvent;
+			import mx.events.FlexEvent;
+		    import mx.controls.CheckBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;				
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.ListEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			private var du:Utils;
+			private var global:Globales;
+			private var wsMS:WebService;
+			
+			private var _xmlAjustes:XML = new XML();
+			
+			private var AjustesObj:ArrayCollection = new ArrayCollection();
+			private var EliminarObj:ArrayCollection = new ArrayCollection();
+						
+			private var titulo:String;
+			
+			private var openEffect:Effect = new WipeDown();
+			private var closeEffect:Effect = new WipeDown();
+		
+			private function buscarLista():void{
+				if(validaBusqueda()){
+					var wsCat:WebService = new WebService();
+					var params:Array = new Array();
+						
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					AjustesObj.removeAll();
+					AjustesObj.refresh();
+					dgInfo.dataProvider = null;
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlAjustes = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlAjustes.elements().length() > 0){
+							formateaLista();
+							dgInfo.dataProvider = AjustesObj;
+						}
+						else{
+							Alert.show("No se han encontrado ajustes registrados.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);	
+						}
+					});
+					params[0] = txtGrupo.text;
+					params[1] = txtCiclo.text;
+					params[2] = "G";
+					params[3] = dtfFecha.text; 
+					wsCat.getInfoGeneral.send(18, params);
+				}
+			}
+						
+			private function elimina():void{
+				var eGrupo:String;
+				var eCiclo:String;
+				var eClns:String;
+				var aPeriodo:Array = new Array();
+				var aSecuencia:Array = new Array();
+				var aFrealdep:Array = new Array();
+				var aCantidad:Array = new Array();
+				var aTipo:Array = new Array();
+				var n:int = 0;
+				var cont:int = AjustesObj.length;
+								
+				for(var i:int = 0; i < cont; i++){
+					if(AjustesObj[i].REGISTRO == true){
+						eGrupo = AjustesObj[i].CDGNS;
+						eCiclo = AjustesObj[i].CICLO;
+						eClns = AjustesObj[i].CLNS;
+						aPeriodo[n] = AjustesObj[i].PERIODO;
+						aSecuencia[n] = AjustesObj[i].SECUENCIA;
+						aFrealdep[n] = AjustesObj[i].FREALDEP;
+						aCantidad[n] = AjustesObj[i].CANTIDAD;
+						aTipo[n] = AjustesObj[i].TIPO;
+						n++
+					}
+				}
+								
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,function():void{
+							buscarLista();	
+						},global.iInfo);
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				wsMS.setEliminaAjustes.send(eGrupo, eCiclo, eClns, aPeriodo, aSecuencia, aFrealdep, aCantidad, aTipo);	
+			}
+			
+			private function enviar():void{
+				if(valida()){
+					Alert.show("¿Realmente desea eliminar los ajustes seleccionados?",titulo,Alert.YES|Alert.NO,null,manejaElimina,global.iQuest);
+				}
+			}
+			
+			private function formateaLista():void{
+				var cont:int = _xmlAjustes.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				var tipo:String = _xmlAjustes.Table[i].TIPO;
+				
+				AjustesObj.removeAll();
+				AjustesObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					if(tipo == "AC" || tipo == "MI" || tipo == "AA" || tipo == "CI"){
+						oItem = new Object();
+						oItem.REGISTRO = false;
+						oItem.CDGNS = _xmlAjustes.Table[i].CDGNS;
+						oItem.CICLO = _xmlAjustes.Table[i].CICLO;
+						oItem.CLNS = _xmlAjustes.Table[i].CLNS;
+						oItem.PERIODO = _xmlAjustes.Table[i].PERIODO;
+						oItem.SECUENCIA = _xmlAjustes.Table[i].SECUENCIA;
+						oItem.FREALDEP = _xmlAjustes.Table[i].FREALDEP;
+						oItem.CANTIDAD = _xmlAjustes.Table[i].CANTIDAD;
+						oItem.TIPO = _xmlAjustes.Table[i].TIPO;
+						oItem.TIPOSTR = _xmlAjustes.Table[i].TIPOSTR;
+						item.push(oItem);
+					}
+				}
+				AjustesObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				du = new Utils(); 
+				global = new Globales();
+				titulo = "Eliminación de Ajustes";
+				lblTitulo.text = titulo.toUpperCase();
+				//Codigo que permite ejecutar el efecto de apertura
+				openEffect.duration = 500;
+				openEffect.play([this]);	
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+		
+			private function limpiar():void{
+				txtGrupo.text = "";
+				txtCiclo.text = "";
+				dtfFecha.selectedDate = null;
+				dgInfo.dataProvider = null;
+			}
+			
+			private function manejaElimina(event:CloseEvent):void{
+				if(event.detail == Alert.YES){
+					elimina();
+				}
+			}
+			
+			public function seleccionaRegistro(event:Event):void{
+				var ind:int = dgInfo.selectedIndex;
+				AjustesObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+			}
+			
+			private function valida():Boolean{
+				var cont:int;
+				for(var i:int = 0; i < AjustesObj.length; i++){
+					if(AjustesObj[i].REGISTRO == true){
+						cont++;
+					}
+				}
+				if(cont == 0){
+					Alert.show("Debe seleccionar un registro de ajuste.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function validaBusqueda():Boolean{
+				if(txtGrupo.text == ""){
+					Alert.show("Debe capturar el grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtGrupo.text.length != 6){
+					Alert.show("Debe capturar los seis dígitos del grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCiclo.text == ""){
+					Alert.show("Debe capturar el ciclo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCiclo.text.length != 2){
+					Alert.show("Debe capturar los dos dígitos del ciclo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecha.text == ""){
+					Alert.show("Debe seleccionar la fecha de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="500" height="328" backgroundColor="#ffffff" backgroundAlpha="1.0">
+		<mx:Label x="18" y="10" width="454" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblTitulo"/>
+		<mx:Canvas x="18" y="39" width="397" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblGrupo" x="10" y="8" text="Grupo:"/>
+			<mx:Label id="lblCiclo" x="136.5" y="8" text="Ciclo:"/>
+			<mx:TextInput id="txtGrupo" x="56" y="6" width="65" enter="buscarLista()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="175.5" y="6" width="40" enter="buscarLista()" maxChars="2" restrict="0-9"/>
+			<mx:Label id="lblFecha" x="235" y="8" text="Fecha:"/>
+			<mx:DateField id="dtfFecha" x="281" y="6" width="100"/>
+		</mx:Canvas>
+		<mx:Canvas x="423" y="39" width="67" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="12.5" y="5" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista()" toolTip="Buscar Ajustes" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="471.5" height="200" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgInfo" x="10" y="10" width="449.5" height="178" sortableColumns="false"
+			  	draggableColumns="false" resizableColumns="false" verticalScrollPolicy="auto" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="25" editorDataField="selected">
+							<mx:itemRenderer>
+								<mx:Component>
+				  					<mx:CheckBox change="outerDocument.seleccionaRegistro(event)" width="15" fontSize="10" verticalCenter="0"/>
+				  				</mx:Component> 
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="TIPO" dataField="TIPOSTR" width="150"/>
+					<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="80"/>
+					<mx:DataGridColumn headerText="FECHA" dataField="FREALDEP" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Button x="341" y="294" label="Eliminar" click="enviar()" id="btnEliminar" height="24"/>
+		<mx:Button x="419" y="294" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	</mx:Canvas>
+</mx:Canvas>

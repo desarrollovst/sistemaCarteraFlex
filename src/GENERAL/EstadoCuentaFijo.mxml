@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="380" height="456" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+
+<!--Componente que permite observar la bitacora de pagos-->
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;			
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.DateField;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+
+			public var _xmlCuenta:XML = new XML();
+			
+			public var ArrPagos:ArrayCollection;
+			
+			public var myPattern:RegExp = /,/g;
+			public var wsMS:WebService;public var grupo:String;
+			public var ciclo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function calculaSaldo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var _xmlTotal:XML;
+				var total:Number = 0;
+				var pagado:Number = 0;
+				var saldo:Number = 0;
+				
+				if(Pagos != null){
+					var cont:int = Pagos.length;
+					for(var i:int = 0; i < cont; i++){
+						var monto:String = Pagos[i].MONTO 
+						pagado += Number(monto.replace(myPattern, "")); 
+					}
+					lblSaldo.text = "PAGADO: " + global.formatoMoneda(pagado.toString()); 	
+					
+					/*du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlTotal = new XML(event.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if(_xmlTotal.elements().length() > 0){
+							total = Number(_xmlTotal.Table[0].TOTAL); 
+							for(i = 0; i < cont; i++){
+								var monto:String = Pagos[i].MONTO 
+								pagado += Number(monto.replace(myPattern, "")); 
+							}
+						}
+						lblSaldo.text = "PAGADO: " + global.formatoMoneda(pagado.toString()); 
+					});
+					params[0] = grupo;
+					params[1] = ciclo;
+					//Obtiene Informacion del total a pagar (Interes Global)
+					wsCat.getInfoGrupo.send(13, params);*/
+				}
+			}
+				
+			public function cargaEdoCuenta(grupo:String, ciclo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.grupo = grupo;
+				this.ciclo = ciclo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCuenta = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if (_xmlCuenta.elements().length() > 0){
+						formateaPagos();
+						modificaColor();
+					}	
+					calculaSaldo();	
+				});
+				params[0] = grupo;
+				params[1] = ciclo;
+				//Obtiene Informacion del acreditado que puede consultar el usuario
+				wsCat.getInfoGrupo.send(12, params);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function formateaPagos():void{
+				var cont:int = _xmlCuenta.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.NUMERO = i + 1;
+					oItem.FECHA = _xmlCuenta.Table[i].FECHA;
+					oItem.DESCRIPCION = _xmlCuenta.Table[i].DESCRIPCION;
+					oItem.MONTO = global.formatoDecimal(_xmlCuenta.Table[i].CANTIDAD);
+					oItem.IND = false;
+					item.push(oItem);
+				}
+				ArrPagos = new ArrayCollection(item);
+				//ordenaPagos();
+				dgPagos.dataProvider = ArrPagos;
+			}
+			
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+				ArrPagos = new ArrayCollection();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function limpiaControles():void{
+				lblSaldo.text = "";
+				dgPagos.dataProvider = null
+			}
+			
+			public function modificaColor():void{
+				dgPagos.rowColorFunction = seleccionaColor; 
+			}
+			
+			public function ordenaPagos():void{
+				var n:int = ArrPagos.length;
+				var auxFecha:String;
+				var auxMonto:String;
+				var auxInd:Boolean;
+				
+				for(var i:int = 0; i < n-1; i++){                           
+          			for(var j:int = 0; j < n-1; j++){  
+          				var fecIni:Date = DateField.stringToDate(ArrPagos[j].FECHA, "YYYY/MM/DD");
+          				var fecFin:Date = DateField.stringToDate(ArrPagos[j+1].FECHA, "YYYY/MM/DD");
+          				if(fecIni > fecFin){               
+                      		auxFecha = ArrPagos[j].FECHA;   
+                      		auxMonto = ArrPagos[j].MONTO;  
+                      		auxInd = ArrPagos[j].IND;              
+							ArrPagos[j].FECHA = ArrPagos[j+1].FECHA;
+							ArrPagos[j].MONTO = ArrPagos[j+1].MONTO; 
+							ArrPagos[j].IND = ArrPagos[j+1].IND;             
+							ArrPagos[j+1].FECHA = auxFecha;
+							ArrPagos[j+1].MONTO = auxMonto;
+							ArrPagos[j+1].IND = auxInd;  
+                		}
+             		}
+				}
+			}
+			
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var rColor:uint;
+				if (Pagos[rowIndex].IND == true) 
+					rColor = 0xDAECF3;
+				else
+					rColor = color; 
+				return rColor;
+			}
+		]]>
+	</mx:Script>
+	<Data:RowColorDataGrid id="dgPagos" x="15" y="39" width="350" height="333">
+		<Data:columns>
+			<mx:DataGridColumn headerText="NO." dataField="NUMERO" width="60"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="80"/>
+			<mx:DataGridColumn headerText="CONCEPTO" dataField="DESCRIPCION"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="90"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Image x="50.5" y="63" width="280.5" height="309" source="assets/images/etiqueta.png" scaleContent="false" alpha="0.4"/>
+        
+	<mx:Label x="17.5" y="10" text="BITÁCORA DE PAGOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="215" y="380" width="150" height="41" styleName="canvasMod">
+		<mx:Label x="10" y="11" text="PAGADO:" width="133.5" id="lblSaldo"/>
+	</mx:Canvas>
+</mx:Canvas>

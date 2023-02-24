@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="262" height="264" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var rep:String;
+
+			private function generar():void{
+				if(valida()){
+					var fecha:String = dtFecha.text;
+					var region:String = ctrlFiltro.obtieneRegion();
+					var sucursal:String = ctrlFiltro.obtieneSucursal(); 
+					
+					if(sucursal == "000")
+						rep = "3";
+					else
+						rep = "4";
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					if(sucursal == "000"){
+						wsMS.addEventListener(ResultEvent.RESULT, setCalculoIncentivos);
+						wsMS.setCalculoIncentivosRegional.send(fecha, region, Application.application.U_ID);
+					}
+					else{
+						wsMS.addEventListener(ResultEvent.RESULT, setCalculoIncentivos);
+						wsMS.setCalculoIncentivosGerente.send(fecha, region, sucursal, Application.application.U_ID);					
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Monitor de Incentivos Gerentes";
+				lblTitulo.text = titulo.toUpperCase();
+				ctrlFiltro.init(false);
+				
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlIncR.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function limpiar():void{
+				ctrlFiltro.limpiar();
+			}	
+			
+			private function setCalculoIncentivos(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+								
+				wsMS.removeEventListener(ResultEvent.RESULT, setCalculoIncentivos);
+				wsMS = null;
+				var res:String = event.result.toString();
+				
+				if (res.substr(0,1) == "1"){
+					
+					if(rep != "-1"){
+						var consulta:String = global.urlIncI;
+						var id:String = "&id=" + rep;
+						var fecha:String = "&fe=" + dtFecha.text;
+						var usuario:String = "&us=" + Application.application.U_ID;
+						consulta = consulta + id + fecha + usuario;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			private function valida():Boolean{
+				if(ctrlFiltro.cboRegion.selectedIndex == 0){
+					Alert.show("Debe seleccionar la Región.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="13" y="10" width="237.45" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="13.45" y="59" width="237.04999" height="161" styleName="canvasMod">
+		<control:CtrlFiltroInfoRS id="ctrlFiltro" x="28.5" y="3"  width="196.5"/>
+		<mx:Label x="33.95" y="109" text="Fecha:" width="41" height="20"/>
+		<mx:DateField x="33.5" y="127" width="96" enabled="true" id="dtFecha"/>
+	</mx:Canvas>
+	<mx:Label x="13" y="41" text="Criterios de Selección:"/>
+	<mx:Button x="54" y="228" label="Generar" click="generar()"/>
+	<mx:Button x="134" y="228" label="Limpiar" click="limpiar()"/>
+</mx:Canvas>

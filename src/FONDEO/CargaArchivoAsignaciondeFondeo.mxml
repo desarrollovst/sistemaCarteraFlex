@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="709" height="520" backgroundAlpha="1.0" 
+	creationPolicy="all" creationComplete="initApp()" backgroundColor="#FFFFFF" 
+	xmlns:Data="Data.*" x="12.5" y="42">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	public var wsMS:WebService;
+      	public var titulo:String;
+		public var du:Utils;
+      	
+      	public var orgFond:Array;
+      	public var lineaCred:Array;
+      	public var disp:Array;
+      	public var fecSdo:Array;
+      	public var grupo:Array;
+      	public var ciclo:Array;
+      	public var acred:Array;
+      	
+      	private var infoObj:ArrayCollection = new ArrayCollection();
+        public var _xmlRep:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        public function cargarInfo():void{
+        	if(formateaInfo() == true){
+	        	initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				//Servicio invocado en la etapa de marca de clientes mediante archivo
+				wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeoArchivo);
+				wsMS.setAsignaFondeoArchivo.send(orgFond, lineaCred, disp, fecSdo, grupo, ciclo, acred, Application.application.U_ID);
+        	}
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        public function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	var i:int;
+			orgFond = new Array;
+			lineaCred = new Array;
+			disp = new Array;
+			fecSdo = new Array;
+			grupo = new Array;
+			ciclo = new Array;
+			acred = new Array;
+			
+			for (i = 0; i < info.length; i++){
+				orgFond[i] = info[i].CDGORF;
+				lineaCred[i] = info[i].CDGLC;
+				disp[i] = info[i].CDGDISP;
+			 	fecSdo[i] = info[i].FECSDO;
+				grupo[i] = info[i].CDGNS;
+				ciclo[i] = info[i].CICLO;
+				acred[i] = info[i].CDGCL;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function onLoadError():void{
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 0; row<noOfRows;row++){
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0;col<noOfColumns;col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell!=null){
+	                            	cellValue =(cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	}  
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = noOfRows + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.CDGORF = cellValue;
+            else if(index == 1)
+                cellObject.CDGLC = cellValue;
+            else if(index == 2)
+                cellObject.CDGDISP = cellValue;
+            else if(index == 3)
+            	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
+                cellObject.FECSDO = global.formatoFechaExcel(Number(cellValue));
+            else if(index == 4)
+                cellObject.CDGNS = cellValue;
+            else if(index == 5)
+                cellObject.CICLO = cellValue;
+            else if(index == 6)
+                cellObject.CDGCL = cellValue;                
+        }
+      
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Asignación de Fondeo";
+	      	lblTitulo.text = titulo.toUpperCase();  
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}	
+	    
+	    private function setAsignaFondeoArchivo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaFondeoArchivo);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				dgInfo.dataProvider = null;	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+						
+					var cont:int = _xmlRep.elements().length();	
+					dgInfo.dataProvider = _xmlRep.Table;
+					lblResultado.text = cont + " Registro(s) Procesado(s)";
+					btnCargar.visible = false;
+					btnExportar.visible = true;	
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();				
+				});
+				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de fondeo
+				wsMS.getRepFondeoArchivo.send(Application.application.U_ID);		
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="39" width="689" height="471" styleName="canvasMod">
+  		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="288.5" y="434" click="cargarInfo()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="395.85" y="402"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="227.85" y="402" width="160"/>
+		<mx:DataGrid id="dgInfo" x="10" y="10" width="667" height="353" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="FONDEADOR" dataField="CDGORF" width="90"/>
+				<mx:DataGridColumn headerText="LINEA CRÉDITO" dataField="CDGLC" width="100"/>
+				<mx:DataGridColumn headerText="DISPOSICIÓN" dataField="CDGDISP" width="90"/>
+				<mx:DataGridColumn headerText="FECHA CALCULO" dataField="FECSDO" width="110"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCEST" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="227.1" y="371" width="232.75" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="292" y="435" click="exportar()"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

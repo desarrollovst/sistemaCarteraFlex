@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Registro de Aclaraciones de Incentivos-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;			
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ArrayUtil;  
+			          
+			private var _xmlAse:XML = new XML();
+			private var _xmlInc:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+		
+			private var aseObj:ArrayCollection = new ArrayCollection();
+
+			private function buscarAsesor():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				limpiarTexto();
+				
+				if(valida()){
+					var mes:String = cboMes.selectedItem.id;
+					var anio:String = cboAnio.selectedItem.id;
+					var asesor:String = cboAsesor.selectedItem.id;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlInc = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+				
+						if (_xmlInc.elements().length() > 0){
+							txtColMod.text = _xmlInc.Table[0].COLOCACION;
+							txtCtesMod.text = _xmlInc.Table[0].CLIENTES;
+							txtDesMod.text = _xmlInc.Table[0].DESERCION;
+							txtMoraMod.text = _xmlInc.Table[0].MORA;
+							txtGruposMod.text = _xmlInc.Table[0].GRUPOS;
+							txtObs.text = _xmlInc.Table[0].OBSERVACIONES;
+						}		
+					}); 
+					params[0] = mes;
+					params[1] = anio;
+					params[2] = asesor;
+					wsCat.getInfoRegistro.send(31, params);
+				}	
+			}
+			
+			private function enviar():void{
+				var mes:String;
+				var anio:String;
+				var asesor:String;
+				var colocacion:Number;
+				var clientes:Number;
+				var desercion:Number;
+				var mora:Number;
+				var grupos:Number;
+				var observaciones:String;
+				
+				mes = cboMes.selectedItem.id;
+				anio = cboAnio.selectedItem.id;
+				asesor = cboAsesor.selectedItem.id;
+				colocacion = Number(txtColMod.text);
+				clientes = Number(txtCtesMod.text);
+				desercion = Number(txtDesMod.text);
+				mora = Number(txtMoraMod.text);
+				grupos = Number(txtGruposMod.text);
+				observaciones = txtObs.text;
+				
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(res.substr(0,1) == "1"){	
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						limpiar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				wsMS.setRegistroAclaraInc.send(mes, anio, asesor, colocacion, clientes, desercion, mora, grupos, 
+											   observaciones, Application.application.U_ID);
+			}
+			
+			private function formateaAsesor():void{
+				var cont:int = _xmlAse.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				aseObj.removeAll();
+				aseObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlAse.Table[i].CODIGO;
+					oItem.nombre = _xmlAse.Table[i].NOMBREC;		
+					item.push(oItem);
+				}
+				aseObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de Aclaraciones de Incentivos";
+				lblTitulo.text = titulo.toUpperCase();
+				cboMes.dataProvider = global.formateaMes();
+				cboAnio.dataProvider = global.formateaAnio();
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAse = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlAse.elements().length() > 0){
+						formateaAsesor();
+						cboAsesor.dataProvider = aseObj;
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+				});
+				params[0] = "";
+				wsCat.getCatalogoGral.send(23, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			private function limpiar():void{
+				cboMes.selectedIndex = 0;
+				cboAnio.selectedIndex = 0;
+				cboAsesor.selectedIndex = 0;
+				limpiarTexto();
+			}
+			
+			private function limpiarTexto():void{
+				txtColMod.text = "";
+				txtCtesMod.text = "";
+				txtDesMod.text = "";
+				txtMoraMod.text = "";
+				txtGruposMod.text = "";
+				txtObs.text = "";
+			}
+			
+			private function valida():Boolean{
+				if(cboMes.selectedIndex == 0)
+					return false;
+				if(cboAnio.selectedIndex == 0)
+					return false;
+				if(cboAsesor.selectedIndex == 0)
+					return false;
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" allowNegative="true"   
+		 decimalSeparator="." thousandsSeparator="," domain="real" required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="420" height="451">
+		<mx:Canvas id="cnvDetalle" x="10" y="127" width="398" height="284" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblColocacion" x="56.3" y="13" text="Colocación:" textAlign="right"/>
+			<mx:TextInput id="txtColMod" x="125.3" y="11" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:Label id="lblColOri" x="213.3" y="13" width="90"/>
+			<mx:Label id="lblClientes" x="71.3" y="45" text="Clientes:" textAlign="right"/>
+			<mx:TextInput id="txtCtesMod" x="125.3" y="43" width="68" restrict="0-9"/>
+			<mx:Label id="lblCtesOri" x="213.3" y="45" width="90"/>
+			<mx:Label id="lblDesercion" x="60.3" y="77" text="Deserción:" textAlign="right"/>
+			<mx:TextInput id="txtDesMod" x="125.3" y="75" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:Label id="lblDesOri" x="213.3" y="77" width="90"/>
+			<mx:Label id="lblMora" x="85.3" y="109" text="Mora:" textAlign="right"/>
+			<mx:TextInput id="txtMoraMod" x="125.3" y="107" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:Label id="lblMoraOri" x="213.3" y="109" width="90"/>
+			<mx:Label id="lblGrupos" x="73.3" y="141" text="Grupos:" textAlign="right"/>
+			<mx:TextInput id="txtGruposMod" x="125.3" y="139" width="68" restrict="0-9"/>
+			<mx:Label id="lblGruposOri" x="213.3" y="141" width="90"/>
+			<mx:Label id="lblObs" x="27.15" y="172" text="Observaciones:" width="90.15" textAlign="right"/>
+			<mx:TextArea id="txtObs" x="125.3" y="171" width="250.5" height="101" maxChars="256"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvEncabezado" x="10" y="39" width="398" height="80" styleName="canvasMod">
+			<mx:Label x="25.95" y="47" text="Mes:" height="20"/>
+			<mx:ComboBox id="cboMes" labelField="nombre" x="61.95" y="44" width="111" change="buscarAsesor()"/>
+			<mx:Label x="193.4" y="47" text="Año:" height="20"/>
+			<mx:ComboBox id="cboAnio" labelField="id" x="229.45" y="44" width="72" change="buscarAsesor()"/>
+			<mx:Label id="lblAsesor" x="10" y="13" text="Asesor:" textAlign="right"/>
+			<mx:ComboBox id="cboAsesor" labelField="nombre" x="62" y="10" width="324" change="buscarAsesor()"/>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="328" y="419" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

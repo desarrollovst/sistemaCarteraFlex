@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="200" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:local="*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			public var repObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			public function consultaBuro():void{
+				if(validar()){
+					var id:String = "&id=" + rep;
+					var acred:String = "&acred=" + txtAcred.text;
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var tipo:String = "&tipo=" + cboTipoRep.selectedItem.id;
+					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario + tipo;
+					Application.application.muestraPdf(consulta);
+				}
+			}
+		
+			private function formateaReporte():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				item.push(oItem);
+				
+				/*oItem = new Object();
+				oItem.descripcion = "Buro de Crédito";
+				oItem.id = "BC";
+				repObj.addItem(oItem);*/
+				
+				oItem = new Object();
+				oItem.descripcion = "Circulo de Crédito";
+				oItem.id = "CC";
+				item.push(oItem);
+				
+				repObj = new ArrayCollection(item);
+			}
+		
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "19";
+				titulo = "Impresión Reporte de Crédito";
+				lblTitulo.text = titulo.toUpperCase();
+				formateaReporte();
+				cboTipoRep.dataProvider = repObj;			
+			}	
+			
+			public function limpiar():void{
+				txtAcred.text = "";
+				cboTipoRep.selectedIndex = 0;
+			}
+			
+			public function validar():Boolean{
+				if(txtAcred.text == ""){
+					Alert.show("Debe capturar el código del acreditado",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				if(cboTipoRep.selectedIndex == 0){
+					Alert.show("Debe seleccionar el tipo de reporte de crédito",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			} 
+				
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="286.45" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="285" height="104.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblAcred" x="37" y="20.5" text="Acreditado:" width="63.5" height="20" textAlign="right"/>
+		<mx:TextInput id="txtAcred" x="108.5" y="18.5" maxChars="6" restrict="0-9"/>
+		<mx:Label id="lblTipoRep" x="10" y="62.5" text="Tipo de Reporte:" width="90.5" height="20" textAlign="right"/>
+		<mx:ComboBox id="cboTipoRep" labelField="descripcion" x="108.5" y="59.5" />
+	</mx:Canvas>
+	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25" id="label1"/>
+	<mx:Button x="85" y="166" label="Generar" click="consultaBuro()"  id="btnGenerar"/>
+	<mx:Button x="164" y="166" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+</mx:Canvas>

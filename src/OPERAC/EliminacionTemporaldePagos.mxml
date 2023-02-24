@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
+	width="100%" height="100%" creationComplete="init()" creationPolicy="all" 
+	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*" xmlns:GENERAL="GENERAL.*">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			public var openEffect:Effect = new Fade();
+			public var wsMS:WebService;
+			public var grupo:String;
+			public var ciclo:String;
+			public var tipo:int;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public var _xmlGrupo:XML = new XML(); 
+			
+			private function asignarFoco(event:Event):void{
+				txtBusqGrupo.setFocus();
+			}
+			
+			private function buscarGrupo():void{
+				if(txtBusqGrupo.length == 6){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var limpio:String;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+						_xmlGrupo = new XML(evt.result.toString()); 
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if(_xmlGrupo.elements().length() == 1)
+							lblNomGrupo.text = _xmlGrupo.Table[0].NOMBRE;
+						else{
+							Alert.show("Información de Grupo no encontrada. Favor de verificar el dato capturado.",titulo,4,null,asignarFoco,global.iAlert);
+							lblNomGrupo.text = "";
+						}
+					});
+					params[0] = 0;
+					params[1] = txtBusqGrupo.text;
+					wsCat.getInfoGrupo.send(2, params);
+				}
+				else{
+					lblNomGrupo.text = "";
+				}
+					
+			}
+			
+			private function eliminaPago():void{
+				if(validaBusqueda()){
+					grupo = txtBusqGrupo.text;
+					ciclo = txtBusqCiclo.text;
+					tipo = 1;
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
+					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, Application.application.U_ID);
+				}
+			}
+			
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				titulo = "Eliminación Temporal de Pagos";
+				lblTitulo.text = titulo.toUpperCase();
+				txtBusqGrupo.setFocus();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpiar():void{
+				txtBusqGrupo.setFocus();
+				txtBusqGrupo.text = "";
+				txtBusqGrupo.editable = true;
+				txtBusqCiclo.text = "";
+				txtBusqCiclo.editable = true;
+				lblNomGrupo.text = "";
+			}
+			
+			private function restauraPago():void{
+				if(validaBusqueda()){
+					grupo = txtBusqGrupo.text;
+					ciclo = txtBusqCiclo.text;
+					tipo = 2;
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
+					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, Application.application.U_ID);
+				}
+			}
+			
+			private function setDevolucionDespuesPago(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
+				wsMS = null;
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					limpiar();
+				}
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			private function validaBusqueda():Boolean{
+				if(txtBusqGrupo.text == ""){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(lblNomGrupo.text == ""){
+					Alert.show("Capture el código de un grupo existente.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtBusqCiclo.text == ""){
+					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+	
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+	        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="335" height="200" id="canvas1">
+		<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="16.5" y="53.5" width="300" height="103.5" styleName="canvasMod" id="canvas2">
+			<mx:Label id="lblBusqCiclo" x="57" y="69" text="Ciclo:" height="20" textAlign="right"/>
+			<mx:Label id="lblBusqGrupo" x="50" y="12" text="Grupo:" height="20" textAlign="right"/>
+			<mx:Label id="lblEtqNomGrupo" x="10" y="40" text="Nombre Grupo:" height="20" textAlign="right"/>
+			<mx:Label id="lblNomGrupo" x="96" y="40" height="20" textAlign="right"/>
+			<mx:TextInput id="txtBusqGrupo" x="96" y="11" maxChars="6" restrict="0-9" focusOut="buscarGrupo()"/>
+			<mx:TextInput id="txtBusqCiclo" x="96" y="68" width="45" maxChars="2" restrict="0-9"/>
+		</mx:Canvas>
+		<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25" id="lblCriterios"/>
+		<mx:Button x="40.5" y="165" width="72" label="Eliminar" click="eliminaPago()" id="btnEliminar"/>
+		<mx:Button x="120.5" y="165" width="94" label="Restaurar" click="restauraPago()" id="btnRestaurar"/>
+		<mx:Button x="222.5" y="165" width="72" label="Limpiar" click="limpiar()" id="btnBusqLimpiar"/>
+	</mx:Canvas>
+</mx:Canvas>

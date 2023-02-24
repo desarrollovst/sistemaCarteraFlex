@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de entrega masiva de prestamos-->
+	<mx:Script>
+		<![CDATA[
+			import mx.messaging.AbstractConsumer;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;			
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.CheckBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			          
+			public var _xmlGrupo:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var band:Boolean;
+			public var fecha:String;
+			private var du:Utils;
+			private var global:Globales;
+			public var titulo:String;
+		
+			public var grupo:Array;
+			public var ciclo:Array;
+			
+			public var grupoObj:ArrayCollection = new ArrayCollection();
+			
+			//funcion que permite buscar los grupos que cumplen con las condiciones
+			//para realizar la entrega del prestamo
+			public function buscar():void{
+				if(valida()){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var fec:Date = dtfFecha.selectedDate;
+					fecha = global.formatoFechaSep(fec, "/");
+					limpiar();
+					dtfFecha.selectedDate = fec;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlGrupo = XML(evt.result.toString());
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+					
+						Application.application.desbloquear();
+					
+						if(_xmlGrupo.elements().length() > 0){
+							formateaListaGrupos();
+							dgGrupo.dataProvider = grupoObj;
+							calculaRegSel();
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = fecha;
+					//Obtiene informacion de los grupos con desembolso en la
+					//fecha indicada
+					wsCat.getListado.send(37, params);
+				}		
+			}
+			
+			public function calculaRegSel():void{
+				var listaGrupo:ArrayCollection = dgGrupo.dataProvider as ArrayCollection;
+				var cont:Number = 0;
+				
+				for (var i:int = 0; i < listaGrupo.length; i++){
+					if(listaGrupo[i].REGISTRO == true)
+						cont++;
+				}
+				lblTotal.text = cont.toString() + " Registro(s) seleccionado(s)";
+			}
+			
+			public function enviar():void{
+				if(validaRegistro()){
+					band = true;
+					var n:int;
+					var cont:int;
+					var grupo:Array = new Array;
+					var ciclo:Array = new Array;
+					var pos:Array = new Array;
+					var listaGrupo:ArrayCollection = dgGrupo.dataProvider as ArrayCollection;  
+					
+					cont = listaGrupo.length;
+					n = 0;
+					
+					for(var i:int = 0; i < cont; i++){
+						if (listaGrupo[i].REGISTRO == true){
+							grupo[n] = listaGrupo[i].CDGNS;
+							ciclo[n] = listaGrupo[i].CICLO;
+							pos[n] = i;
+							n++;		
+						}
+					}
+					
+					Application.application.bloquear();
+					
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+						wsMS = null;	
+						
+						Application.application.desbloquear();
+							
+						if(res.substr(0,1) == "1"){
+							var infoEst:String;
+							var info:String = res.substr(1,res.length - 1);
+							var contProc:int;
+							var contError:int;
+							var arrInfo:Array = new Array;
+							
+							arrInfo = info.split("|");
+							for(var i:int = 0; i < n; i++){
+								infoEst = arrInfo[i];
+								 
+								if(infoEst.substr(0, 1) == "1")
+									contProc++;	
+								else
+									contError++;
+									
+								listaGrupo[pos[i]].ESTATUS = infoEst.substr(2,infoEst.length - 1);
+							}
+							lblResultado.text = contProc + " Registro(s) Procesado(s) Exitosamente, " + contError + " Registro(s) No Procesado(s)";
+							dgGrupo.dataProvider = listaGrupo;
+						}
+						else	
+							Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.setAccionEntPrnMas.send(grupo, ciclo, Application.application.U_ID);
+				}
+			}
+			
+			public function formateaListaGrupos():void{
+				var cont:int = _xmlGrupo.elements().length();
+				
+				grupoObj.removeAll();
+				grupoObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					var oItem:Object = new Object();
+					oItem.REGISTRO = true;
+					oItem.CDGNS = _xmlGrupo.Table[i].CDGNS;
+					oItem.NOMNS = _xmlGrupo.Table[i].NOMNS;
+					oItem.CICLO = _xmlGrupo.Table[i].CICLO;
+					oItem.INICIO = _xmlGrupo.Table[i].FECINICIO;
+					oItem.CANTIDAD = _xmlGrupo.Table[i].CANTAUTOR;
+					oItem.PLAZO = _xmlGrupo.Table[i].PLAZO;	
+					oItem.TASA = _xmlGrupo.Table[i].TASA;
+					oItem.PERIODICIDAD = _xmlGrupo.Table[i].PERITRAN;
+					oItem.ESTATUS = "";
+					grupoObj.addItem(oItem);
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Entrega Masiva de Préstamos";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				band = false;
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				grupoObj.removeAll();
+				grupoObj.refresh();
+				dgGrupo.dataProvider = null;
+				lblTotal.text = "";	
+				lblResultado.text = "";
+			}
+			
+			public function seleccionaPrn(event:Event):void{
+				var ind:int = dgGrupo.selectedIndex;
+				grupoObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				calculaRegSel();
+			}
+			
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de inicio.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaRegistro():Boolean{
+				if(grupoObj.length == 0){
+					Alert.show("Debe realizar la consulta de los créditos por entregar.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(band == true){
+					Alert.show("Debe actualizar la lista de los créditos por entregar.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="650" height="520">
+		<mx:Canvas id="cnvDetalle" x="9.75" y="97" width="630.25" height="365" styleName="canvasMod" visible="true">
+			<Data:RowColorDataGrid id="dgGrupo" x="10" y="10" width="608.25" height="343" editable="true"
+				sortableColumns="false" resizableColumns="false" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="50" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+		  					<mx:CheckBox change="outerDocument.seleccionaPrn(event)" width="30" fontSize="10" verticalCenter="0"/> 
+		  				</mx:Component>
+					</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMNS" width="150" editable="false"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50" editable="false"/>
+					<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="70" editable="false"/>
+					<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="70" editable="false"/>
+					<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="50" editable="false"/>
+					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="45" editable="false"/>
+					<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD" width="90" editable="false"/>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="150" editable="false"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="370.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="320" height="50" x="165" y="39">
+			<mx:Button id="btnBuscar" x="247.85" y="10" icon="@Embed(source='assets/images/iconBusq.png')" click="buscar()" toolTip="Buscar Préstamos" />
+			<mx:Label id="lblFecha" x="21.1" y="12" text="Fecha de Inicio:" width="90.75" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="119.85" y="10" width="100"/>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="472" y="470" label="Enviar" click="enviar()" toolTip="Aceptar" width="80"/>
+		<mx:Button id="btnLimpiar" x="560" y="470" label="Limpiar" click="limpiar()" toolTip="Limpiar" width="80"/>
+		<mx:Label id="lblTotal" x="10" y="466" width="440.75" textAlign="left" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Label id="lblResultado" x="10" y="491" width="440.75" textAlign="left" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	</mx:Canvas>
+</mx:Canvas>

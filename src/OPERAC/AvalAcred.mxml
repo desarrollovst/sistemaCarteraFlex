@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" showCloseButton="true" close="cerrar()" 
+	width="572" height="394" verticalScrollPolicy="off" 
+	horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:Metadata>
+		[Event(name="seleccionar", type="seleccionar")]
+	</mx:Metadata>
+
+	<!--Componente que permite seleccionar al acreditado que fungira como aval-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;			
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+
+			public var _xmlAcred:XML = new XML();
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;	
+			private var global:Globales;
+			private var du:Utils;	
+			private var tipoProd:String;
+			private var cdgclnsRel:String;
+			private var clnsRel:String;
+			private var cicloRel:String;
+			private var titulo:String;
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function formateaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				for (var i:int = 0; i < cont; i++){
+				  	oItem = new Object();
+					oItem.REG = false; 
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMBRE = _xmlAcred.Table[i].NOMBREC;
+					item.push(oItem);
+				}
+				acredObj = new ArrayCollection(item);
+			}
+			
+			public function init(tipoProd:String, clnsRel:String, cdgclnsRel:String, cicloRel:String, cdgclns:String, clns:String):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				this.tipoProd = tipoProd;
+				this.clnsRel = clnsRel;
+				this.cdgclnsRel = cdgclnsRel;
+				this.cicloRel = cicloRel;
+				titulo = "Acreditados";
+				this.title = titulo;
+				global = new Globales();
+				du = new Utils();
+				
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+						
+					if(_xmlAcred.elements().length() > 0){
+						formateaAcred();
+						dgAcred.dataProvider = acredObj;
+					}
+				});
+				params[0] = tipoProd;
+				params[1] = clnsRel;
+				params[2] = cdgclnsRel;
+				params[3] = cicloRel;
+				params[4] = cdgclns;
+				params[5] = clns;
+				wsCat.getListado.send(7, params);			
+			}
+			
+			public function obtieneAcred():String{
+				return dgAcred.selectedItem.CDGCL;
+			}
+			
+			public function obtieneNomAcred():String{
+				return dgAcred.selectedItem.NOMBRE;
+			}
+			
+			private function seleccionar():void{
+				dispatchEvent(new Event("seleccionar"));
+				cerrar();
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Button x="490.5" y="318" label="Cerrar" click="cerrar()"/>
+	<Data:RowColorDataGrid id="dgAcred" x="17.5" y="10" width="537" height="300" alpha="1.0" sortableColumns="true" horizontalScrollPolicy="auto" 
+		doubleClickEnabled="true" itemDoubleClick="seleccionar()">
+		<Data:columns>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE" width="200"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+</mx:TitleWindow>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="460" 
+	height="315" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="nombreV" source="{txtCoordinacion}" property="text" 
+	invalid="{txtCoordinacion.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Coordinación Requerida"/>
+
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosDir;
+		import Data.EventDir;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		
+		[Bindable]
+		private var info:DatosDir;
+		private var _xmlPE:XML =  new XML();
+		
+		public var persSucObj:ArrayCollection = new ArrayCollection();
+		public var persCdrObj:ArrayCollection = new ArrayCollection();
+	
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var codPers:String; 
+		public var titulo:String;
+		public var du:Utils;
+			
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			if(valida()){
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear()
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionCdr);
+				wsMS.setAccionCRD.send( txtCodCrd.text, txtCodReg.text, txtCodSuc.text, txtCoordinacion.text, 
+										cboGerCrd.selectedItem.codigo, tipoAccion );
+			}
+		}
+		
+		public function formateaCdr():void{
+			var cont:int = _xmlPE.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var telefono:String;
+			
+			persCdrObj.removeAll();
+			persCdrObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(var i:int = 0; i < cont; i++){
+				if(_xmlPE.Table[i].PUESTO == "C" && _xmlPE.Table[i].CDGCO == txtCodSuc.text){
+					oItem = new Object();
+					oItem.codigo = _xmlPE.Table[i].CODIGO;
+					oItem.desc = _xmlPE.Table[i].NOMBREC;
+					item.push(oItem);			 
+				}
+			}
+			
+			persCdrObj = new ArrayCollection(item);
+			cboGerCrd.dataProvider = persCdrObj;
+		}
+						
+		public function formateaSuc():void{
+			var cont:int = _xmlPE.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			persSucObj.removeAll();
+			persSucObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlPE.Table[i].CODIGO;
+				oItem.desc = _xmlPE.Table[i].NOMBREC;
+				item.push(oItem);
+			}
+			persSucObj = new ArrayCollection(item);
+			cboGerSuc.dataProvider = persSucObj;
+		}
+			
+		public function init(tipo:int, codReg:String, regional:String, codSuc:String, sucursal:String
+		, codPersSuc:String, codCdr:String, coor:String, codPersCdr:String):void{
+			var j:int;
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = tipo;
+			du = new Utils(); 
+			global = new Globales();
+			titulo = "Mantenimiento de Coordinación";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipoAccion == 1)
+				this.title = "Nuevo";
+			else if (tipoAccion == 2)
+				this.title = "Edición";
+		
+			du.initWsCat(wsCat);
+			du.sCursor();
+			Application.application.bloquear();
+				
+			txtCodReg.text = codReg;
+			txtRegional.text = regional;
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+				_xmlPE = new XML(evt.result.toString());
+							
+				if (_xmlPE.elements().length() > 0){
+					formateaSuc();					
+					txtCodSuc.text = codSuc;
+					txtSucursal.text = sucursal;
+					for(j = 0; j < persSucObj.length; j++){
+						if (persSucObj[j].codigo.toString() == codPersSuc){
+							cboGerSuc.selectedIndex = j;
+							break;
+						}
+					}
+										
+					formateaCdr();
+					txtCodCrd.text = codCdr;
+					txtCoordinacion.text = coor;
+					for(j = 0; j < persCdrObj.length; j++){
+						if (persCdrObj[j].codigo.toString() == codPersCdr){
+							cboGerCrd.selectedIndex = j;
+							break;
+						}
+					}
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+				Application.application.desbloquear();
+			});
+			params[0] = "";
+			wsCat.getCatalogoGral.send(8, params);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+				
+		private function setAccionCdr(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCdr);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+			
+		public function valida():Boolean{
+			var invalidArray:Array = Validator.validateAll([nombreV]);
+			
+			if (invalidArray.length != 0){
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cboGerCrd.selectedIndex == 0){
+				Alert.show("Debe seleccionar un coordinador",titulo,4,null,null,global.iAlert);
+				return false;
+			}		
+			return true;
+		}
+	]]>
+	</mx:Script>
+	<mx:Canvas x="15" y="59" width="430" height="76" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCodigo" x="24" y="10" text="Sucursal:"/>
+		<mx:TextInput id="txtCodSuc" editable="false" x="86.5" y="8" width="45" maxChars="3"/>
+		<mx:TextInput id="txtSucursal" editable="false" x="139.5" y="8" width="278.5" height="24" maxChars="50"/>
+		<mx:Label id="lblGerente" x="27" y="42" text="Gerente:"/>
+		<mx:ComboBox id="cboGerSuc" x="87.5" y="39" width="330.5" height="24" labelField="desc" editable="false" enabled="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="15" y="160" width="430" height="76" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="32" y="10" text="Nombre:"/>
+		<mx:Label id="lblCoord" x="10" y="42" text="Coordinador:"/>
+		<mx:TextInput id="txtCodCrd" editable="false" x="86.5" y="8" width="45" maxChars="3"/>
+		<mx:TextInput id="txtCoordinacion" editable="true" x="139.5" y="8" width="278.5" height="24" maxChars="30"/>
+		<mx:ComboBox id="cboGerCrd" x="85" y="40" width="333" height="24" labelField="desc"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="357" y="244" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="405" y="244" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Canvas x="15" y="10" width="430" height="44" styleName="canvasMod">
+		<mx:TextInput id="txtCodReg" x="111" y="8" width="45" editable="false"/>
+		<mx:TextInput id="txtRegional" x="164" y="8" width="254" editable="false"/>
+		<mx:Label x="10" y="10" text="Gerencia Regional:"/>
+	</mx:Canvas>
+	<mx:Label id="lblCodigo2" x="15" y="142" text="DATOS DE COORDINACIÓN:" fontStyle="italic" fontWeight="bold"/>
+</mx:TitleWindow>

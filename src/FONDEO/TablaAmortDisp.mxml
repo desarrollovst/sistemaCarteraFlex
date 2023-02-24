@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" showCloseButton="true" 
+	close="cerrar()" width="510" height="492" title="Tabla de Amortización de Disposición" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" xmlns:control="Controls.*">
+
+	<!--Componente que contiene el control que muestra la tabla de amortizacion de la disposicion-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import mx.managers.PopUpManager;
+			
+			private var global:Globales;
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function init(orgFond:String, nomOF:String, lineaCred:String, nomLC:String, disp:String, nomDisp:String):void{
+				global = new Globales();
+				contAmortDisp.cargaTablaAmort(orgFond, nomOF, lineaCred, nomLC, disp, nomDisp);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Button x="425.5" y="418" label="Cerrar" click="cerrar()"/>
+	<control:CtrlAmortDisp id="contAmortDisp" />
+</mx:TitleWindow>

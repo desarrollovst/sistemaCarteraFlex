@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" xmlns:Administracion="Administracion.*"
+    x="12.5" y="42" creationPolicy="all" creationComplete="init()">
+    <mx:states>
+        <mx:State name="AnexoA">
+            <mx:SetProperty target="{cnvCarga}" name="height" value="582"/>
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="283" width="818" height="286" styleName="canvasMod" id="Canvas1">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgAnexoA"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="No." dataField="NO" width="40"/>
+                            <mx:DataGridColumn headerText="Nombre del Acreditado" dataField="NOMBRE_CL" width="300"/>
+                            <mx:DataGridColumn headerText="Producto" dataField="PRODUCTO" width="200"/>
+                            <mx:DataGridColumn headerText="Monto del Crédito y Pagarés" dataField="MONTO_CREDITO" width="220"/>
+                            <mx:DataGridColumn headerText="Valor de la Garantía" dataField="VALOR_GARANTIA" width="180"/>
+                            <mx:DataGridColumn headerText="Saldo a la Fecha" dataField="SALDO_FECHA" width="130"/>
+                            <mx:DataGridColumn headerText="Número de Pagaré" dataField="NUM_CL" width="130"/>
+                            <mx:DataGridColumn headerText="Fecha de Vencimiento del Pagaré" dataField="FIN" width="200"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalAA" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarAA" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+        <mx:State name="LayDisp">
+            <mx:SetProperty target="{cnvCarga}" name="width" value="838"/>
+            <mx:SetProperty target="{cnvCarga}" name="height" value="582"/>
+            <mx:AddChild relativeTo="{cnvCarga}" position="lastChild">
+                <mx:Canvas x="10" y="283" width="818" height="286" styleName="canvasMod" id="Canvas2">
+                    <mx:DataGrid x="10" y="42" width="796" height="200" id="dgLayDisp"
+                    horizontalScrollPolicy="on" sortableColumns="false" draggableColumns="false" 
+                    resizableColumns="false" verticalScrollPolicy="on">
+                        <mx:columns>
+                            <mx:DataGridColumn headerText="No." dataField="NO" width="40"/>
+                            <mx:DataGridColumn headerText="No. de cliente" dataField="NUM_CL" width="110"/>
+                            <mx:DataGridColumn headerText="Fecha de Cesión" dataField="FECHA_CESION" width="150"/>
+                            <mx:DataGridColumn headerText="Producto (según los productos del intermediario)" dataField="PRODUCTO" width="250"/>
+                            <mx:DataGridColumn headerText="Nro. Pagare" dataField="NUM_PAGARE" width="110"/>
+                            <mx:DataGridColumn headerText="Nombre del Acreditado" dataField="NOMBRE_CL" width="350"/>
+                            <mx:DataGridColumn headerText="Tipo de persona (fisica, moral, con actividad empresarial)" dataField="TIPO_PERSONA" width="130"/>
+                            <mx:DataGridColumn headerText="Nombre y Número de Sucursal " dataField="SUCURSAL" width="190"/>
+                            <mx:DataGridColumn headerText="Fecha de otorgamiento (cuando dispuso del dinero)" dataField="INICIO" width="120"/>
+                            <mx:DataGridColumn headerText="Fecha de Vencimiento  del contrato" dataField="FIN" width="120"/>
+                            <mx:DataGridColumn headerText="Nro. Dias Atraso" dataField="DIAS_ATRASO" width="130"/>
+                            <mx:DataGridColumn headerText="Monto Original" dataField="MONTO_ORIGINAL" width="120"/>
+                            <mx:DataGridColumn headerText="No. de amortizaciones pactadas" dataField="AMORTIZACION_PACT" width="180"/>
+                            <mx:DataGridColumn headerText="Nro. Amortizaciones realizadas" dataField="AMORTIZACION_REAL" width="180"/>
+                            <mx:DataGridColumn headerText="Nro. Amortizaciones Pendientes" dataField="AMORTIZACION_PEND" width="180"/>
+                            <mx:DataGridColumn headerText="Importe de amortizaciones" dataField="AMORTIZACION_IMPO" width="160"/>
+                            <mx:DataGridColumn headerText="Tasa de Interes" dataField="TASA" width="120"/>
+                            <mx:DataGridColumn headerText="Tipo Tasa ( mensual, anual, global o sobre saldos insolutos)" dataField="TIPO_TASA" width="100"/>
+                            <mx:DataGridColumn headerText="Tasa de Interés  Moratoria" dataField="TASA_INT_MOR" width="150"/>
+                            <mx:DataGridColumn headerText="Frecuencia de Pago (semanal, quincenal, mensual)" dataField="FRECU_PAGO" width="150"/>
+                            <mx:DataGridColumn headerText="Saldo a la Fecha" dataField="SALDO_FECHA" width="150"/>
+                            <mx:DataGridColumn headerText="Pago anticipado acumulado" dataField="PAGO_ANT_ACU" width="150"/>
+                            <mx:DataGridColumn headerText="Mes de Vencimiento" dataField="MESANIOVENC" width="150"/>
+                            <mx:DataGridColumn headerText="Tecnologia" dataField="TIPO_CARTERA" width="120"/>
+                            <mx:DataGridColumn headerText="Cliente Sustituido" dataField="CLIENTE_SUST" width="120"/>
+                        </mx:columns>
+                    </mx:DataGrid>
+                    <mx:Label id="lblTotalLD" x="10" y="250" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+                    <mx:Button id="btnExportarLD" x="702.95" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+                </mx:Canvas>
+            </mx:AddChild>
+        </mx:State>
+    </mx:states>
+    <mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cnvCarga}"/> 
+				<mx:AddChildAction duration="500" target="{Canvas1}"/>
+				<mx:AddChildAction duration="500" target="{Canvas2}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+    
+    <mx:Script>
+		<![CDATA[
+			import flash.sampler.NewObjectSample;
+			import mx.formatters.DateFormatter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			private var _xmlOF:XML = new XML();
+			private var _xmlDisp:XML = new XML();
+			private var _xmlLC:XML = new XML();
+			
+			private var orgObj:ArrayCollection = new ArrayCollection();
+			private var dispObj:ArrayCollection = new ArrayCollection();
+			private var lineaObj:ArrayCollection = new ArrayCollection();
+		
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public var tipoReporteObj:ArrayCollection = new ArrayCollection();
+			
+			private var acTipoReporte:ArrayCollection = new ArrayCollection();
+			
+			public function cambiaLayoutRep():void{
+				var opcion:String = cbxReporte.selectedItem.id;
+				cboLC.enabled = true;
+				cboDisp.enabled = true;
+										
+				switch (opcion) {
+					case "0":
+						currentState = null;
+						break;
+					case "1":
+						currentState = "LayDisp";
+						lblTotalLD.text = ""; 				 	
+						break;
+					case "2":
+						currentState = "AnexoA";
+						lblTotalAA.text = ""; 				 			
+						break;
+				}
+			}
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				
+				if(currentState == "LayDisp"){
+					dgE.loadDGInExcel(dgLayDisp, null, titulo + " Layout Disposición " + dtFecha.text);
+				}
+				else if(currentState == "AnexoA"){
+					dgE.loadDGInExcel(dgAnexoA, null, titulo + " Anexo A " + dtFecha.text);
+				}
+			}
+			
+			private function formateaDisp():void{
+				var cont:int = _xmlDisp.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				dispObj.removeAll();
+				dispObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlDisp.Table[i].CODIGO;
+					oItem.desc = _xmlDisp.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				dispObj = new ArrayCollection(item);
+			}
+			
+			private function formateaLC():void{
+				var cont:int = _xmlLC.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				lineaObj.removeAll();
+				lineaObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlLC.Table[i].CODIGO;
+					oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				lineaObj = new ArrayCollection(item);
+			}
+			
+			private function formateaOF():void{
+				var cont:int = _xmlOF.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+					
+				orgObj.removeAll();
+				orgObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);	
+					
+				for (var i:int = 0; i < cont; i++){
+					if(_xmlOF.Table[i].CODIGO == "0008"){
+						oItem = new Object();
+						oItem.nombre = _xmlOF.Table[i].NOMBRE;
+						oItem.codigo = _xmlOF.Table[i].CODIGO;
+						item.push(oItem);
+					}
+				}
+				orgObj = new ArrayCollection(item);
+			}
+			
+			private function formateaTipoReportes():void{
+				var oItem:Object;
+				var item:Array = new Array();
+								
+				oItem = new Object();
+				oItem.id = "0";
+				oItem.nombre = "--Seleccionar--";	
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Layout Disposición";
+				item.push(oItem);
+												
+				oItem = new Object();
+				oItem.id = "2";	
+				oItem.nombre = "Anexo A";
+				item.push(oItem);
+				
+				acTipoReporte = new ArrayCollection(item);
+				cbxReporte.dataProvider = acTipoReporte;
+				cbxReporte.selectedIndex = 0;		
+			}
+			
+			private function generar():void{
+				if(valida()){
+					var cont:int;
+					var opcion:String = "";
+					var organizacion:String = "";
+					var linea:String = "";
+					var disposicion:String = "";
+					var fecha:String = "";
+					
+					opcion = cbxReporte.selectedItem.id;
+					organizacion = cboOF.selectedItem.codigo;
+					linea = cboLC.selectedItem.codigo;
+					disposicion = cboDisp.selectedItem.codigo;
+					fecha = dtFecha.text;
+					
+					initConexionRep();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						var cont:int = _xmlRep.elements().length();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						switch (opcion) {
+							case "1":
+								if(cont > 0){
+									dgLayDisp.dataProvider = _xmlRep.Table;
+									btnExportarLD.enabled = true;
+									lblTotalLD.text = cont.toString() + " Registro(s)";
+								}	
+								else{
+									dgLayDisp.dataProvider = null;
+									btnExportarLD.enabled = false;
+									lblTotalLD.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);									
+								}
+								break;
+							case "2":
+								if(cont > 0){
+									dgAnexoA.dataProvider = _xmlRep.Table;
+									btnExportarAA.enabled = true;
+									lblTotalAA.text = cont.toString() + " Registro(s)";
+								}
+								else{
+									dgAnexoA.dataProvider = null;
+									btnExportarAA.enabled = false;
+									lblTotalAA.text = "";
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								} 				 			
+								break;
+						}
+					});
+					wsMS.getRepMarcadoBansefi.send(fecha, organizacion, linea, disposicion, opcion, Application.application.U_ID);
+				}
+			}
+			
+			private function init():void{
+				global = new Globales();  
+				titulo = "Reportes de Bansefi";
+				lblTitulo.text = titulo.toUpperCase();
+				du = new Utils();
+				formateaTipoReportes();
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				dtFecha.selectedDate = new Date();
+			
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlOF = new XML(evt.result.toString());
+						
+					if(_xmlOF.elements().length() > 0){
+						formateaOF();
+						cboOF.dataProvider = orgObj;
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+				});
+				//Obtiene informacion de las Organizaciones Fondeadoras
+				wsCat.getCatalogoGral.send(29);	
+			}
+			
+			private function initConexionRep():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function limpiar():void{
+				if(currentState == "LayDisp"){
+					dgLayDisp.dataProvider = null;
+					lblTotalLD.text = "";
+					btnExportarLD.enabled = false;
+				}
+				else if (currentState == "RelContrato"){
+					dgAnexoA.dataProvider = null;
+					lblTotalAA.text = "";
+					btnExportarAA.enabled = false;
+				}
+				
+				currentState = null;
+				formateaTipoReportes();
+				cboDisp.dataProvider = null
+				cboLC.dataProvider = null;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlOF = new XML(evt.result.toString());
+						
+					if(_xmlOF.elements().length() > 0){
+						formateaOF();
+						cboOF.dataProvider = orgObj;
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+				});
+				//Obtiene informacion de las Organizaciones Fondeadoras
+				wsCat.getCatalogoGral.send(29);	
+				
+				dtFecha.text = "";
+			}
+			
+			private function seleccionarLC():void{
+				cboDisp.dataProvider = null;
+				
+				if(cboLC.selectedIndex > 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var orgFond:String = cboOF.selectedItem.codigo;
+					var lineaCred:String = cboLC.selectedItem.codigo;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					_xmlDisp = null;
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlDisp = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if(_xmlDisp.elements().length() > 0){
+							formateaDisp();
+							cboDisp.dataProvider = dispObj;
+							cboDisp.selectedIndex = 0;	
+						}
+					});
+					params[0] = orgFond;
+					params[1] = lineaCred;
+					wsCat.getListado.send(22, params);
+				}
+			}
+			
+			private function seleccionarOF():void{
+				cboLC.dataProvider = null;
+				cboDisp.dataProvider = null;
+				
+				if(cboOF.selectedIndex > 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var orgFond:String = cboOF.selectedItem.codigo;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					_xmlLC = null;
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlLC = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if(_xmlLC.elements().length() > 0){
+							formateaLC();
+							cboLC.dataProvider = lineaObj;
+							cboLC.selectedIndex = 0;
+						}
+					});
+					params[0] = orgFond;
+					wsCat.getListado.send(21, params);
+				}
+			}
+			
+			private function valida():Boolean{
+				if(cbxReporte.selectedIndex == 0){
+					Alert.show("Seleccione un reporte.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				
+				if(cboOF.selectedIndex == 0){
+					Alert.show("Seleccione una organización.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				
+				if(cboLC.selectedIndex == 0){
+					Alert.show("Seleccione una línea de crédito.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				if(cboDisp.selectedIndex == 0){
+					Alert.show("Seleccione una disposición.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				
+				if(dtFecha.text == ""){
+					Alert.show("Elija la fecha de saldos a buscar.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				
+				return true;
+			}
+		]]>
+	</mx:Script>
+    <mx:Canvas id="cnvCarga" x="0" y="0" width="400" height="284" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
+		<mx:Canvas x="10" y="10" width="380" height="265" styleName="canvasMod">
+			<mx:Label id="lblTitulo" x="10" y="10" width="358" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:Canvas id="cnvFondeo" x="10" y="55" width="358" height="169" styleName="canvasMod">
+				<mx:Label id="lblReporte" x="31" y="106" textAlign="right" text="Reporte:" width="49"/>
+				<mx:ComboBox id="cbxReporte" x="88" y="104" width="258" change="cambiaLayoutRep()" labelField="nombre"></mx:ComboBox>
+				<mx:Label id="lblFecha" x="0" y="136" textAlign="right" text="Fecha Saldo:" width="80"/>
+				<mx:DateField id="dtFecha" x="88" y="134" width="100" showToday="true"></mx:DateField>
+				<mx:Label id="lblOF" x="14" y="16" text="Fondeadora:"/>
+				<mx:ComboBox id="cboOF" x="88" y="14" width="258" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+				<mx:Label id="lblLC" x="9" y="46" text="Línea Crédito:"/>
+				<mx:ComboBox id="cboLC" x="88" y="44" width="258" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+				<mx:Label id="lblDisp" x="17" y="76" text="Disposición:"/>
+				<mx:ComboBox id="cboDisp" x="88" y="74" width="258" labelField="desc"/>
+			</mx:Canvas>
+			<mx:Label id="lblCriterios" x="10" y="36" text="Criterios de Selección"/>
+			<mx:Button x="114.25" y="232" label="Generar" click="generar()"  id="btnGenerar"/>
+			<mx:Button x="192.75" y="232" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

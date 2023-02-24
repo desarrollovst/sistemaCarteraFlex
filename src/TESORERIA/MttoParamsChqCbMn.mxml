@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="TESORERIA.*" layout="absolute" 
+	width="390" height="546" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="TESORERIA.*">
+	
+	<mx:Validator id="vSegmento" source="{txtSegmento}" property="text" 
+	invalid="{txtSegmento.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="vComision" source="{txtComision}" property="text" 
+	invalid="{txtComision.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="vReferencia" source="{txtReferencia}" property="text" 
+	invalid="{txtReferencia.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente de Parametros para reporte de cheques cobrados mensual-->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.List;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.charts.DateTimeAxis;
+			import mx.collections.IList;
+			import mx.core.DragSource;
+			import mx.events.ValidationResultEvent;
+			import mx.events.FlexEvent;
+			import mx.effects.*;
+			import mx.events.*;
+			import mx.events.EffectEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.effects.easing.Elastic;
+			import mx.graphics.Stroke;
+			import mx.managers.PopUpManager;
+			import mx.managers.DragManager;
+			import mx.rpc.events.FaultEvent;	
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.states.State;
+			import mx.validators.Validator;	
+			import mx.collections.SortField;
+      		import mx.collections.Sort;
+		
+			private var vResult:ValidationResultEvent;
+			
+			private var openEffect:Effect = new WipeDown();
+			private var closeEffect:Effect = new WipeDown();
+		
+			private var _xmlSucursal:XML =  new XML();
+			private var _xmlBancos:XML =  new XML();
+			private var _xmlCuentas:XML =  new XML();
+			private var _xmlComision:XML =  new XML();
+			
+			private var acSucursal:ArrayCollection = new ArrayCollection();
+			private var acBancos:ArrayCollection = new ArrayCollection();
+			private var acCuentas:ArrayCollection = new ArrayCollection();
+			private var acMes:ArrayCollection = new ArrayCollection();
+			private var acAnio:ArrayCollection = new ArrayCollection();
+			private var acComision:ArrayCollection = new ArrayCollection();
+			
+			private var aAnio:Array;
+			private var aMes:Array;
+			private var aComision:Array;
+						
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var tipoAccion:int;
+			
+			private function agregar():void{
+				if(validaLista()){
+					var oItem:Object;
+					var item:Array = new Array;
+					
+					for(var i:int; i < acComision.length; i ++){
+						oItem = new Object();
+						oItem.ANIO = acComision[i].ANIO;
+						oItem.MES = acComision[i].MES;
+						oItem.MESDESC = acComision[i].MESDESC;
+						oItem.COMISION = acComision[i].COMISION;
+						item.push(oItem);
+					}
+					
+					oItem = new Object();
+					oItem.ANIO = Number(cbxAnio.selectedItem.id);
+					oItem.MES = Number(cbxMes.selectedItem.id);
+					oItem.MESDESC = cbxMes.selectedItem.nombre;
+					oItem.COMISION = Number(txtComision.text);
+					item.push(oItem);
+					
+					acComision = new ArrayCollection(item);
+					
+					var sortField:SortField = new SortField();
+					sortField.name = "MES";
+					sortField.numeric = true;
+					
+					var sort:Sort = new Sort();
+					sort.fields = [sortField];
+					sort.reverse();
+					
+					acComision.sort = sort;
+					acComision.refresh();
+					
+					if(acComision.length > 0){
+						dgDatos.dataProvider = null;
+						dgDatos.dataProvider = acComision;
+					}
+				}
+			}
+			
+			private function buscarComisiones():void{
+				limpiar();
+				if(cbxSucursal.selectedIndex > 0 && cbxBanco.selectedIndex > 0 && cbxCuenta.selectedIndex > 0){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array
+										
+					du.sCursor();		
+					du.initWsCat(wsCat);
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlComision = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						
+						if(_xmlComision.elements().length() > 0){
+							txtSegmento.text = _xmlComision.Table[0].SEGMENTO;
+							txtReferencia.text = _xmlComision.Table[0].REFERENCIA;
+							
+							if(_xmlComision.elements().length() > 0){
+								formateaComision();
+								
+								dgDatos.dataProvider = null;
+								dgDatos.dataProvider = acComision;
+							}
+							tipoAccion = 2;
+						}
+						else
+							tipoAccion = 1;
+					});
+					params[0] = cbxSucursal.selectedItem.codigo;
+					params[1] = cbxBanco.selectedItem.codigo;
+					params[2] = cbxCuenta.selectedItem.codigo
+					params[3] = "0";
+					params[4] = "0";
+					wsCat.getListado.send(70, params);
+				}	
+			}
+			
+			public function cargaInfo(pXmlDatos:XML):void{
+				init();
+				tipoAccion = 2;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array
+				
+				formateaSucursal();
+							
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					_xmlBancos = new XML(event.result);
+							
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+						_xmlCuentas = new XML(event.result);
+						
+						du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+							_xmlComision = new XML(event.result);
+							
+							du.closeWs(wsCat);
+							du.rCursor();
+							Application.application.desbloquear();
+							
+							if (_xmlBancos.elements().length() > 0){
+								formateaBancos();
+								
+								if (_xmlCuentas.elements().length() > 0){
+																	
+									var i:int;
+									for(i = 0; i < acSucursal.length; i++){   
+										if (acSucursal[i].codigo.toString() == pXmlDatos.CDGCO){
+											cbxSucursal.selectedIndex = i;
+											break;
+										}
+									}
+									
+									for(i = 0; i < acBancos.length; i++){   
+										if (acBancos[i].codigo.toString() == pXmlDatos.CDGIB){
+											cbxBanco.selectedIndex = i;
+											break;
+										}
+									}
+									
+									formateaCuentas(pXmlDatos.CDGIB);
+									
+									for(i = 0; i < acCuentas.length; i++){   
+										if (acCuentas[i].codigo.toString() == pXmlDatos.CDGCB){
+											cbxCuenta.selectedIndex = i;
+											break;
+										}
+									}
+									
+									txtSegmento.text = pXmlDatos.SEGMENTO;
+									txtReferencia.text = pXmlDatos.REFERENCIA;
+									
+									if(_xmlComision.elements().length() > 0){
+										formateaComision();
+										
+										dgDatos.dataProvider = null;
+										dgDatos.dataProvider = acComision;
+									}
+									cbxSucursal.enabled = false;
+									cbxBanco.enabled = false;
+									cbxCuenta.enabled = false;
+								}
+							}
+						});
+						params[0] = pXmlDatos.CDGCO;
+						params[1] = pXmlDatos.CDGIB;
+						params[2] = pXmlDatos.CDGCB;
+						params[3] = "0";
+						params[4] = "0";
+						wsCat.getListado.send(70, params);
+					});
+					params[0] = "";
+					wsCat.getListado.send(62, params);
+				});
+				params[0] = "P";
+				wsCat.getCatalogoGral.send(42, params);
+			}
+			
+			private function cerrar():void{
+				var playReverse:Boolean = true;   
+	            closeEffect.duration = 500;
+	            closeEffect.play([this], playReverse);
+	            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			}
+			
+			private function eliminar():void{
+				if(dgDatos.selectedIndex >= 0){
+					if(dgDatos.selectedItem.ANIO != "")
+						Alert.show("¿Desea eliminar la comisión seleccionada?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+					else
+						Alert.show("Seleccione una comisión a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+				else
+					Alert.show("¿Desea eliminar la comisión seleccionada?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+			}
+			
+			private function enviar():void{	
+				//TIPO 1 - INSERTA (tipoAccion)
+				//TIPO 2 - ACTUALIZA (tipoAccion)
+				if(valida()){
+					var cdgco:String = cbxSucursal.selectedItem.codigo;
+					var sucursal:String = cbxSucursal.selectedItem.nombre;
+					var cdgib:String = cbxBanco.selectedItem.codigo;
+					var banco:String = cbxBanco.selectedItem.nombre;
+					var cdgcb:String = cbxCuenta.selectedItem.codigo;
+					var cuenta:String = cbxCuenta.selectedItem.numero;
+					var segmento:String = txtSegmento.text;
+					var referencia:String = txtReferencia.text;
+					
+					aAnio = new Array;
+					aMes = new Array;
+					aComision = new Array;
+					
+					var n:int = 0;
+			
+					for(var i:int = 0; i < acComision.length; i++){
+						if (acComision[i].ANIO != ""){
+							aAnio[n] = acComision[i].ANIO;
+							aMes[n] = acComision[i].MES;
+							aComision[n] = acComision[i].COMISION;
+							n++;
+						}
+					}
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+											
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+							
+						if(res.substr(0,1) == "1")
+							cerrar();
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					
+					wsMS.setAccionParametrosChqCbMn.send( cdgco, sucursal, cdgib, banco, cdgcb, cuenta,
+							segmento, referencia, aAnio, aMes, aComision, tipoAccion);					
+				}
+			}
+			
+			private function formateaBancos():void{
+				var cont:int = _xmlBancos.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlBancos.Table[i].CODIGO;	
+					oItem.nombre = _xmlBancos.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				
+				acBancos = new ArrayCollection(item);
+				cbxBanco.dataProvider = acBancos;
+				cbxBanco.selectedIndex = 0;
+			}
+			
+			private function formateaComision():void{
+				var cont:int = _xmlComision.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+								
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.ANIO = _xmlComision.Table[i].ANIO;	
+					oItem.MES = _xmlComision.Table[i].MES;
+					oItem.MESDESC = _xmlComision.Table[i].MESDESC;
+					oItem.COMISION = _xmlComision.Table[i].COMISION;
+					item.push(oItem);
+				}
+				
+				acComision = new ArrayCollection(item);
+			}
+			
+			private function formateaCuentas(cdgib:String):void{
+				limpiar();
+				var cont:int = _xmlCuentas.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				acCuentas =  new ArrayCollection();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.numero = "--Seleccionar--";
+				item.push(oItem);
+				
+				if(cdgib != ""){
+					for (var i:int = 0; i < cont; i++){
+						if(_xmlCuentas.Table[i].CDGIB == cdgib){
+							oItem = new Object();
+							oItem.codigo = _xmlCuentas.Table[i].CODIGO;	
+							oItem.numero = _xmlCuentas.Table[i].NUMERO;
+							item.push(oItem);
+						}
+					}
+					
+					acCuentas = new ArrayCollection(item);
+					cbxCuenta.dataProvider = acCuentas;
+					cbxCuenta.selectedIndex = 0;
+				}
+				else
+					acCuentas = new ArrayCollection(item);
+					cbxCuenta.dataProvider = acCuentas;
+					cbxCuenta.selectedIndex = 0;
+			}
+			
+			private function formateaSucursal():void{
+				var cont:int = Application.application._xmlSuc.Table.length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for(var i:int = 0; i < cont; i++){
+					_xmlSucursal = null;
+					_xmlSucursal = Application.application._xmlSuc.Table[i];
+					var cont2:int = _xmlSucursal.length();
+					
+					for(var j:int = 0; j < cont2; j++){
+						oItem = new Object();
+						oItem.codigo = _xmlSucursal.CODIGO[j].toString();
+						oItem.nombre = _xmlSucursal.NOMBRE[j].toString();
+						item.push(oItem);
+					}	
+				}
+				
+				acSucursal = new ArrayCollection(item);
+				cbxSucursal.dataProvider = acSucursal;
+				cbxSucursal.selectedIndex = 0;
+			}
+				
+			private function init():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Parametros de Cheques Cobrados Mensual";
+				cbxMes.dataProvider = global.formateaMes();
+				cbxAnio.dataProvider = global.formateaAnio();
+			}	
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function limpiar():void{
+				txtSegmento.text = "";
+				txtReferencia.text = "";
+				txtComision.text = "";
+
+				dgDatos.dataProvider = null;
+				acComision = new ArrayCollection();
+			}
+			
+			public function nuevo():void{
+				init();
+				tipoAccion = 1;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array
+				
+				formateaSucursal();
+							
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					_xmlBancos = new XML(event.result);
+							
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+						_xmlCuentas = new XML(event.result);
+					
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlBancos.elements().length() > 0){
+							formateaBancos();
+							
+							if (_xmlCuentas.elements().length() > 0){
+								formateaCuentas("");
+							}
+						}
+					});
+					params[0] = "";
+					wsCat.getListado.send(62, params);
+				});
+				params[0] = "P";
+				wsCat.getCatalogoGral.send(42, params);
+			}
+			
+			private function manejadorEliminar(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var anio:Number = Number(dgDatos.selectedItem.ANIO);
+					var mes:Number = Number(dgDatos.selectedItem.MES);
+					var comision:Number = Number(dgDatos.selectedItem.COMISION);
+					var i:int;
+					
+					for(i = 0; i < acComision.length; i++){
+						if(acComision[i].ANIO == anio && acComision[i].MES == mes && acComision[i].COMISION == comision){
+							break;	
+						}
+					}
+					acComision.removeItemAt(i);
+					if(acComision.length > 0){
+						dgDatos.dataProvider = null;
+						dgDatos.dataProvider = acComision;
+					}
+			    } 
+			}
+			
+			private function terminarEfecto(event:EffectEvent):void{
+				closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function valida():Boolean{
+				var iaSegmento:Array = Validator.validateAll([vSegmento]);
+				var iaReferencia:Array = Validator.validateAll([vReferencia]);	
+				
+				if(cbxSucursal.selectedIndex == 0){
+					Alert.show("Debe seleccionar la sucursal.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(cbxBanco.selectedIndex == 0){
+					Alert.show("Debe seleccionar el banco.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(cbxCuenta.selectedIndex == 0){
+					Alert.show("Debe seleccionar la cuenta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(iaSegmento.length > 0){
+					Alert.show("Debe capturar el segmento.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+								
+				if(iaReferencia.length > 0){
+					Alert.show("Debe capturar la referencia.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				acComision.refresh();
+				if(acComision.length == 0){
+					Alert.show("Es necesario agregar una comisión.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function validaLista():Boolean{	
+				var iaComision:Array = Validator.validateAll([vComision]);
+					
+				if(cbxAnio.selectedIndex == 0){
+					Alert.show("Debe seleccionar el año.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Debe seleccionar el mes.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(iaComision.length > 0){
+					Alert.show("Debe capturar la comisión.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				for(var i:int; i < acComision.length; i ++){
+					if(acComision[i].ANIO == cbxAnio.selectedItem.id && acComision[i].MES == cbxMes.selectedItem.id){
+						Alert.show("La comisión ya se encuentra dada de alta.",titulo,4,null,null,global.iAlert);
+						return false;	
+					}
+				}
+				return true;
+			}
+		
+			private function validaComision(event:Event):void{
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+	
+				if (vResult.type!=ValidationResultEvent.VALID)
+	            	TextInput(event.currentTarget).text = "";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="21.25" y="10" width="348.5" height="175" styleName="canvasMod">
+		<mx:Label x="68.5" y="48" text="Banco:" width="45" height="20" textAlign="right" id="lblBanco"/>
+		<mx:Label x="70" y="78" text="Cuenta:" width="44" height="20" textAlign="right" id="lblCuenta"/>
+		<mx:ComboBox x="116.5" y="46" width="186.99998" id="cbxBanco" labelField="nombre" change="formateaCuentas(cbxBanco.selectedItem.codigo)"></mx:ComboBox>
+		<mx:ComboBox x="117" y="76" width="186.44998" id="cbxCuenta" labelField="numero" change="buscarComisiones()"></mx:ComboBox>
+		<mx:ComboBox x="116.5" y="16" width="187.04999" id="cbxSucursal" labelField="nombre" change="buscarComisiones()"></mx:ComboBox>
+		<mx:Label x="56.5" y="18" text="Sucursal:" width="57" height="20" textAlign="right" id="lblSucursal"/>
+		<mx:Label x="50" y="108" text="Segmento:" width="64" height="20" textAlign="right" id="lblSegmento"/>
+		<mx:Label x="45" y="138" text="Referencia:" width="69" height="20" textAlign="right" id="lblReferencia"/>
+		<mx:TextInput id="txtSegmento" x="117" y="106" width="93" maxChars="8" />
+		<mx:TextInput id="txtReferencia" x="117" y="136" width="93" maxChars="30" />
+	</mx:Canvas>
+	<mx:Canvas x="20.75" y="193" width="349" height="65" styleName="canvasMod">
+		<mx:Button id="btnAceptar" x="298" y="29.5" icon="@Embed(source='assets/images/add.png')" click="agregar()" width="40" tabIndex="19"/>
+		<mx:Label x="212" y="9" text="Comision:" width="58" height="20" id="lblComision"/>
+		<mx:TextInput id="txtComision" x="212" y="28.5" width="70" change="validaComision(event)"/>
+		<mx:Label x="13" y="10" text="Mes" width="81" height="20"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="13" y="28.5" width="111"/>
+		<mx:Label x="132" y="10" text="Año" width="72" height="20"/>
+		<mx:ComboBox id="cbxAnio" labelField="id" x="132" y="28.5" width="72"/>
+	</mx:Canvas>
+	<mx:Canvas x="20.25" y="266" width="349.5" height="200" styleName="canvasMod">
+		<mx:DataGrid id="dgDatos" x="10" y="10" width="280" height="180" 
+			sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on">										
+			<mx:columns>
+				<mx:DataGridColumn headerText="AÑO" dataField="ANIO" width="50" />
+				<mx:DataGridColumn headerText="MES" dataField="MESDESC" width="90" />
+				<mx:DataGridColumn headerText="COMISION" dataField="COMISION" width="80" />
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnEliminar" x="298" y="10" icon="@Embed(source='assets/images/iconCancel.png')" click="eliminar()" width="40" tabIndex="18"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="329.75" y="473" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40" tabIndex="18"/>
+	<mx:Button id="btnGuardar0" x="281.75" y="473" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40" tabIndex="19"/>
+</mx:TitleWindow>

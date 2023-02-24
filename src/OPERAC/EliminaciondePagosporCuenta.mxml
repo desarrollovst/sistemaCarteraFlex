@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de eliminacion de Pagos por Cuenta-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.TxtExport;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			  
+			public var _xmlPag:XML = new XML();
+			private var _xmlCta:XML =  new XML();
+			private var _xmlCtaBan:XML =  new XML();
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			public var acred:Array;
+			public var cheque:Array;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var ctaObj:ArrayCollection =  new ArrayCollection();
+			public var bancObj:ArrayCollection =  new ArrayCollection();
+			
+			public function cargaCuantasBancarias():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCtaBan = XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlCtaBan.elements().length() > 0){
+						formateaCuentasBanc();							 			
+						cboCuenta.dataProvider = ctaObj;
+						btnBuscar.enabled = true;
+						cambioCuenta();//LIMPIA LABELS
+					} else {
+						btnEliminar.enabled = false;
+						btnBuscar.enabled = false;
+					}
+				});
+				//params[0] = "D";
+				params[0] = cboBanco.selectedItem.CODIGO;				
+				wsCat.getListado.send(69, params);
+			}
+			
+			public function cargaBanco():void{ 
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCta = XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlCta.elements().length() > 0){
+						formateaCuenta(evt.result.toString());
+						cboBanco.dataProvider = bancObj;
+					}
+				});
+				params[0] = "D";
+				wsCat.getCatalogoGral.send(42, params);
+			}
+			
+			public function cargaTipoMov():void{
+				if(cboBanco.selectedIndex > 0){
+					cargaCuantasBancarias();
+				}
+				else
+					cboCuenta.dataProvider = null;
+			}
+			
+			public function cambioCuenta():void{
+				lblSumaTotal.text = "";
+				lblTotalPagos.text = "";
+				btnEliminar.enabled = false;
+			}
+			
+			public function buscar():void{     
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if(valida()){     
+				     var ib:String = cboBanco.selectedItem.CODIGO;
+				     var cta:String = cboCuenta.selectedItem.id;
+				     var fecha:String = dtfFecha.text;
+				                       
+				     du.initWsCat(wsCat);
+				     du.sCursor();
+				                       
+				     du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {                                                                                                                  
+				           _xmlPag = XML(evt.result.toString());
+				           
+				           du.rCursor();
+				           du.closeWs(wsCat); 
+				                 
+				           if(_xmlPag.elements().length() > 0){                                         
+				                 lblTotalPagos.text = _xmlPag.Table[0].TOT_PAGOS;
+				                 lblSumaTotal.text = global.formatoMoneda(_xmlPag.Table[0].SUMA_TOTAL);                                         
+				                 if(lblTotalPagos.text != "" && lblSumaTotal.text != ""){
+				                       btnEliminar.enabled = true;
+				                 } else {
+				                       Alert.show("No se encontraron movimientos.\n\nVerifique los criterios de selección.",titulo,4,null,null,global.iAlert);
+				                       btnEliminar.enabled = false; 
+				                 }
+				           }
+				           else  
+				                 Alert.show("Error en la consulta.\n\nVerifique los criterios de selección.",titulo,4,null,null,global.iAlert);      
+				     });
+				     params[0] = fecha;
+				     params[1] = cta;
+				     wsCat.getInfoRegistro.send(32, params);
+				}
+			}
+
+			public function eliminar():void{					
+				if(valida()){	
+					var banco:String = cboBanco.selectedItem.CODIGO;
+					var cta:String = cboCuenta.selectedItem.id;
+					var fecha:String = dtfFecha.text;
+					var usuario:String = Application.application.U_ID;
+				 				
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS); 
+						
+						if (res.substr(0,1) == "1"){
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							btnEliminar.enabled = false;
+							limpiar();
+						}
+						else {
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+						}
+					});
+					wsMS.setAccionEliminaPagos.send(banco, cta, fecha, usuario);
+				}
+			}
+			
+			public function formateaCuenta(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+			
+				oItem.CODIGO = "0";
+				oItem.NOMBRE = "--Seleccionar--";
+					
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				bancObj = new ArrayCollection(array);
+				bancObj.addItemAt(oItem,0);	
+			}
+			
+			public function formateaCuentasBanc():void{ 
+				var cont:int = _xmlCtaBan.elements().length();
+                var oItem:Object;
+                var item:Array = new Array();
+                   
+                oItem = new Object();
+                oItem.id = "0";
+                oItem.numero = "--Seleccionar--";
+                item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+                        oItem = new Object();
+                        oItem.id = _xmlCtaBan.Table[i].CODIGO;
+                        oItem.numero = _xmlCtaBan.Table[i].CODIGO + " - " + _xmlCtaBan.Table[i].NUMERO;                             
+                        item.push(oItem);
+                 }
+                 ctaObj = new ArrayCollection(item);
+	
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Eliminación de pagos por cuenta";
+				lblTitulo.text = titulo.toUpperCase();
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				cargaBanco();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				var fec:Date;
+				dtfFecha.selectedDate = Application.application._Current_Fecha;				
+				cboBanco.selectedIndex = 0;
+				cboCuenta.dataProvider = null;
+				lblSumaTotal.text = "";
+				lblTotalPagos.text = "";
+				btnEliminar.enabled = false;
+				btnBuscar.enabled = false;
+			}
+			
+			public function valida():Boolean{
+				if(cboBanco.selectedIndex <= 0){	
+					Alert.show("Seleccione la Institución Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboCuenta.selectedIndex <= 0){	
+					Alert.show("Seleccione una Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de registro de los depósitos.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="305" height="295">
+		<mx:Canvas id="cnvDetalle" x="9.25" y="180" width="286.5" height="71" styleName="canvasMod" visible="true">
+			<mx:Label x="13" y="11" text="Total Pagos:" width="120.5" fontWeight="bold" fontSize="12" fontStyle="italic" textAlign="right"/>
+			<mx:Label x="10" y="38" text="Suma Total:" width="123.5" fontWeight="bold" fontSize="12" fontStyle="italic" textAlign="right" height="21"/>
+			<mx:Label x="135.1" y="38" width="133" id="lblSumaTotal" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:Label x="135.1" y="11" width="133" id="lblTotalPagos" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="285" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="286.5" height="133" x="9.25" y="39">
+			<mx:Label id="lblBanco" x="10" y="41" text="Banco:" width="44.7" textAlign="right"/>
+			<mx:ComboBox id="cboBanco" labelField="NOMBRE" x="62.7" y="38" width="206.5"  change="cargaTipoMov()"></mx:ComboBox>
+			<mx:Label id="lblFecha" x="10" y="10" text="Fecha:" width="44.75" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="62.7" y="8" width="100"/>
+			<mx:Label id="lblTipoMov" x="10" y="73" text="Cuenta:" width="44.75" textAlign="right"/>
+			<mx:ComboBox id="cboCuenta" labelField="numero" x="62.75" y="70" change="cambioCuenta()" width="206.45001"></mx:ComboBox>
+			<mx:Button label="Buscar" id="btnBuscar" enabled="false" click="buscar()" x="72.25" y="102"/>
+			<mx:Button label="Limpiar" id="btnLimpiar" enabled="true" click="limpiar()" x="144.25" y="102"/>
+		</mx:Canvas>
+		<mx:Button label="Eliminar" id="btnEliminar" enabled="false" click="eliminar()" x="225" y="259"/>
+	</mx:Canvas>
+</mx:Canvas>

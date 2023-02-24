@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="240" height="50" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*"
+	creationPolicy="all" creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			
+			private var titulo:String;
+			private var global:Globales;
+			private var du:Utils;
+			
+			public function asignaMeses(meses:ArrayCollection):void{
+				cboMes.dataProvider = global.formateaMes(meses);
+			}
+			
+			public function asignaAnios(anios:ArrayCollection):void{
+				cboAnio.dataProvider = global.formateaAnio(anios);
+			}
+			
+			public function init(titulo:String=null):void{
+				global = new Globales();
+				du = new Utils();
+				this.titulo = titulo;
+				cboAnio.dataProvider = global.formateaAnio();
+				cboMes.dataProvider = global.formateaMes();
+			}			
+						
+			public function limpiar():void{
+				cboMes.selectedIndex = 0;
+				cboAnio.selectedIndex = 0;
+			}
+			
+			public function obtieneMes():String{
+				return cboMes.selectedItem.id;
+			}
+			
+			public function obtieneNomMes():String{
+				return cboMes.selectedItem.nombre;
+			}
+			
+			public function obtieneAnio():String{
+				return cboAnio.selectedItem.id;
+			}
+			
+			public function valida():Boolean{
+				if(cboMes.selectedIndex <= 0){
+					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboAnio.selectedIndex <= 0){
+					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="13.5" y="1" text="Mes" height="20"/>
+	<mx:ComboBox id="cboMes" labelField="nombre" x="13.5" y="19.5" width="111"/>
+	<mx:Label x="142.45" y="1" text="Año" height="20"/>
+	<mx:ComboBox id="cboAnio" labelField="id" x="142.45" y="19.5" width="72"/>
+</mx:Canvas>

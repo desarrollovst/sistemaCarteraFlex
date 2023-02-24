@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="288" height="270" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" xmlns:Data="Data.*" xmlns:control="Controls.*">
+	<mx:states>
+		<mx:State name="plazo">
+			<mx:SetProperty name="height" value="380"/>
+			<mx:SetProperty target="{btnGenerar}" name="y" value="339"/>
+			<mx:SetProperty target="{btnLimpiar}" name="y" value="339"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="71.25" y="246" width="150.04999" height="80" styleName="canvasMod" id="canvas1">
+					<mx:RadioButtonGroup id="semana"/>
+					<mx:RadioButton id="rdbSAnt" x="21.25" label="Semana Anterior" y="6" width="116.75" groupName="semana" value="-7"/>
+					<mx:RadioButton id="rdbSAct" x="21.25" label="Semana Actual" y="28" groupName="semana" value="0" selected="true" width="116.75"/>
+					<mx:RadioButton id="rdbSSig" x="21.25" label="Semana Siguiente" y="50" groupName="semana" value="7" width="116.75"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="71.25" y="227" text="Periodo" id="label4"/>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="fecha">
+			<mx:SetProperty name="height" value="320"/>
+			<mx:SetProperty target="{btnGenerar}" name="y" value="281"/>
+			<mx:SetProperty target="{btnLimpiar}" name="y" value="281"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="18" y="227" width="264" height="41" styleName="canvasMod" id="canvas0">
+					<mx:DateField id="dtfFecha" x="98.5" y="8" width="111"/>
+					<mx:Label x="52.5" y="10" text="Fecha:" id="label1"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+		[Event(name="limpiar", type="limpiar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;	
+			import flash.external.ExternalInterface;
+			
+			public var wsMS:WebService;
+			public var rep:String;
+			public var band:Boolean;    //Indica que el codigo de Asesor es obligatorio
+			public var iniAsesor:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function ejecuta():void{
+				//rep = 0 indica que el control es utilizado para extraer 
+				//los valores de sus controles
+				if(rep == "0")
+					enviar();
+				//rep <> 0 indica que el control es utilizado para generar 
+				//el reporte indicado en esta variable
+				else if(rep != "0")
+					generar();
+			}	
+				
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}	
+							
+			public function generar():void{
+				if (valida() == true){					
+					var consulta:String;
+					var periodo:Number;
+					var fecha:String
+					var id:String = "&id=" + rep;
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var region:String = "&region=" + ctrlFiltro.obtieneRegion();
+					var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
+					var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();
+					var fec:Date = Application.application._Current_Fecha;
+					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					
+					if(currentState == null)
+						consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;
+					else if(currentState == 'plazo'){
+						var fechaFin:String;
+						var fecIni:Date;
+						var fecFin:Date;
+						periodo = Number(semana.selectedValue);
+						fec = new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + periodo);
+						var diaSem:Number = fec.getDay();
+						//Condicion que asegura que sea seleccionada 
+						if(diaSem == 0)
+							diaSem = 7;
+						fecIni = new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() - (diaSem - 1));
+						fecFin = new Date(fecIni.getFullYear(),fecIni.getMonth(),fecIni.getDate() + 4);
+						fecha = "&fecha=" + global.formatoFechaSep(fecIni, "-");
+						fechaFin = "&fechaFin=" + global.formatoFechaSep(fecFin, "-"); 
+						consulta = global.urlPdf + id + fecha + fechaFin + usuario + nomUsuario + coord + asesor;
+						ExternalInterface.call("console.log", consulta );
+					}
+					Application.application.muestraPdf(consulta);
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String, band:Boolean = false):void{
+				global = new Globales();
+				du = new Utils();
+				this.rep = rep;
+				this.band = band;
+				this.titulo = titulo;
+				ctrlFiltro.init(band);
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;				
+				limpiar();
+			}		
+						
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				ctrlFiltro.limpiar();
+				dispatchEvent(new Event("limpiar"));	
+				if(currentState == "fecha"){
+					fec = Application.application._Current_Fecha;
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				}
+			}
+			
+			public function obtieneAsesor():String{
+				return ctrlFiltro.obtieneAsesor();
+			}
+			
+			public function obtieneNomAsesor():String{
+				return ctrlFiltro.obtieneNomAsesor();
+			}
+			
+			public function obtieneNomRegion():String{
+				return ctrlFiltro.obtieneNomRegion();
+			}
+			
+			public function obtieneNomSucursal():String{
+				return ctrlFiltro.obtieneNomSucursal();
+			}
+			
+			public function obtieneRegion():String{
+				return ctrlFiltro.obtieneRegion();
+			}
+			
+			public function obtieneSucursal():String{
+				return ctrlFiltro.obtieneSucursal();
+			}
+				
+			public function valida():Boolean{
+				var invalidArray:Array; 
+				
+				if(band == true){
+					invalidArray = Validator.validateAll([ctrlFiltro.asesorV]);
+					if(invalidArray.length > 0){
+						Alert.show("Seleccione el registro de Asesor.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				if(currentState == "fecha" && dtfFecha.selectedDate == null){
+					Alert.show("Seleccione la fecha de consulta del Reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="10" y="10" width="266" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="11.95" y="53.5" width="265.05" height="165.5" styleName="canvasMod" id="canvas2">
+		<control:CtrlFiltroInfoAsesor id="ctrlFiltro" x="6" y="6" width="252.04999"/>
+	</mx:Canvas>
+	<mx:Button x="69" y="231" label="Generar" click="ejecuta()" id="btnGenerar"/>
+	<mx:Button x="148" y="231" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Label x="10" y="34" text="Criterios de Selección" width="127.25" id="label2"/>
+</mx:Canvas>

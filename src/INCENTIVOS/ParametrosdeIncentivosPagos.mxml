@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="initApp()">
+	<mx:states>
+		<mx:State name="Asesor">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="837"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="473"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="817" height="369" styleName="canvasMod" id="cvGeneralA">
+					<mx:Label x="9" y="55" text="PARÁMETROS DE PAGOS POR ASESOR:" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+					<mx:Canvas x="9" y="75" width="796" height="282" styleName="canvasMod" id="cvAsesor1">
+						<mx:DataGrid id="dgPA" x="10" y="10" width="774" height="260" horizontalScrollPolicy="on"
+							sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+							itemClick="seleccionaAsesorPagos()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPagos(2)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="100" />
+								<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300" />
+								<mx:DataGridColumn headerText="PAGOS INICIO" dataField="PAGOS_INI" width="90" />
+								<mx:DataGridColumn headerText="PAGOS FINAL" dataField="PAGOS_FIN" width="90" />
+								<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="90" />
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					<mx:Canvas x="599" y="12" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Button id="btnEditarA" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarFormPagos(2)"/>
+						<mx:Button id="btnAgregarA" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarFormPagos(1)"/>
+						<mx:Button id="btnEliminarA" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" enabled="false" toolTip="Eliminar" width="40" click="eliminarIncentivo()"/>
+						<mx:Button id="btnDatosA" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" enabled="true" toolTip="Listado" width="40" click="buscarLista();"/>
+					</mx:Canvas>
+					<mx:Canvas x="10" y="10" width="581" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Label id="lblNombre" x="143" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+						<mx:TextInput id="txtNombreA" x="201.5" y="5" width="367.5" enter="buscarLista()" tabIndex="2"/>
+						<mx:Label id="lblCod" x="6" y="7" text="CODIGO:" width="53"/>
+						<mx:TextInput id="txtCodigoA" x="58" y="5" width="77" maxChars="6" enter="buscarLista()" tabIndex="1"/>
+					</mx:Canvas>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="Sucursal">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="837"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="473"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="817" height="369" styleName="canvasMod" id="cvGeneralS">
+					<mx:Canvas x="8" y="75" width="796" height="282" styleName="canvasMod">
+						<mx:DataGrid id="dgPS" x="10" y="10" width="775" height="260" horizontalScrollPolicy="on"
+							sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+							itemClick="seleccionaSucursalPagos()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPagos(2)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="100" />
+								<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300" />
+								<mx:DataGridColumn headerText="PAGOS INICIO" dataField="PAGOS_INI" width="90" />
+								<mx:DataGridColumn headerText="PAGOS FINAL" dataField="PAGOS_FIN" width="90" />
+								<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="90" />
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					<mx:Canvas x="600" y="10" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Button id="btnEditarS" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarFormPagos(2)"/>
+						<mx:Button id="btnAgregarS" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarFormPagos(1)"/>
+						<mx:Button id="btnEliminarS" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" enabled="false" toolTip="Eliminar" width="40" click="eliminarIncentivo()"/>
+						<mx:Button id="btnDatosS" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" enabled="true" toolTip="Listado" width="40" click="buscarLista();"/>
+					</mx:Canvas>
+					<mx:Canvas x="10" y="10" width="581" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Label id="lblNombre1" x="139" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+						<mx:TextInput id="txtNombreS" x="197.5" y="5" width="371.5" enter="buscarLista()" tabIndex="2"/>
+						<mx:Label id="lblCod1" x="6" y="7" text="CODIGO:" width="53"/>
+						<mx:TextInput id="txtCodigoS" x="58" y="5" width="73" maxChars="3" enter="buscarLista()" tabIndex="1"/>
+					</mx:Canvas>
+					<mx:Label x="10" y="55" text="PARÁMETROS DE PAGOS POR SUCURSAL:" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="Region">
+			<mx:SetProperty target="{cvGeneral}" name="width" value="837"/>
+			<mx:SetProperty target="{cvGeneral}" name="height" value="473"/>
+			<mx:AddChild relativeTo="{cvGeneral}" position="lastChild">
+				<mx:Canvas x="10" y="90" width="817" height="369" styleName="canvasMod" id="cvGeneralR">
+					<mx:Canvas x="10" y="73" width="796" height="282" styleName="canvasMod">
+						<mx:DataGrid id="dgPR" x="10" y="10" width="774" height="260" horizontalScrollPolicy="on"
+							sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+							itemClick="seleccionaRegionalPagos()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPagos(2)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="100" />
+								<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300" />
+								<mx:DataGridColumn headerText="PAGOS INICIO" dataField="PAGOS_INI" width="90" />
+								<mx:DataGridColumn headerText="PAGOS FINAL" dataField="PAGOS_FIN" width="90" />
+								<mx:DataGridColumn headerText="PORCENTAJE" dataField="PORCENTAJE" width="90" />
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					<mx:Canvas x="600" y="10" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Button id="btnEditarR" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" toolTip="Editar" width="40" click="mostrarFormPagos(2)"/>
+						<mx:Button id="btnAgregarR" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="true" toolTip="Registrar" width="40" click="mostrarFormPagos(1)"/>
+						<mx:Button id="btnEliminarR" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" enabled="false" toolTip="Eliminar" width="40" click="eliminarIncentivo()"/>
+						<mx:Button id="btnDatosR" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" enabled="true" toolTip="Listado" width="40" click="buscarLista();"/>
+					</mx:Canvas>
+					<mx:Label x="10" y="53" text="PARÁMETROS DE PAGOS POR REGIÓN:" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+					<mx:Canvas x="10" y="8" width="581" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+						<mx:Label id="lblNombre2" x="143" y="7" text="NOMBRE:" width="63.5" enabled="true"/>
+						<mx:TextInput id="txtNombreR" x="201.5" y="5" width="367.5" enter="buscarLista()" tabIndex="2"/>
+						<mx:Label id="lblCod2" x="6" y="7" text="CODIGO:" width="53"/>
+						<mx:TextInput id="txtCodigoR" x="58" y="5" width="77" maxChars="3" enter="buscarLista()" tabIndex="1"/>
+					</mx:Canvas>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{cvGeneral}"/> 
+				<mx:AddChildAction duration="500" target="{cvGeneralA}"/>
+				<mx:AddChildAction duration="500" target="{cvGeneralS}"/>
+				<mx:AddChildAction duration="500" target="{cvGeneralR}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+    <![CDATA[
+    	
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.events.CloseEvent;
+		import mx.events.DataGridEvent;				
+		import mx.events.FlexEvent;
+		import mx.events.ListEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent
+		import mx.rpc.Fault;
+		import mx.rpc.soap.WebService;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+			
+    	private var _xmlPagos:XML = new XML();
+    	
+    	private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+    	private var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var objMtto:Sprite = new Sprite();
+		
+		private var indAsesor:int;
+		private var indSucursal:int;
+		private var indRegion:int;
+		
+		private var vScrollAsesor:Number;
+		private var vScrollSucursal:Number;
+		private var vScrollRegion:Number;
+		
+		private function activarBotonEditar(pActivo:Boolean, pTipo:String):void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "A"){
+				if(pTipo == "P")
+					btnEditarA.enabled = pActivo;
+			}
+			else if(pPuesto == "S"){
+				if(pTipo == "P")
+					btnEditarS.enabled = pActivo;
+			}
+			else if(pPuesto == "R"){
+				if(pTipo == "P")
+					btnEditarR.enabled = pActivo;
+			}
+		}
+		
+		private function activarBotonEliminar(pActivo:Boolean, pTipo:String):void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "A"){
+				if(pTipo == "P")	
+					btnEliminarA.enabled = pActivo;
+			}
+			else if(pPuesto == "S"){
+				if(pTipo == "P")
+					btnEliminarS.enabled = pActivo;
+			}
+			else if(pPuesto == "R"){
+				if(pTipo == "P")
+					btnEliminarR.enabled = pActivo;
+			}
+		}
+		
+		private function buscarLista():void{
+			var pPuesto:String = obtienePuesto();
+			var pCodigo:String = "";
+			var pNombre:String = "";
+			
+			wsIncC = new WebService;
+			
+			_xmlPagos = null;
+			
+			if(pPuesto == "A"){ //Asesor
+			
+				pCodigo = txtCodigoA.text;
+				pNombre = txtNombreA.text;
+				
+				initConexionIncC();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgPA.dataProvider = null;
+				
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+								
+				du.ejecutaWsMethod(wsIncC,function(evt:ResultEvent):void {											
+					_xmlPagos = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsIncC);	
+					Application.application.desbloquear();
+						
+					if (_xmlPagos.elements().length() > 0)
+						dgPA.dataProvider = _xmlPagos.Table;	
+				});
+				wsIncC.getParametrosIncPagos.send(pCodigo, pNombre, pPuesto);
+			}
+			else if(pPuesto == "S"){ //Sucursal
+				pCodigo = txtCodigoS.text;
+				pNombre = txtNombreS.text;
+				
+				initConexionIncC();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgPS.dataProvider = null;
+				
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+				
+				du.ejecutaWsMethod(wsIncC,function(evt:ResultEvent):void {											
+					_xmlPagos = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsIncC);	
+					Application.application.desbloquear();
+						
+					if (_xmlPagos.elements().length() > 0)
+						dgPS.dataProvider = _xmlPagos.Table;
+				});
+					wsIncC.getParametrosIncPagos.send(pCodigo, pNombre, pPuesto);
+			}
+			else if(pPuesto == "R"){ //Region
+				pCodigo = txtCodigoR.text;
+				pNombre = txtNombreR.text;
+				
+				initConexionIncC();
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgPR.dataProvider = null;
+				
+				activarBotonEditar(false, "P");				
+				activarBotonEliminar(false, "P");
+				
+				du.ejecutaWsMethod(wsIncC,function(evt:ResultEvent):void {											
+					_xmlPagos = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsIncC);	
+					Application.application.desbloquear();
+						
+					if (_xmlPagos.elements().length() > 0)
+						dgPR.dataProvider = _xmlPagos.Table;
+				});
+				wsIncC.getParametrosIncPagos.send(pCodigo, pNombre, pPuesto);
+			}
+		}
+		
+		private function eliminarIncentivo():void{
+			var pPuesto:String = obtienePuesto();
+			
+			if(pPuesto == "A"){
+				if(dgPA.selectedIndex >= 0){
+					if(dgPA.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el parámetro de pagos seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarIncentivo,global.iQuest);
+					else
+						Alert.show("Seleccione el parámetro de pagos a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			else if(pPuesto == "S"){
+				if(dgPS.selectedIndex >= 0){
+					if(dgPS.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el parámetro de pagos seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarIncentivo,global.iQuest);
+					else
+						Alert.show("Seleccione el parámetro de pagos a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			else if(pPuesto == "R"){
+				if(dgPR.selectedIndex >= 0){
+					if(dgPR.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el parámetro de pagos seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarIncentivo,global.iQuest);
+					else
+						Alert.show("Seleccione el parámetro de pagos a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+		}
+			
+		private function manejadorEliminarIncentivo(e:CloseEvent):void{
+			var pPuesto:String = obtienePuesto();
+			
+			var mCodigo:String;
+			var mPagosIni:Number;
+			var mPagosFin:Number;
+			var mPorcentaje:Number;
+			
+			if(e.detail==Alert.YES){
+				if(pPuesto == "A"){
+					mCodigo = dgPA.selectedItem.CODIGO;
+					mPagosIni = dgPA.selectedItem.PAGOS_INI;
+					mPagosFin = dgPA.selectedItem.PAGOS_FIN;
+					mPorcentaje = dgPA.selectedItem.PORCENTAJE;
+				}
+				else if(pPuesto == "S"){
+					mCodigo = dgPS.selectedItem.CODIGO;
+					mPagosIni = dgPS.selectedItem.PAGOS_INI;
+					mPagosFin = dgPS.selectedItem.PAGOS_FIN;
+					mPorcentaje = dgPS.selectedItem.PORCENTAJE;
+				}
+				else if(pPuesto == "R"){
+					mCodigo = dgPR.selectedItem.CODIGO;
+					mPagosIni = dgPR.selectedItem.PAGOS_INI;
+					mPagosFin = dgPR.selectedItem.PAGOS_FIN;
+					mPorcentaje = dgPR.selectedItem.PORCENTAJE;
+				}
+				
+		    	initConexionIncR();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
+					wsIncR.setAccionParametrosIncPagos.send(mCodigo, pPuesto, mPagosIni, mPagosFin, mPorcentaje, 3);
+			}
+		}
+			
+		private function setAccionElimina(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionElimina);
+			var res:String = new String(event.result.toString());
+			
+			if (res.substr(0,1) == "1")
+				buscarLista();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+		}
+		
+		private function initApp():void{
+    		global = new Globales();
+	    	du = new Utils();
+	        titulo = "Parámetros de Incentivos de Pagos";
+	      	lblTitulo.text = titulo.toUpperCase();
+
+	      	var oItem:Object;
+			var item:Array = new Array();
+			var acPuesto:ArrayCollection;
+
+			oItem = new Object();
+			oItem.id = "0";
+			oItem.nombre = "--Seleccionar--";
+			oItem.puesto = "N";
+			item.push(oItem);
+
+			oItem = new Object();
+			oItem.id = "1";
+			oItem.nombre = "Asesor";
+			oItem.puesto = "A";
+			item.push(oItem);
+
+			oItem = new Object();
+			oItem.id = "2";
+			oItem.nombre = "Sucursal";
+			oItem.puesto = "S";
+			item.push(oItem);
+
+			oItem = new Object();
+			oItem.id = "3";
+			oItem.nombre = "Región";
+			oItem.puesto = "R";
+			item.push(oItem);
+
+			acPuesto = new ArrayCollection(item);
+			cbxPuesto.dataProvider = acPuesto;
+			cbxPuesto.selectedIndex = 0;
+    	}
+    	
+    	private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		private function iniVar():void{
+			this.indAsesor = -1;
+			this.vScrollAsesor = -1;
+							
+			this.indSucursal = -1;
+			this.vScrollSucursal = -1;
+			
+			this.indRegion = -1;
+			this.vScrollRegion= -1;
+		}
+			
+    	private function modificarEstado():void{
+			var id:Number = cbxPuesto.selectedItem.id;
+			
+			if(id == 1){ //Asesor
+				currentState = "Asesor";
+				
+				dgPA.dataProvider = null;
+				
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+				txtCodigoA.text = "";
+				txtNombreA.text = "";
+			}
+			else if(id == 2){ //Sucursal
+				currentState = "Sucursal"
+				
+				dgPS.dataProvider = null;
+				
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+				txtCodigoS.text = "";
+				txtNombreS.text = "";
+			}
+			else if(id == 3){ //Region
+				currentState = "Region"
+				
+				dgPR.dataProvider = null;
+				
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+				txtCodigoR.text = "";
+				txtNombreR.text = "";
+			}
+			else
+				currentState = null;
+		}
+		
+		private function actualiza(event:Event):void{
+			buscarLista();
+		}
+		
+		private function mostrarFormPagos(tipo:int):void{
+			//tipo = 1 NUEVO REGISTRO
+			//tipo = 2 MODIFICA REGISTRO
+			var pPuesto:String = obtienePuesto();
+			var comMttoParamsIncPagos:MttoParamIncPagos = new MttoParamIncPagos();						
+			objMtto = this;
+			switch(tipo){
+				case 1: 
+					comMttoParamsIncPagos = MttoParamIncPagos(PopUpManager.createPopUp(objMtto,MttoParamIncPagos,true));
+					comMttoParamsIncPagos.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+					PopUpManager.centerPopUp(comMttoParamsIncPagos);							
+					comMttoParamsIncPagos.nuevo(pPuesto);
+					break;
+				case 2:
+						if(pPuesto == "A"){
+							if (dgPA.selectedIndex >= 0){
+								comMttoParamsIncPagos = MttoParamIncPagos(PopUpManager.createPopUp(objMtto,MttoParamIncPagos,true));	
+								comMttoParamsIncPagos.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+								PopUpManager.centerPopUp(comMttoParamsIncPagos);
+								iniVar();
+								
+								this.indAsesor = dgPA.selectedIndex;
+								this.vScrollAsesor = dgPA.verticalScrollPosition;
+								comMttoParamsIncPagos.edicion(_xmlPagos.Table[dgPA.selectedIndex], pPuesto);								
+							}
+							else
+								Alert.show("Debe seleccionar el registro de pagos.",titulo,4,null,null,global.iAlert); 
+						}
+						else if(pPuesto == "S"){
+							if (dgPS.selectedIndex >= 0){
+								comMttoParamsIncPagos = MttoParamIncPagos(PopUpManager.createPopUp(objMtto,MttoParamIncPagos,true));	
+								comMttoParamsIncPagos.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+								PopUpManager.centerPopUp(comMttoParamsIncPagos);
+								iniVar();
+								
+								this.indSucursal = dgPS.selectedIndex;
+								this.vScrollSucursal = dgPS.verticalScrollPosition;
+								comMttoParamsIncPagos.edicion(_xmlPagos.Table[dgPS.selectedIndex], pPuesto);								
+							}
+							else
+								Alert.show("Debe seleccionar el registro de pagos.",titulo,4,null,null,global.iAlert);	
+						}
+						else if(pPuesto == "R"){
+							if (dgPR.selectedIndex >= 0){
+								comMttoParamsIncPagos = MttoParamIncPagos(PopUpManager.createPopUp(objMtto,MttoParamIncPagos,true));	
+								comMttoParamsIncPagos.addEventListener(Event.REMOVED_FROM_STAGE, actualiza);
+								PopUpManager.centerPopUp(comMttoParamsIncPagos);
+								iniVar();
+								
+								this.indRegion = dgPR.selectedIndex;
+								this.vScrollRegion = dgPR.verticalScrollPosition;
+								comMttoParamsIncPagos.edicion(_xmlPagos.Table[dgPR.selectedIndex], pPuesto);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de pagos.",titulo,4,null,null,global.iAlert);
+						}
+			}
+		}
+		
+		private function obtienePuesto():String{
+			var pPuesto:String = cbxPuesto.selectedItem.puesto;
+			return pPuesto;
+		}
+		
+		private function seleccionaAsesorPagos():void{
+			if (dgPA.selectedIndex >= 0){
+				activarBotonEditar(true, "P");
+				activarBotonEliminar(true, "P");
+			}
+			else{
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+			}
+		}
+		
+		private function seleccionaSucursalPagos():void{
+			if (dgPS.selectedIndex >= 0){
+				activarBotonEditar(true, "P");
+				activarBotonEliminar(true, "P");
+			}
+			else{
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+			}
+		}
+		
+		private function seleccionaRegionalPagos():void{
+			if (dgPR.selectedIndex >= 0){
+				activarBotonEditar(true, "P");
+				activarBotonEliminar(true, "P");
+			}
+			else{
+				activarBotonEditar(false, "P");
+				activarBotonEliminar(false, "P");
+			}
+		}
+	]]>
+  	</mx:Script>
+	<mx:Canvas x="0" y="0" width="305" height="93" id="cvGeneral" backgroundColor="#FFFFFF">
+		<mx:Canvas x="10" y="39" width="247" height="43" styleName="canvasMod" id="cvBusqueda">
+			<mx:Label x="13" y="10" text="Puesto:"/>
+			<mx:ComboBox x="62" y="8" id="cbxPuesto" labelField="nombre" change="modificarEstado()"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="285" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

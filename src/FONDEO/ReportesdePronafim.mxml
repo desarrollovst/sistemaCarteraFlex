@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" xmlns:Administracion="Administracion.*"
+    x="12.5" y="42" creationPolicy="all" creationComplete="init()">
+	<mx:states>
+		<mx:State name="stateClientes">
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgRepClientes" x="21" y="205" width="785.05" visible="true" height="246" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PERSONA_ID" dataField="PERSONA_ID" width="80"/>
+						<mx:DataGridColumn headerText="CURP" dataField="CURP" width="160"/>
+						<mx:DataGridColumn headerText="INE" dataField="INE" width="100"/>
+						<mx:DataGridColumn headerText="PRIMER_AP" dataField="PRIMER_AP" width="120"/>
+						<mx:DataGridColumn headerText="SEGUNDO_AP" dataField="SEGUNDO_AP" width="120"/>
+						<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="130"/>
+						<mx:DataGridColumn headerText="FECHA_NAC" dataField="FECHA_NAC" width="90"/>
+						<mx:DataGridColumn headerText="CVE_EDO_NAC" dataField="CVE_EDO_NAC" width="100"/>
+						<mx:DataGridColumn headerText="SEXO" dataField="SEXO" width="60"/>
+						<mx:DataGridColumn headerText="TELEFONO" dataField="TELEFONO" width="90"/>
+						<mx:DataGridColumn headerText="CVE_EDO_CIVIL" dataField="CVE_EDO_CIVIL" width="110"/>			
+						<mx:DataGridColumn headerText="TIPO_VIALIDAD" dataField="TIPO_VIALIDAD" width="110"/>
+						<mx:DataGridColumn headerText="NOMBRE_VIALIDAD" dataField="NOMBRE_VIALIDAD" width="180"/>
+						<mx:DataGridColumn headerText="NUM_EXT_NUM" dataField="NUM_EXT_NUM" width="90"/>
+						<mx:DataGridColumn headerText="NUM_EXT_ALF" dataField="NUM_EXT_ALF" width="90"/>
+						<mx:DataGridColumn headerText="NUM_EXT_ANT" dataField="NUM_EXT_ANT" width="90"/>
+						<mx:DataGridColumn headerText="NUM_INT_NUM" dataField="NUM_INT_NUM" width="90"/>
+						<mx:DataGridColumn headerText="NUM_INT_ALF" dataField="NUM_INT_ALF" width="90"/>
+						<mx:DataGridColumn headerText="TIPO_ASENTAMIENTO" dataField="TIPO_ASENTAMIENTO" width="140"/>				
+						<mx:DataGridColumn headerText="NOMBRE_ASENTAMIENTO" dataField="NOMBRE_ASENTAMIENTO" width="145"/>
+						<mx:DataGridColumn headerText="CP" dataField="CP" width="70"/>
+						<mx:DataGridColumn headerText="CVE_LOCALIDAD" dataField="CVE_LOCALIDAD" width="110"/>				
+						<mx:DataGridColumn headerText="ESTUDIOS" dataField="ESTUDIOS" width="80"/>
+						<mx:DataGridColumn headerText="ACTIVIDAD" dataField="ACTIVIDAD" width="80"/>
+						<mx:DataGridColumn headerText="FECHA_INICIO_ACT_PRODUCTIVA" dataField="FEC_INICIO_ACT_PRODUCTIVA" width="140"/>
+						<mx:DataGridColumn headerText="UBICACIÓN_NEGOCIO" dataField="UBICACION_NEGOCIO" width="140"/>
+						<mx:DataGridColumn headerText="PERSONAS_TRABAJANDO" dataField="PERSONAS_TRABAJANDO" width="155"/>
+						<mx:DataGridColumn headerText="ROL_EN_HOGAR" dataField="ROL_EN_HOGAR" width="110"/>
+						<mx:DataGridColumn headerText="RFC" dataField="RFC" width="50"/>
+						<mx:DataGridColumn headerText="FAMILIA" dataField="FAMILIA" width="70"/>
+						<mx:DataGridColumn headerText="LENGUA_INDIGENA" dataField="LENGUA_INDIGENA" width="120"/>
+						<mx:DataGridColumn headerText="DISCAPACIDAD" dataField="DISCAPACIDAD" width="120"/>
+						<mx:DataGridColumn headerText="USO_INTERNET" dataField="USO_INTERNET" width="120"/>
+						<mx:DataGridColumn headerText="REDES_SOCIALES" dataField="REDES_SOCIALES" width="120"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="width" value="830"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="490"/>
+		</mx:State>
+		<mx:State name="stateCreditos">
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgRepCreditos" x="21" y="205" width="785.05" visible="true" height="246" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PERSONA_ID" dataField="PERSONA_ID" width="90"/>
+						<mx:DataGridColumn headerText="CREDITO_ID" dataField="CREDITO_ID" width="100"/>
+						<mx:DataGridColumn headerText="NO_PAGARE" dataField="NO_PAGARE" width="100"/>
+						<mx:DataGridColumn headerText="DESTINO_CREDITO" dataField="DESTINO_CREDITO" width="120"/>
+						<mx:DataGridColumn headerText="MONTO_CREDITO" dataField="MONTO_CREDITO" width="90"/>
+						<mx:DataGridColumn headerText="FECHA_ENTREGA" dataField="FECHA_ENTREGA" width="110"/>
+						<mx:DataGridColumn headerText="FECHA_VENCIMIENTO" dataField="FECHA_VENCIMIENTO" width="130"/>
+						<mx:DataGridColumn headerText="TASA_MENSUAL" dataField="TASA_MENSUAL" width="100"/>
+						<mx:DataGridColumn headerText="TIPO_TASA" dataField="TIPO_TASA" width="80"/>
+						<mx:DataGridColumn headerText="FRECUENCIA_PAGOS" dataField="FRECUENCIA_PAGOS" width="130"/>
+						<mx:DataGridColumn headerText="METODOLOGIA" dataField="METODOLOGIA" width="110"/>
+						<mx:DataGridColumn headerText="NOMBRE_GRUPO" dataField="NOMBRE_GRUPO" width="120"/>
+					    <mx:DataGridColumn headerText="PUNTO_ACCESO" dataField="PUNTOACCESO_ID" width="120"/>
+						<!--<mx:DataGridColumn headerText="COSTO_OPERATIVO" dataField="COSTO_OPERATIVO" width="140"/>
+						<mx:DataGridColumn headerText="COSTO_FINANCIERO" dataField="COSTO_FINANCIERO" width="140"/>
+						<mx:DataGridColumn headerText="GASTO_ADMINISTRATIVO" dataField="GASTO_ADMINISTRATIVO" width="150"/>
+						<mx:DataGridColumn headerText="UTILIDAD" dataField="UTILIDAD" width="70"/>-->
+						<mx:DataGridColumn headerText="PROMOTOR" dataField="PROMOTOR" width="80"/>
+						<mx:DataGridColumn headerText="HA_SOLICITADO_CREDITO" dataField="HA_SOLICITADO_CREDITO" width="170"/>
+						<mx:DataGridColumn headerText="PREGUNTA_INGRESO" dataField="PREGUNTA_INGRESO" width="70"/>
+						<mx:DataGridColumn headerText="MONTO_PAGO" dataField="MONTO_PAGO" width="100"/>
+						<mx:DataGridColumn headerText="NUMERO_PAGOS" dataField="NUMERO_PAGOS" width="70"/>
+						<mx:DataGridColumn headerText="ACCESORIO_CREDITICIO" dataField="ACCESORIO_CREDITICIO" width="80"/>
+						<mx:DataGridColumn headerText="MONTO_ACCESORIO_CREDITICIO" dataField="MONTO_ACCESORIO_CREDITICIO" width="90"/>
+						<mx:DataGridColumn headerText="FORMA_DE_PAGO_AC" dataField="FORMA_DE_PAGO_AC" width="90"/>
+						<mx:DataGridColumn headerText="GARANTIA_AHORRO_PAGO" dataField="GARANTIA_AHORRO_PAGO" width="170"/>
+						<mx:DataGridColumn headerText="MONTO_GAR_AHOR" dataField="MONTO_GAR_AHOR" width="130"/>
+						<!--<mx:DataGridColumn headerText="LINEA" dataField="CDGLC" width="60"/>
+						<mx:DataGridColumn headerText="DISPOSICION" dataField="CDGDISP" width="90"/>-->
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{canvas1}" name="height" value="490"/>
+			<mx:SetProperty target="{canvas1}" name="width" value="830"/>
+		</mx:State>
+		<mx:State name="stateDesgloce">
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgRepDesgloce" x="21" y="205" width="785.05" visible="true" height="246" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PERSONA_ID" dataField="PERSONA_ID" width="100"/>
+						<mx:DataGridColumn headerText="CREDITO_ID" dataField="CREDITO_ID" width="100"/>
+						<mx:DataGridColumn headerText="STATUS" dataField="STATUS" width="80"/>
+						<mx:DataGridColumn headerText="SALDO_CAPITAL_VIGENTE" dataField="SDO_CAP_VIG" width="170"/>
+						<mx:DataGridColumn headerText="SALDO_CAPITAL_VENCIDO" dataField="SDO_CAP_VEN" width="170"/>
+						<mx:DataGridColumn headerText="TOTAL_DIAS_VENCIDO" dataField="DIAS_MORA" width="80"/>
+						<mx:DataGridColumn headerText="LINEA_DE_CREDITO" dataField="LINEA" width="80"/>
+						<mx:DataGridColumn headerText="DISPOSICION" dataField="DISPOSICION" width="80"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty target="{lblOF}" name="text" value="Reporte:"/>
+			<mx:SetProperty target="{lblOF}" name="x" value="48"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="490"/>
+			<mx:SetProperty target="{canvas1}" name="width" value="830"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="500" target="{canvas1}"/> 
+				<mx:AddChildAction duration="500" target="{canvas1}"/>
+			</mx:Sequence>		
+		</mx:Transition>
+	</mx:transitions>
+
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.ExcelExportXls;
+		import Data.Utils;
+		import mx.events.CloseEvent;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;
+		
+		private var _xmlLC:XML = new XML();
+		private var _xmlRes:XML = new XML();
+		
+		public var orgObj:ArrayCollection = new ArrayCollection();
+		public var lineaObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var titulo:String;
+		public var texto:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		private var totalMovsRptDesgloce:String;	
+		private var totalMovsRptCreditos:String; 
+		private var totalMovsRptClientes:String;
+	    private var CONST_PRONAFIM:String;
+		
+		public function enviar():void{
+			 if(dtfFecha.text != ""){
+				var opcion:String = cboOF.selectedItem.codigo;
+				
+				switch (opcion) {
+					case "0":
+					Alert.show("Debe seleccionar un tipo de reporte.",titulo,4,null,null,global.iAlert);
+					break;
+					
+					case "1":
+						getReporteClientes();
+					break
+					
+					case "2":
+						getReporteCreditos();
+					break
+					
+					case "3":
+						getReporteDesgloce();
+					break
+				}	
+		    }
+		    else {
+		    	if(cboOF.selectedItem.codigo == "0"){
+					Alert.show("Debe seleccionar un tipo de reporte.",titulo,4,null,null,global.iAlert);
+		    	} else {
+		    		Alert.show("Debe seleccionar la fecha de consulta.",titulo,4,null,null,global.iAlert);	
+		    	}
+		    }
+		}
+		
+		public function getReporteClientes():void{
+			if(valida()){
+				//asignacion de variables para realizar la consulta de seleccion
+				var cont:int;
+				var orgFond:String = CONST_PRONAFIM;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var fecha:String = dtfFecha.text;
+				
+				Application.application.bloquear();
+				initConexionRep();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRes = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					dgRepClientes.dataProvider = null;
+					btnExportar.enabled = false;
+					
+					if(_xmlRes.elements().length() > 0){
+						var cont:int = _xmlRes.elements().length();
+						dgRepClientes.dataProvider = _xmlRes.Table;
+						btnExportar.enabled = true;
+						lblTotal.text = cont.toString() + " Registro(s)";
+						totalMovsRptClientes = cont.toString();
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}	
+				});
+				wsMS.getRepPersonasFondeo.send(orgFond, lineaCred, fecha);
+			}
+		}
+		
+		public function getReporteCreditos():void{
+			if(valida()){
+				//asignacion de variables para realizar la consulta de seleccion
+				var cont:int;
+				var orgFond:String = CONST_PRONAFIM;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var fecha:String = dtfFecha.text;
+				
+				Application.application.bloquear();
+				initConexionRep();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRes = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					dgRepCreditos.dataProvider = null;
+					btnExportar.enabled = false;
+					
+					if(_xmlRes.elements().length() > 0){
+						var cont:int = _xmlRes.elements().length();
+						dgRepCreditos.dataProvider = _xmlRes.Table;
+						btnExportar.enabled = true;
+						lblTotal.text = cont.toString() + " Registro(s)";
+						totalMovsRptCreditos = cont.toString();
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}	
+				});
+				wsMS.getRepCreditosFondeo.send(orgFond, lineaCred, fecha);
+			}
+		}
+		
+		public function getReporteDesgloce():void{
+			if(valida()){
+				//asignacion de variables para realizar la consulta de seleccion
+				var cont:int;
+				var orgFond:String = CONST_PRONAFIM;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var fecha:String = dtfFecha.text;
+				
+				Application.application.bloquear();
+				initConexionRep();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRes = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					dgRepDesgloce.dataProvider = null;
+					btnExportar.enabled = false;
+					
+					if(_xmlRes.elements().length() > 0){
+						var cont:int = _xmlRes.elements().length();
+						dgRepDesgloce.dataProvider = _xmlRes.Table;
+						btnExportar.enabled = true;
+						lblTotal.text = cont.toString() + " Registro(s)";
+						totalMovsRptDesgloce = cont.toString();
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}	
+				});
+				wsMS.getRepDesglocePronafim.send(orgFond, lineaCred, fecha);
+			}
+		}
+		
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			 
+			var opcion:String = cboOF.selectedItem.codigo;
+			
+			switch (opcion) {
+				case "0": break;
+				
+				case "1"://listo en espera de tabla de borrado
+					dgE.loadDGInExcel(dgRepClientes,null,"Reporte de Personas de Fondeo");
+				break;
+				
+				case "2"://listo en espera de tabla de borrado
+					dgE.loadDGInExcel(dgRepCreditos,null,"Reporte de Créditos de Fondeo");	
+				break;
+				
+				case "3":
+					dgE.loadDGInExcel(dgRepDesgloce,null,"Reporte de Desglose");		
+				break;
+			}	
+		}
+		
+		private function formateaLC():void{
+			var cont:int = _xmlLC.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			lineaObj.removeAll();
+			lineaObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Todas--";	
+			item.push(oItem);
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlLC.Table[i].CODIGO;
+				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			lineaObj = new ArrayCollection(item);
+		}
+	
+		public function init():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			CONST_PRONAFIM = "0002";
+			global = new Globales(); 
+			du = new Utils();
+			titulo = "Reportes de Pronafim";
+			lblTitulo.text = titulo.toUpperCase();
+			initCboReportes();
+			cargaLineasCredito();
+		}
+		
+		public function initCboReportes():void{
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+	
+			 oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccione Reporte--";
+			item.push(oItem);	 
+			 	
+			var oItem1:Object = new Object();
+			oItem1.codigo = "1";
+			oItem1.nombre = "Reporte de Personas de Fondeo";
+			item.push(oItem1);
+			
+			var oItem2:Object = new Object();
+			oItem2.codigo = "2";
+			oItem2.nombre = "Reporte de Créditos de Fondeo";
+			item.push(oItem2);
+			
+			var oItem3:Object = new Object();
+			oItem3.codigo = "3";
+			oItem3.nombre = "Reporte de Desglose";
+			item.push(oItem3);
+			
+			cboOF.dataProvider = new ArrayCollection(item);
+		}
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function limpiar():void{
+			if(dgRepClientes != null) dgRepClientes.dataProvider = null;
+		    if(dgRepCreditos != null) dgRepCreditos.dataProvider = null;
+			if(dgRepDesgloce != null) dgRepDesgloce.dataProvider = null;
+			btnExportar.enabled = false;
+			cboOF.selectedIndex = 0;
+			cboLC.selectedIndex = 0;
+			currentState = null;
+			dtfFecha.selectedDate = null;
+			lblTotal.text = "";
+			totalMovsRptClientes = "";
+			totalMovsRptCreditos = "";
+			totalMovsRptDesgloce = "";
+		}
+		
+		public function cargaLineasCredito():void{
+			cboLC.dataProvider = null;			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;	
+			var LINEAS_CREDITO_MONTO_MAYOR_A_CERO:int = 64;		
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			_xmlLC = null;
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlLC = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlLC.elements().length() > 0){
+					formateaLC();
+					cboLC.dataProvider = lineaObj;
+					cboLC.selectedIndex = 0;
+				}
+			});
+			params[0] = CONST_PRONAFIM;
+			wsCat.getListado.send(LINEAS_CREDITO_MONTO_MAYOR_A_CERO, params);
+		}
+		
+		public function valida():Boolean{
+			if(cboOF.selectedIndex == 0){
+				Alert.show("Debe seleccionar la Organización Fondeadora.",titulo,4,null,null,global.iAlert);
+				return false;
+			} 
+			if(dtfFecha.text == ""){
+				Alert.show("Debe seleccionar la Fecha de Cálculo de Saldos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		public function seleccionarOF():void{
+			var opcion:String = cboOF.selectedItem.codigo;
+			
+			switch (opcion) {
+				case "0":
+					currentState = null;
+					lblTotal.text = "";
+				break;
+				
+				case "1":
+					currentState = "stateClientes";
+					lblTotal.text = totalMovsRptClientes; 				 	
+				break;
+				
+				case "2":
+					currentState = "stateCreditos";
+					lblTotal.text = totalMovsRptCreditos; 				 			
+				break;
+				
+				case "3":
+					currentState = "stateDesgloce";	
+					lblTotal.text = totalMovsRptDesgloce; 						
+				break;
+			}
+		}
+    ]]>
+	</mx:Script>
+	
+	<mx:Canvas width="390" height="210" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:Canvas id="cnvFondeo" x="21" y="55" width="350" height="110" styleName="canvasMod">
+			<mx:Label id="lblOF" x="51" y="12" text="Reporte:"/>
+			<mx:ComboBox id="cboOF" x="105" y="9" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+			<mx:Label id="lblFecha" x="23" y="74" text="Fecha Saldos:"/>
+			<mx:DateField id="dtfFecha" x="105" y="72" width="100"></mx:DateField>
+			<mx:Label id="lblLC" x="26" y="43" text="Línea Crédito:"/>
+			<mx:ComboBox id="cboLC" x="105" y="40" width="230" labelField="desc"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Label id="lblFondeo" x="21" y="36" text="Criterios de Selección"/>
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button x="118.5" y="173" label="Generar" click="enviar()" />
+		<mx:Button x="197" y="173" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label id="lblTotal" x="21" y="459" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Button id="btnExportar" x="703.05" y="173" label="Exportar Excel" click="exportar()" enabled="false"/>
+	</mx:Canvas>
+</mx:Canvas>

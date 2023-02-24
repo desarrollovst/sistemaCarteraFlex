@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationPolicy="all" 
+	creationComplete="initApp()" verticalScrollPolicy="auto" horizontalScrollPolicy="auto" 
+	xmlns:control="Controls.*">
+	
+	<!--Componente de Reporte de Prorrateo de Consultas-->
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.events.IndexChangedEvent;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.events.ValidationResultEvent;
+			
+			private var vResult:ValidationResultEvent;
+			
+			public var TipoRepObj:ArrayCollection = new ArrayCollection();
+			
+			private var _xmlRep:XML =  new XML();
+				
+			private var wsMS:WebService;
+			private var mes:String;
+			private var anio:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				
+				if (lblTipoReporte.text == "Acumulado")
+					dgE.loadDGInExcel(dgAcumulado,null,titulo + " de " + mes + " del " + anio + " - Acumulado.");
+				else 
+					dgE.loadDGInExcel(dgDetalle,null,titulo + " de " + mes + " del " + anio + " - Detalle.");
+			}
+		
+			public function generar():void{
+				if(valida()){
+					if(compMesAnio.valida()){
+						initConexion();
+						du.sCursor();
+						
+						var i:int;
+						var occurs:int = txtRedondeo.text.split(",").length - 1;
+						var RedondeoStr:String = "";
+						
+						if(txtRedondeo.text == "")
+							RedondeoStr = "0";
+						else 
+							RedondeoStr = txtRedondeo.text;
+						
+						for(i = 0; i<= occurs; i++){
+							RedondeoStr = RedondeoStr.replace(',','');
+						}
+						
+						var redondear:int;
+						if(chkRedondeo.selected)
+							redondear = 1;
+						else
+							redondear = 0;
+						
+						lblTipoReporte.text = "";
+						
+						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+							_xmlRep = new XML(evt.result.toString());
+							
+							du.rCursor();
+							du.closeWs(wsMS);
+						
+							btnExportar.enabled = false;
+														
+							if(_xmlRep.elements().length() > 0){
+								var cont:int = _xmlRep.elements().length();							
+								btnExportar.enabled = true;
+															
+								if(cbTipoReporte.selectedItem.NOMBRE == "Acumulado"){
+									dgAcumulado.dataProvider = _xmlRep.Table;
+									dgAcumulado.visible = true;
+									dgDetalle.dataProvider = null;
+									dgDetalle.visible = false;
+									
+									lblTipoReporte.text = "Acumulado";
+								}
+								else{
+									dgDetalle.dataProvider = _xmlRep.Table;
+									dgDetalle.visible = true;
+									dgAcumulado.dataProvider = null;
+									dgAcumulado.visible = false;
+									
+									lblTipoReporte.text = "Detalle";
+								}
+								
+								lblTotal.text = cont + " Registro(s)";   
+								mes = compMesAnio.obtieneNomMes();
+								anio = compMesAnio.obtieneAnio();
+							}
+							else{
+								Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								dgAcumulado.dataProvider = null;
+								dgDetalle.dataProvider = null;
+								lblTotal.text = "";
+							}
+						});
+						wsMS.getRepProrrateoConsultas.send(compMesAnio.obtieneAnio(), compMesAnio.obtieneMes(), Number(RedondeoStr)
+						, Application.application.U_ID, redondear, cbTipoReporte.selectedItem.NOMBRE);
+					}
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Prorrateo de Consultas";
+				compMesAnio.init(titulo);
+				lblTitulo.text = titulo.toUpperCase();
+				
+				var oItem:Object;
+				var item:Array = new Array();
+					
+				oItem = new Object();
+				oItem.NOMBRE = "--Seleccionar--";	
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.NOMBRE = "Acumulado";	
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.NOMBRE = "Detalle";	
+				item.push(oItem);
+				
+				TipoRepObj = new ArrayCollection(item);
+				cbTipoReporte.dataProvider = TipoRepObj;
+				
+				chkRedondeo.selected = false;
+				
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgAcumulado.dataProvider = null;
+				dgDetalle.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				compMesAnio.limpiar();
+				cbTipoReporte.selectedIndex = 0;
+				chkRedondeo.selected = false;
+				txtRedondeo.text = "";
+			}
+			
+			private function QuitaMontoFormato():void{
+				var occurs:int = txtRedondeo.text.split(",").length - 1;
+				
+				for(var i:int = 0; i<= occurs; i++){
+					txtRedondeo.text = txtRedondeo.text.replace(',','');
+				}
+			}
+			
+			private function valida():Boolean{
+				if(cbTipoReporte.selectedIndex == 0){
+					Alert.show("Seleccione el tipo de reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}
+			
+			private function validaMonto(event:Event):void{
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+	
+				if (vResult.type!=ValidationResultEvent.VALID)
+	               	TextInput(event.currentTarget).text = "";
+			}
+		
+			private function validaMontoFormato():void{
+				txtRedondeo.text = global.formatoDecimal(Number(txtRedondeo.text).toString());
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Canvas width="800" height="429" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Label id="lblTitulo" x="18" y="10" width="382" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button x="71.75" y="134" label="Generar" click="generar()"/>
+		<mx:Button x="150.25" y="134" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+		<mx:DataGrid id="dgAcumulado" x="18.45" y="166" width="763.05" height="221" 
+			horizontalScrollPolicy="auto" visible="true">
+			<mx:columns>
+				<mx:DataGridColumn headerText="COD. REGIÓN" dataField="CDGRG" width="100"/>
+				<mx:DataGridColumn headerText="REGIÓN" dataField="REGION" width="150"/>
+				<mx:DataGridColumn headerText="COD. SUCURSAL" dataField="CDGCO" width="110"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="NO. EMPLEADO" dataField="NOEMP" width="100"/>
+				<mx:DataGridColumn headerText="COD. ASESOR" dataField="CDGOCPE" width="100"/>
+				<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="250"/>
+				<mx:DataGridColumn headerText="CONSULTAS" dataField="CONSULTAS" width="80"/>
+				<mx:DataGridColumn headerText="COSTO" dataField="COSTO" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:DataGrid id="dgDetalle" x="18.45" y="166" width="763.05" height="221" 
+			horizontalScrollPolicy="auto" visible="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="COD. REGIÓN" dataField="CDGRG" width="100"/>
+				<mx:DataGridColumn headerText="REGIÓN" dataField="REGION" width="150"/>
+				<mx:DataGridColumn headerText="COD. SUCURSAL" dataField="CDGCO" width="110"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="NO. EMPLEADO" dataField="NOEMP" width="100"/>
+				<mx:DataGridColumn headerText="COD. ASESOR" dataField="CDGOCPE" width="100"/>
+				<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="250"/>
+				<mx:DataGridColumn headerText="COD. ACREDITADO" dataField="CDGCL" width="100"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="CLIENTE" width="250"/>
+				<mx:DataGridColumn headerText="CONSULTAS" dataField="CONSULTAS" width="80"/>
+				<mx:DataGridColumn headerText="COSTO" dataField="COSTO" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnExportar" x="678.5" y="134" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Label id="lblTotal" x="18.45" y="395" width="763.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Canvas x="18" y="53.5" width="633.05" height="68.5" styleName="canvasMod">
+			<control:FiltroMesAnio id="compMesAnio" y="6.5" x="7.5" width="230" height="55"/>
+			<mx:Canvas x="242.45" y="7" width="211" height="55">
+				<mx:Label x="10" y="1.5" text="Costo Factura:" width="83.25"/>
+				<mx:TextInput x="10.05" y="21.5" restrict="0-9" width="105" id="txtRedondeo" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)"/>
+				<mx:Label x="135" y="2.5" text="Redondeo:" width="58.25"/>
+				<mx:CheckBox x="155" y="24" id="chkRedondeo" selected="false"/>
+			</mx:Canvas>
+			<mx:Canvas x="461.45" y="7" width="157" height="55">
+				<mx:Label x="10" y="1.5" text="Tipo de Reporte:" width="97.25"/>
+				<mx:ComboBox x="10" y="21" width="137" id="cbTipoReporte" labelField="NOMBRE"></mx:ComboBox>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Label x="486" y="25.5" id="lblTipoReporte" visible="false"/>
+	</mx:Canvas>
+</mx:Canvas>

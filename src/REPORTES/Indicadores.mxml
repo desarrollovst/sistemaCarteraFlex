@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var fecha:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecha);		
+			}
+		
+			public function generar():void{
+				Application.application.bloquear();
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					Application.application.desbloquear();
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+												
+					if(_xmlRep.elements().length() > 0){
+						var cont:int = _xmlRep.elements().length();   
+						btnExportar.enabled = true;
+						dgReporte.dataProvider = _xmlRep.Table;
+						fecha = dtfFecha.text;
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsMS.getRepIndicadores.send(dtfFecha.text);	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Indicadores";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="140.04999" height="68.5" styleName="canvasMod">
+		<mx:Label x="13.5" y="10" text="Fecha" width="81" height="20"/>
+		<mx:DateField id="dtfFecha" x="13.5" y="28.5" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="71.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="149.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="true" height="185" 
+		horizontalScrollPolicy="auto">
+		<mx:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="COD_SUCURSAL" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOM_SUCURSAL" width="160"/>
+			<mx:DataGridColumn headerText="NOMBRE COORDINADOR" dataField="NOM_COR" width="210"/>
+			<mx:DataGridColumn headerText="NUMERO GRUPOS" dataField="NO_GRUPOS" width="120"/>
+			<mx:DataGridColumn headerText="NUMERO CLIENTES" dataField="NO_CLIENTES" width="130"/>
+			<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="MONTO_ENTREGADO" width="130"/>			
+			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" width="90"/>
+			<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL" width="100"/>
+			<mx:DataGridColumn headerText="SALDO INTERES" dataField="SDO_INTERES" width="100"/>
+			<mx:DataGridColumn headerText="SALDO INDICADORES" dataField="SIDNC" width="130"/>
+			<mx:DataGridColumn headerText="CARTERA VENCIDA" dataField="CAR_VEN" width="130"/>
+			<mx:DataGridColumn headerText="% CARTERA VENCIDA" dataField="PORC_CAR_VEN" width="140"/>
+			<mx:DataGridColumn headerText="CR30" dataField="CR30" width="90"/>
+			<mx:DataGridColumn headerText="% CR30" dataField="PORC_CR30" width="90"/>
+			<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL" width="90"/>
+			<mx:DataGridColumn headerText="% MORA" dataField="PORC_MORA" width="90"/>
+			<mx:DataGridColumn headerText="CASTIGOS" dataField="CASTIGOS" width="90"/>
+			<mx:DataGridColumn headerText="% CART CASTIGADA" dataField="PORC_CAR_CAST" width="130"/>
+			<mx:DataGridColumn headerText="SALDO GL" dataField="SALDO_GL" width="90"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="678" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+</mx:Canvas>

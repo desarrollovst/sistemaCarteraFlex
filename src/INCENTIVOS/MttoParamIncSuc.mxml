@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="288" 
+	height="482" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="vPar30Ini" source="{txtPar30Ini}" property="text" 
+	invalid="{txtPar30Ini.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPar30Fin" source="{txtPar30Fin}" property="text" 
+	invalid="{txtPar30Fin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcPar30" source="{txtPorcPar30}" property="text" 
+	invalid="{txtPorcPar30.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vDiasMoraMax" source="{txtDiasMoraMax}" property="text" 
+	invalid="{txtDiasMoraMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcInc" source="{txtPorcInc}" property="text" 
+	invalid="{txtPorcInc.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcIncMora" source="{txtPorcMora}" property="text" 
+	invalid="{txtPorcMora.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcIncPagos" source="{txtPorcPago}" property="text" 
+	invalid="{txtPorcPago.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcIncCart" source="{txtPorcCart}" property="text" 
+	invalid="{txtPorcCart.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vPorcClNvo" source="{txtPorcClNvo}" property="text" 
+	invalid="{txtPorcClNvo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Parámetro Incentivos Sucursal";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtCodigo.text = pXmlInfo.CODIGO;
+			txtPar30Ini.text = pXmlInfo.PAR30_INI;
+			txtPar30Fin.text = pXmlInfo.PAR30_FIN;
+			txtPorcPar30.text = pXmlInfo.PORC_PAR30;
+			txtDiasMoraMax.text = pXmlInfo.DIAS_MORA_MAX;
+			txtPorcInc.text = pXmlInfo.PORC_INC;
+			txtPorcMora.text = pXmlInfo.PORC_INC_MORA;
+			txtPorcPago.text = pXmlInfo.PORC_INC_PAGOS;
+			txtPorcCart.text = pXmlInfo.PORC_INC_CART;
+			txtPorcClNvo.text = pXmlInfo.PORC_CLNVO;
+			
+			txtCodigo.editable = false;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mPar30Ini:Number = Number(txtPar30Ini.text);
+				var mPar30Fin:Number = Number(txtPar30Fin.text);
+				var mPorcPar30:Number = Number(txtPorcPar30.text);
+				var mDiasMoraMax:Number = Number(txtDiasMoraMax.text);
+				var mPorcInc:Number = Number(txtPorcInc.text);
+				var mPorcMora:Number = Number(txtPorcMora.text);
+				var mPorcPagos:Number = Number(txtPorcPago.text);
+				var mPorcCart:Number = Number(txtPorcCart.text);
+				var mPorcClNvo:Number = Number(txtPorcClNvo.text);
+								
+				initConexionIncR();
+				du.sCursor();
+				Application.application.bloquear()
+				
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncGerente);
+				wsIncR.setAccionParametrosIncSucursal.send(mCodigo, mPar30Ini, mPar30Fin, mPorcPar30, mDiasMoraMax, mPorcInc
+					, mPorcMora, mPorcPagos, mPorcCart, mPorcClNvo, tipoAccion);
+			}
+		}
+		
+		private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Parámetro Incentivos Sucursal";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function setAccionParametrosIncGerente(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncGerente);
+			wsIncR = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaPar30Ini:Array = Validator.validateAll([vPar30Ini]);
+			var iaPar30Fin:Array = Validator.validateAll([vPar30Fin]);	
+			var iaPorcPar30:Array = Validator.validateAll([vPorcPar30]);
+			var iaDiasMoraMax:Array = Validator.validateAll([vDiasMoraMax]);
+			var iaPorcInc:Array = Validator.validateAll([vPorcInc]);
+			var iaPorcIncMora:Array = Validator.validateAll([vPorcIncMora]);
+			var iaPorcIncPagos:Array = Validator.validateAll([vPorcIncPagos]);
+			var iaPorcIncCart:Array = Validator.validateAll([vPorcIncCart]);
+			var iaPorcClNvo:Array = Validator.validateAll([vPorcClNvo]);
+		
+			if (iaPar30Ini.length != 0){
+				Alert.show("Debe capturar el inicio del Par30.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPar30Fin.length != 0){
+				Alert.show("Debe capturar el fin del Par30.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcPar30.length != 0){
+				Alert.show("Debe capturar el porcentaje del Par30.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaDiasMoraMax.length != 0){
+				Alert.show("Debe capturar los días de mora máximo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcInc.length != 0){
+				Alert.show("Debe capturar el porcentaje de incentivo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcIncMora.length != 0){
+				Alert.show("Debe capturar el porcentaje de mora.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcIncPagos.length != 0){
+				Alert.show("Debe capturar el porcentaje de pagos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcIncCart.length != 0){
+				Alert.show("Debe capturar el porcentaje de cartera.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if (iaPorcClNvo.length != 0){
+				Alert.show("Debe capturar el porcentaje de incentivo por promoción de clientes nuevos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="267" height="40" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="77" y="10" text="Código:" id="lblCodigo"/>
+		<mx:TextInput id="txtCodigo" x="126" y="7" width="62" editable="true" maxChars="3"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="58" width="267" height="130" styleName="canvasMod">
+		<mx:Label x="34" y="9" text="Porcentaje Incentivo:" id="lblPorcInc"/>
+		<mx:TextInput id="txtPorcInc" x="147" y="7" width="53" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="53" y="39" text="Procentaje Mora:" id="lblPorcMora"/>
+		<mx:TextInput id="txtPorcMora" x="147" y="37" width="53" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="53" y="69" text="Procentaje Pago:" id="lblPorcPago" enabled="true"/>
+		<mx:TextInput id="txtPorcPago" x="147" y="67" width="53" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="41" y="99" text="Procentaje Cartera:" id="lblPorcCart"/>
+		<mx:TextInput id="txtPorcCart" x="147" y="97" width="53" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="208" y="9" text="%" id="lblPorc0" width="23"/>
+		<mx:Label x="208" y="39" text="%" id="lblPorc4" width="23"/>
+		<mx:Label x="208" y="69" text="%" id="lblPorc5" width="23"/>
+		<mx:Label x="208" y="99" text="%" id="lblPorc6" width="23"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="196" width="267" height="100" styleName="canvasMod">
+		<mx:Label x="66.5" y="9" text="Par30 Inicio:" id="lbPar30Ini"/>
+		<mx:TextInput id="txtPar30Ini" x="137.5" y="7" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="76.5" y="39" text="Par30 Fin:" id="lblPar30Fin"/>
+		<mx:TextInput id="txtPar30Fin" x="137.5" y="37" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="39.5" y="69" text="Porcentaje Par30:" id="lblPorcPar30"/>
+		<mx:TextInput id="txtPorcPar30" x="137.5" y="67" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="202.5" y="9" text="%" id="lblPorc1" width="23"/>
+		<mx:Label x="202.5" y="39" text="%" id="lblPorc2" width="23"/>
+		<mx:Label x="202.5" y="69" text="%" id="lblPorc3" width="23"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="304" width="267" height="40" styleName="canvasMod">
+		<mx:Label x="58" y="9" text="Dias Mora Máximo:" id="lblDiasMoraMax"/>
+		<mx:TextInput id="txtDiasMoraMax" x="161" y="6" width="46" editable="true" restrict="0-9"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="352" width="267" height="50" styleName="canvasMod">
+		<mx:Label x="8" y="15" text="Porcentaje por clientes nuevos:" id="lblPorcClNvo"/>
+		<mx:TextInput id="txtPorcClNvo" x="176" y="12" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="236" y="15" text="%" id="lblPorc7" width="19"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="189" y="410" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="237" y="410" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

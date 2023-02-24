@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:FONDEO="FONDEO.*"
+	 creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			public function initApp():void{
+				comAsignacionFondeoBajio.init(1);
+			}		
+		]]>
+	</mx:Script>
+	<FONDEO:ControlAsignaciondeFondeoBajio id="comAsignacionFondeoBajio"/>
+</mx:Canvas>

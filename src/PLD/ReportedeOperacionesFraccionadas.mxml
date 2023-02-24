@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"  
+	creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*" x="12.5" y="42">
+
+	<!--Componente de Reporte de Operaciones Fraccionadas-->
+	<mx:Script>
+		<![CDATA[
+			import mx.formatters.DateFormatter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+
+			private var _xmlRep:XML =  new XML();
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var anio:Number;
+			private var mes:Number;
+			private var mesDesc:String;
+			private var tipoReporte:String;
+			
+			private var acMes:ArrayCollection = new ArrayCollection();
+			private var acAnio:ArrayCollection = new ArrayCollection();
+			private var acReporte:ArrayCollection = new ArrayCollection();
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " " + mesDesc + " " + anio);
+			}
+						
+			public function generar():void{
+				anio = cbxAnio.selectedItem.id;
+				mes = cbxMes.selectedItem.id;
+				mesDesc = cbxMes.selectedItem.nombre;
+				
+				initConexion();
+				du.sCursor();
+				
+				_xmlRep = null;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if(_xmlRep.elements().length() > 0){
+						dgReporte.dataProvider = _xmlRep.Table;
+						lblTotal.text = _xmlRep.elements().length() + " Registro(s)";
+						btnExportar.enabled = true; 
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				wsMS.getRepOperacionesFrac.send(mes, anio, Application.application.U_ID);
+			}			
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Operaciones Fraccionadas";
+				lblTitulo.text = titulo.toUpperCase(); 
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{				
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCarga" x="0" y="0" width="789" height="411" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
+		<mx:Canvas x="10" y="10" width="315" height="96" styleName="canvasMod">
+			<mx:Label x="57" y="39" text="Mes" width="81" height="20" id="lblMes"/>
+			<mx:ComboBox id="cbxMes" labelField="nombre" x="57" y="57.5" width="111"/>
+			<mx:Label x="184" y="41.5" text="Año" width="72" height="20" id="lblAnio"/>
+			<mx:ComboBox id="cbxAnio" labelField="id" x="184" y="60" width="72"/>
+			<mx:Label id="lblTitulo" x="10" y="10" width="292.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		</mx:Canvas>
+		<mx:Canvas x="18" y="127" width="764" height="274" styleName="canvasMod" id="canvas1">
+					<mx:Button x="63.3" y="10" label="Generar" click="generar()" id="btnGenerar"/>
+					<mx:Button x="141.8" y="10" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+					<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="10" y="46" width="740.05" 
+						visible="true" height="186" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+						<Data:columns>
+							<mx:DataGridColumn headerText="SUCURSAL" dataField="NOM_SUCURSAL" width="150"/>
+							<mx:DataGridColumn headerText="COD. GRUPO" dataField="COD_GRUPO" width="90"/>
+							<mx:DataGridColumn headerText="NOM. GRUPO" dataField="NOM_GRUPO" width="180"/>
+							<mx:DataGridColumn headerText="CICLO." dataField="CICLO" width="50"/>
+							<mx:DataGridColumn headerText="COD. ACREDITADO" dataField="CDGCL" width="120"/>
+							<mx:DataGridColumn headerText="ACREDITADO" dataField="NOM_CL" width="180"/>
+							<mx:DataGridColumn headerText="FECHA REAL DEPOSITO" dataField="FREALDEP" width="150"/>
+							<mx:DataGridColumn headerText="CANTIDAD" dataField="PRORRATEO" width="80"/>
+							<mx:DataGridColumn headerText="VALOR" dataField="VALOR" width="80"/>
+						</Data:columns>
+					</Data:RowColorDataGrid>
+					<mx:Label id="lblTotal" x="10" y="240" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+					<mx:Button id="btnExportar" x="647.05" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+				</mx:Canvas>
+	</mx:Canvas>
+	
+</mx:Canvas>
+

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosGrupo", type="Data.EventGrupo")]
+	</mx:Metadata>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Grupo Requerido"/>
+	 
+	<mx:Validator id="fechaV" source="{txtFecha}" property="text" 
+	invalid="{txtFecha.setFocus()}" triggerEvent="" requiredFieldError="Fecha de Formación Requerida"/>
+	 
+	<mx:Validator id="sucursalV" source="{cboSucursal}" property="text" 
+	invalid="{cboSucursal.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Sucursal Requerido"/>
+	
+	<mx:Validator id="entFedV" source="{txtEntFed}" property="text" 
+	invalid="{txtEntFed.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Entidad Federativa Requerido"/>
+	
+	<mx:Validator id="municipioV" source="{txtMunicipio}" property="text" 
+	invalid="{txtMunicipio.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Municipio Requerido"/>
+	
+	<mx:Validator id="localidadV" source="{txtLocalidad}" property="text" 
+	invalid="{txtLocalidad.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Localidad Requerido"/>
+	
+	<mx:Validator id="coloniaV" source="{txtColonia}" property="text" 
+	invalid="{txtColonia.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Colonia Requerido"/>
+		
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import Data.EventGrupo;
+			import Data.DatosGrupo;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			private var _xmlCodigo:XML =  new XML();
+			[Bindable]
+			private var _xmlDir:XML =  new XML();
+			private var _xmlSuc:XML =  new XML();
+			
+			public var sucObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosGrupo;
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS
+			public var tipoAccion:int;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function cambiaSucursal():void{
+				if (tipoAccion == 1)
+					txtCodigo.text = "";
+				cargaDireccion();
+			}
+			
+			public function cargaDireccion():void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				var sucursal:String;
+				
+				for(var j:int = 0; j < sucObj.length; j++){
+					if (sucObj[j].nombre.toString() == cboSucursal.text){
+						sucursal = sucObj[j].id;
+						Application.application.SUC_ID = sucObj[j].id;
+					}
+				}
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+					_xmlDir = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+					if (_xmlDir.elements().length() > 0)
+						llenaDireccion();
+					else
+						limpiaCamposDir();
+				});
+				params[0] = sucursal;
+				wsCat.getCatalogoGral.send(7, params);
+			}
+			
+			public function enviarDatosGrupo(formData:DatosGrupo):void{
+				var invalidArray:Array = Validator.validateAll([nombreV, fechaV, sucursalV, entFedV, municipioV, localidadV, coloniaV]);
+				
+				if(invalidArray.length == 0){	
+					formData.codigo = txtCodigo.text;
+					formData.nombre = StringUtil.trim(txtNombre.text);
+					formData.fecha = txtFecha.text;
+					for(var j:int = 0; j < sucObj.length; j++){
+						if (sucObj[j].nombre.toString() == cboSucursal.text){
+							formData.cdgCoord = sucObj[j].id.toString();			
+						}			
+					}
+					formData.codPostal = txtCodPostal.text;
+					formData.cdgEnt = datos.cdgEnt;
+					formData.cdgMun = datos.cdgMun;
+					formData.cdgLoc = datos.cdgLoc;
+					formData.cdgCol = datos.cdgCol;
+					formData.guardaDatos = true;
+				}
+				else{
+					formData.guardaDatos = false;
+				}
+				var event:EventGrupo = new EventGrupo("enviarDatosGrupo", formData);
+				dispatchEvent(event);
+			}
+			
+			private function formateaSucursal():void{
+				var cont:int = _xmlSuc.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					if(_xmlSuc.Table[i].ELEGIBLE != "N"){
+						oItem = new Object();
+						oItem.id = _xmlSuc.Table[i].CODIGO;	
+						oItem.nombre = _xmlSuc.Table[i].NOMBRE;
+						item.push(oItem);
+					}
+				}
+				sucObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosGrupo, tipoAccion:int):void{
+				this.tipoAccion = tipoAccion;
+				datos = new DatosGrupo();
+				global = new Globales();
+				du = new Utils();
+				
+				_xmlSuc = Application.application._xmlSuc;
+					
+				if (_xmlSuc.elements().length() > 0){
+					formateaSucursal();
+					cboSucursal.dataProvider = sucObj;
+				} 	
+				if (info != null){
+					txtCodigo.text = info.codigo;
+					txtNombre.text = info.nombre;
+					txtFecha.text = info.fecha;
+					for(var j:int = 0; j < sucObj.length; j++){
+						if (sucObj[j].id.toString() == info.cdgCoord){
+							cboSucursal.selectedIndex = j;
+						}
+					}
+					txtCodPostal.text = info.codPostal;
+					txtEntFed.text = info.entidad;
+					txtMunicipio.text = info.municipio;
+					txtLocalidad.text = info.localidad;
+					txtColonia.text = info.colonia;
+					
+					datos.cdgEnt = info.cdgEnt;
+					datos.cdgMun = info.cdgMun;
+					datos.cdgLoc = info.cdgLoc;
+					datos.cdgCol = info.cdgCol;
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiaCamposDir():void{
+				txtEntFed.text = "";
+				txtMunicipio.text = "";
+				txtLocalidad.text = "";
+				txtColonia.text = "";
+				txtCodPostal.text = "";
+			}
+			
+			public function llenaDireccion():void{
+				datos.cdgEnt = _xmlDir.Table[0].CDGEF;
+				datos.entidad = _xmlDir.Table[0].ENTFED;
+				datos.cdgMun = _xmlDir.Table[0].CDGMU;
+				datos.municipio = _xmlDir.Table[0].MUNIC;
+				datos.cdgLoc = _xmlDir.Table[0].CDGLO;
+				datos.localidad = _xmlDir.Table[0].LOC;
+				datos.cdgCol = _xmlDir.Table[0].CDGCOL;
+				datos.colonia = _xmlDir.Table[0].COL;
+				datos.codPostal = _xmlDir.Table[0].CDGPOSTAL;
+				
+				txtEntFed.text = datos.entidad;
+				txtMunicipio.text = datos.municipio;
+				txtLocalidad.text = datos.localidad;
+				txtColonia.text = datos.colonia;
+				txtCodPostal.text = datos.codPostal;
+			}
+			
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Código:" id="codigo" visible="true">
+		<mx:TextInput id="txtCodigo" maxChars="12" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Sucursal:" id="sucursal" visible="true">
+		<mx:ComboBox id="cboSucursal" labelField="nombre" change="cambiaSucursal()"/>
+	</mx:FormItem>
+	<mx:FormItem label="Fecha de Formación:" id="fecha" visible="true" width="280">
+		<mx:DateField id="txtFecha" width="109"/>
+	</mx:FormItem>
+	<mx:FormItem label="Nombre:" id="nombre" visible="true">
+		<mx:TextInput id="txtNombre"/>
+	</mx:FormItem>
+	<mx:FormItem label="Código Postal:" id="codPostal" visible="true">
+		<mx:TextInput id="txtCodPostal" resize="0-9" maxChars="5" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Entidad Federativa:" id="entFederativa" visible="true" width="330">
+		<mx:Canvas width="207">
+			<mx:TextInput id="txtEntFed" width="197" editable="false"/>
+		</mx:Canvas>
+	</mx:FormItem>
+	<mx:FormItem label="Municipio:" id="municipio" visible="true" width="330">
+		<mx:Canvas width="207">
+			<mx:TextInput id="txtMunicipio" width="197" editable="false"/>
+		</mx:Canvas>
+	</mx:FormItem>
+	<mx:FormItem label="Localidad:" id="localidad" visible="true" width="330">
+		<mx:Canvas width="207">
+			<mx:TextInput id="txtLocalidad" width="197" editable="false"/>
+		</mx:Canvas>
+	</mx:FormItem>
+	<mx:FormItem label="Colonia:" id="colonia" visible="true" width="330">
+		<mx:Canvas width="207">
+			<mx:TextInput id="txtColonia" width="197" editable="false"/>
+		</mx:Canvas>
+	</mx:FormItem>
+</mx:Form>

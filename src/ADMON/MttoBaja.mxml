@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	width="230" height="150" creationPolicy="all" xmlns:ns1="*">
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.events.CloseEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.StringUtil;
+		
+		private var titulo:String;
+		private var global:Globales;
+		private var du:Utils;
+		private var codigo:String;
+		
+		private function baja():void{
+			var wsMS:WebService = new WebService;
+			var Params:Array = new Array();
+			
+			if(dtFecha.text != ""){
+				du.initWs(wsMS);
+			    du.sCursor();
+			    Application.application.bloquear();
+			    
+			    du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					cerrar();
+				});
+				Params[0] = codigo;
+				Params[1] = dtFecha.text;
+				wsMS.ES_Admin_Usuarios.send(3,Params);
+			}
+			else{
+				Alert.show("Debe seleccionar la fecha de baja del usuario.",titulo,4,null,null,global.iAlert);
+				return;
+			}
+		}
+		
+		private function cerrar():void{																			
+			var event:CloseEvent = new CloseEvent('CloseEvent',true);
+			dispatchEvent(event);											
+		}
+
+		public function init(codigo:String, baja:String):void{
+			du = new Utils();
+			global = new Globales();
+			titulo = "Baja de Usuario";
+			this.title = titulo;
+			this.codigo = codigo;
+			
+			if(baja != ""){
+				dtFecha.text = baja;
+				dtFecha.enabled = false;
+				btnAceptar.enabled = false;
+			}
+			else{
+				dtFecha.text = "";
+				dtFecha.enabled = true;
+				btnAceptar.enabled = true;
+			}
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas width="100%" height="100%">
+		<mx:Button id="btnAceptar" icon="@Embed(source='assets/images/iconAccept.png')" toolTip="Guardar" click="baja()" x="71" y="73" width="40"/>
+		<mx:Button id="btnCancelar" icon="@Embed(source='assets/images/iconCancel.png')" toolTip="Cancelar" click="cerrar()" x="119" y="73" width="40"/>
+		<mx:Canvas x="10" y="10" width="210" height="55" styleName="canvasMod">
+			<mx:Label x="21.5" y="16" text="Fecha: " id="lbFecha"/>
+			<mx:DateField x="70.5" y="14" width="110" id="dtFecha"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:TitleWindow>

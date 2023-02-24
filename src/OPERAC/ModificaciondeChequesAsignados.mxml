@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de modificacion de cheques-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;  
+			import mx.utils.StringUtil;
+			          
+			public var _xmlAcred:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var titulo:String;
+			private var clns:String;
+			private var sucursal:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			public var acred:Array;
+			public var chqAcred:Array;
+			public var cuenta:Array;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			//funcion que consulta los clientes relacionados con el credito
+			private function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (valida()){
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlAcred = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if (_xmlAcred.elements().length() > 0){
+							sucursal = _xmlAcred.Table[0].CDGCO;
+							formateaListaAcred();
+							dgAcred.dataProvider = acredObj;
+						}	
+					});
+					params[0] = txtCodigo.text;
+					params[1] = txtCiclo.text;
+					params[2] = Application.application.U_ID;
+					wsCat.getListado.send(51, params);
+				}	
+			}
+			
+			private function desabilitaEdicion(event:DataGridEvent):void{
+				event.preventDefault();
+			} 
+			
+			private function enviar():void{
+				if(validaReg()){
+					var cdgclns:String = txtCodigo.text;
+					var ciclo:String = txtCiclo.text;
+					
+					if(formateaRegAcred() > 0){
+						initConexion();
+						du.sCursor();
+								
+						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+							var res:String = evt.result.toString();
+							
+							du.rCursor();
+							du.closeWs(wsMS);	
+							
+							if (res.substr(0,1) == "1"){
+								Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+								limpiar();
+							}
+							else
+								Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+						});
+						wsMS.setAccionModNumCheque.send(cdgclns, ciclo, clns, sucursal, cuenta, acred, chqAcred);
+					}	
+					else
+						Alert.show("No se ha modificado ningún registro de acreditado.",titulo,4,null,null,global.iAlert);			
+				}
+			}
+			
+			//Metodo que formatea el XML de resultado devuelto por el servicio
+			private function formateaListaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMBREC = _xmlAcred.Table[i].NOMBREC;
+					oItem.CDGCB = _xmlAcred.Table[i].CDGCB;
+					oItem.NOCHEQUE = _xmlAcred.Table[i].NOCHEQUE;
+					oItem.CHQNVO = null;
+					item.push(oItem);
+				}
+				acredObj = new ArrayCollection(item);
+			}
+			
+			//Metodo que formatea la informacion que se enviara al servicio
+			private function formateaRegAcred():int{
+				var n:int;
+				var cont:int;
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;  
+				
+				n = 0;
+				cont = listaAcred.length;
+				cuenta = new Array;
+				acred = new Array;
+				chqAcred = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					if(listaAcred[i].CHQNVO != null && StringUtil.trim(listaAcred[i].CHQNVO) != ""){
+						cuenta[n] = listaAcred[i].CDGCB;
+						acred[n] = listaAcred[i].CDGCL;
+						chqAcred[n] = listaAcred[i].CHQNVO; 
+						n++;
+					}
+				}
+				return n;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				clns = "G";
+				titulo = "Modificación de Cheques Asignados";
+				lblTitulo.text = titulo.toUpperCase(); 	
+				limpiar();
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}		
+			
+			private function limpiar():void{
+				sucursal = "";
+				txtCodigo.text = "";
+				txtCiclo.text = "";
+				dgAcred.dataProvider = null;
+			}	
+			
+			//funcion que valida los datos utilizados en la busqueda del credito
+			private function valida():Boolean{
+				if(txtCodigo.text == ""){
+					Alert.show("Debe capturar el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCiclo.text == ""){
+					Alert.show("Debe capturar el ciclo del crédito.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		
+			//funcion que valida la informacion que se enviara al servicio
+			private function validaReg():Boolean{
+				var cont:int;
+				var cheque:String;
+				var acred:String;
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				
+				cont = listaAcred.length;
+				
+				if(cont > 0){
+					for(var i:int = 0; i < cont; i++){
+						if(listaAcred[i].CHQNVO != null && StringUtil.trim(listaAcred[i].CHQNVO) != ""){
+							listaAcred[i].CHQNVO = StringUtil.trim(listaAcred[i].CHQNVO);
+							cheque = listaAcred[i].CHQNVO;
+							acred = listaAcred[i].CDGCL; 
+							if(cheque.length != 7){
+								Alert.show("Formato incorrecto de cheque " + cheque + " del acreditado " + acred + ".",titulo,4,null,null,global.iAlert);
+								return false;
+							}
+						}
+					}
+					listaAcred.refresh();
+				}
+				else{
+					Alert.show("Debe seleccionar información del crédito.",titulo,4,null,null,global.iAlert);
+					return false;	
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="650" height="400">
+		<mx:Canvas x="418.75" y="39" width="61" height="37" styleName="canvasMod" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="170.25" y="39" width="240.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblCodigo" x="10" y="7" text="Código:"/>
+			<mx:Label id="lblCiclo" x="140.5" y="7" text="Ciclo:"/>
+			<mx:TextInput id="txtCodigo" x="55" y="5" width="68" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="179.5" y="5" width="40" enter="buscarAcred()" maxChars="2"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvAcred" x="11.35" y="84" width="627.25" height="261" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="605.25" height="239" editable="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="230" editable="false"/>
+					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="CHEQUE ANTERIOR" dataField="NOCHEQUE" width="120" editable="false"/>
+					<mx:DataGridColumn headerText="CHEQUE NUEVO" dataField="CHQNVO" width="100" editable="true"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="580" y="353" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnImprimir" x="7.75" y="3" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" enabled="true" toolTip="Imprimir" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

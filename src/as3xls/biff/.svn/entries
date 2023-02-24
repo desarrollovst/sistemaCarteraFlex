@@ -1,0 +1,64 @@
+8
+
+dir
+23
+http://desarrollo-pc:18080/svn/EMP_ADMIN/trunk/EMP_ADMIN/src/as3xls/biff
+http://desarrollo-pc:18080/svn/EMP_ADMIN
+
+
+
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+
+svn:special svn:externals svn:needs-lock
+
+Record.as
+file
+
+
+
+
+2010-06-28T21:40:10.000000Z
+fe1170b0351942189ca992cbfa7d9a96
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+BIFFWriter.as
+file
+
+
+
+
+2010-06-28T21:40:24.000000Z
+b86aefdcf8fcdd3d6797eb2acc7d19ac
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+BIFFReader.as
+file
+
+
+
+
+2010-06-28T21:39:52.000000Z
+d21b11be4f546a381e201725df9b9f3e
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+
+BIFFVersion.as
+file
+
+
+
+
+2010-06-28T21:40:24.000000Z
+929a6c379ff3695ee8fd50c140b1b35b
+2014-11-12T19:58:22.664685Z
+3
+dtrinado
+

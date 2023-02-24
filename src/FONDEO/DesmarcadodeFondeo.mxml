@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:OPERAC="OPERAC.*"
+	 creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			public function initApp():void{
+							
+			}		
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvFondeo" x="21" y="55" width="460" height="140" styleName="canvasMod">
+		<mx:Label id="lblOF" x="70.05" y="13" text="Fondeadora:"/>
+		<mx:ComboBox id="cboOF" x="144.05" y="10" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+		<mx:Label id="lblLC" x="65.05" y="44" text="Línea Crédito:"/>
+		<mx:ComboBox id="cboLC" x="144.05" y="41" width="230" labelField="desc" change="seleccionarLC()"></mx:ComboBox>
+		<mx:Label id="lblDisp" x="73.05" y="75" text="Disposición:"/>
+		<mx:ComboBox id="cboDisp" x="144.05" y="72" width="230" labelField="desc" change="buscarInfoDisp()"/>
+		<mx:Button id="btnBusqDisp" x="378.9" y="43" icon="@Embed(source='assets/images/iconBusq.png')" toolTip="Buscar Info Disposición" width="40" click="buscarInfoDisp()" visible="false"/>
+		<mx:Button x="154" y="106" label="Generar" click="ejecuta()"  id="btnGenerar"/>
+		<mx:Button x="233" y="106" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	</mx:Canvas>
+	<mx:Label id="lblFondeo" x="21" y="36" text="Criterios de Fondeo"/>
+	<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	
+</mx:Canvas>

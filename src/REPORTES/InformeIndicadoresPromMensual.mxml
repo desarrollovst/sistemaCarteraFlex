@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="340" height="260" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+					
+			public var du:Utils;
+			public var fecha:String;
+			public var titulo:String;
+			private var global:Globales;
+			
+			private var rep:String;
+					
+			private function generar():void{
+				if(valida()){
+					if(rep != "-1"){
+						var consulta:String = global.urlInf;
+						var id:String = "&id=" + rep;
+						var mes:String = "&mes=" + cbxMes.selectedItem.id;
+						var anio:String = "&anioI=" + cbxAnio.selectedItem.id;
+						var opcion:String = "&op=" + cbxDiasMora.selectedItem.id;
+						consulta = consulta + id + mes + anio + opcion;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "6";
+				titulo = "Informe - Indicadores Promedio Mensual";
+				lblTitulo.text = titulo.toUpperCase();
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+				
+				var oItem:Object;
+				var item:Array = new Array();
+				var acDiasMora:ArrayCollection;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Todos--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Menor o Igual a 60 días";
+				item.push(oItem);
+								
+				acDiasMora = new ArrayCollection(item);
+				cbxDiasMora.dataProvider = acDiasMora;
+				
+				cbxDiasMora.selectedIndex = 0;
+			}		
+				
+			public function valida():Boolean{
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxAnio.selectedIndex == 0){
+					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="307" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="56.5" width="307.05" height="161.5" styleName="canvasMod">
+		<mx:Label x="32.5" y="56" text="Año:" width="41" height="20"/>
+		<mx:Label x="32.5" y="10" text="Mes:" width="41" height="20"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="32.5" y="28" width="111"/>
+		<mx:ComboBox x="32.5" y="74" width="72" id="cbxAnio" labelField="id"></mx:ComboBox>
+		<mx:Label x="33" y="103.5" text="Dias de Mora:" width="81" height="20" id="lblDiasMora"/>
+		<mx:ComboBox x="32.5" y="121" id="cbxDiasMora" labelField="nombre"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Label x="18" y="37" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="254" y="226" label="Generar" click="generar()"/>
+</mx:Canvas>

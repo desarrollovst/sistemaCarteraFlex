@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="802" height="394" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.events.CloseEvent;
+			
+			private var _xmlRep:XML = new XML();
+			private var _xmlBancos:XML = new XML();
+			private var _xmlCuentas:XML = new XML();
+			
+			private var acBancos:ArrayCollection = new ArrayCollection();
+			private var acCuentas:ArrayCollection = new ArrayCollection();
+		
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}
+			
+			private function formateaBancos():void{
+				var cont:int = _xmlBancos.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.nombre = "--Todos--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlBancos.Table[i].CODIGO;	
+					oItem.nombre = _xmlBancos.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				acBancos = new ArrayCollection(item);
+				cbxBanco.dataProvider = acBancos;
+				cbxBanco.selectedIndex = 0;
+			}
+			
+			private function formateaCuentas(cdgib:String):void{
+				var cont:int = _xmlCuentas.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				acCuentas =  new ArrayCollection();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.numero = "--Todas--";
+				item.push(oItem);
+				
+				if(cdgib != ""){
+					for (var i:int = 0; i < cont; i++){
+						if(_xmlCuentas.Table[i].CDGIB == cdgib){
+							oItem = new Object();
+							oItem.codigo = _xmlCuentas.Table[i].CODIGO;	
+							oItem.numero = _xmlCuentas.Table[i].NUMERO;
+							item.push(oItem);
+						}
+					}
+					acCuentas = new ArrayCollection(item);
+					cbxCuenta.dataProvider = acCuentas;
+					cbxCuenta.selectedIndex = 0;
+				}
+				else
+					acCuentas = new ArrayCollection(item);
+					cbxCuenta.dataProvider = acCuentas;
+					cbxCuenta.selectedIndex = 0;
+			}
+			
+			private function generar():void{
+				if(valida()){
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+					
+					var banco:String = "";
+					var cuenta:String = "";
+					
+					if(cbxBanco.selectedIndex > 0)
+				    	banco = cbxBanco.selectedItem.codigo;
+				    	
+				    if(cbxCuenta.selectedIndex > 0)
+				    	cuenta = cbxCuenta.selectedItem.codigo;
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length();
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}	
+					});
+					wsMS.getRepSegChequeraPendiente.send(banco, cuenta);	
+				}
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Inventario de Chequeras";
+				lblTitulo.text = titulo.toUpperCase();
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array
+							
+				du.initWsCat(wsCat);
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					_xmlBancos = new XML(event.result);
+							
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{	
+						_xmlCuentas = new XML(event.result);
+					
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlBancos.elements().length() > 0){
+							formateaBancos();
+							
+							if (_xmlCuentas.elements().length() > 0){
+								formateaCuentas("");
+								limpiar();
+							}
+						}
+					});
+					params[0] = "";
+					wsCat.getListado.send(62, params);
+				});
+				params[0] = "P";
+				wsCat.getCatalogoGral.send(42, params);
+			}		
+
+			private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+			private function limpiar():void{
+				cbxBanco.selectedIndex = 0;
+				cbxCuenta.selectedIndex = 0;
+				formateaCuentas("");
+			}
+				
+			private function valida():Boolean{			
+				return true;
+			}		
+		]]>
+	</mx:Script>
+	
+	<mx:Label id="lblTitulo" x="18" y="10" width="414" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="41" width="300" height="109.5" styleName="canvasMod">
+		<mx:Label x="11" y="15" text="Banco:" width="45" height="20" textAlign="right" id="lblBanco"/>
+		<mx:Label x="12.5" y="45" text="Cuenta:" width="44" height="20" textAlign="right" id="lblCuenta"/>
+		<mx:ComboBox x="64" y="13" width="215" id="cbxBanco" labelField="nombre" change="formateaCuentas(cbxBanco.selectedItem.codigo)"></mx:ComboBox>
+		<mx:ComboBox x="64.5" y="43" width="215" id="cbxCuenta" labelField="numero"></mx:ComboBox>
+		<mx:Button x="208.5" y="75" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Button id="btnGenerar" x="129.45" y="75" label="Generar" click="generar()"/>
+	</mx:Canvas>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="17.95" y="158.5" width="766.05" visible="true" height="199" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="80"/>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="NOMIB" width="160"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE CUENTA" dataField="NOMCB" width="220"/>
+			<mx:DataGridColumn headerText="NÚMERO CUENTA" dataField="NUMCB" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUE SIG SUC" dataField="CHQSIG" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUE FINAL SUC" dataField="CHQFINAL" width="130"/>
+			<mx:DataGridColumn headerText="CHEQUES DISPONIBLES SUC" dataField="CHQDISP" width="180"/>
+			<mx:DataGridColumn headerText="ÚLTIMO CHEQUE" dataField="ULTCHQ" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUES STOCK" dataField="CHQPEND" width="120"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Label id="lblTotal" x="18.45" y="364" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<mx:Button id="btnExportar" x="681" y="126.5" label="Exportar Excel" click="exportar()" enabled="false"/>
+</mx:Canvas>

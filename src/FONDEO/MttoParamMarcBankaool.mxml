@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="492" 
+	height="382" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*"
+	creationPolicy="all">
+	
+	<mx:Validator id="Dias_atrasoV" source="{txtDiasAtraso}" property="text" 
+	invalid="{txtDiasAtraso.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="LocalidadesV" source="{txtLocalidades}" property="text" 
+	invalid="{txtLocalidades.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.charts.DateTimeAxis;
+		import mx.collections.ArrayCollection;
+		import mx.collections.IList;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.core.DragSource;
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		import mx.effects.*;
+		import mx.events.*;
+		import mx.events.EffectEvent;
+		import mx.events.IndexChangedEvent;
+		import mx.effects.easing.Elastic;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;
+		import mx.managers.DragManager;
+		import mx.rpc.events.FaultEvent;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.states.State;
+		import mx.validators.Validator;	
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[		
+		private var _xmlProd:XML = new XML();
+		private var _xmlProdAsig:XML = new XML();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var acProductos:ArrayCollection = new ArrayCollection();
+		private var acProductosAsignados:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		
+		private var wsMS:WebService;
+			
+		private var dropInitiator:String;
+		private var indice:int;
+		private var titulo:String;
+		private var tipoAccion:Number;
+		private var vg_codigo:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[			
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		public function formateaProducto():void{
+			var cont:int = _xmlProd.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProd.Table[i].CODIGO;	
+				oItem.nombre = _xmlProd.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductos = new ArrayCollection(item);
+		}
+		public function formateaProductoAsignado():void{
+			var cont:int = _xmlProdAsig.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+	
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProdAsig.Table[i].CODIGO;	
+				oItem.nombre = _xmlProdAsig.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acProductosAsignados = new ArrayCollection(item);
+		}
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Parámetros de Marcado Bankaool";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			destGrid.dataProvider = new ArrayCollection([]);
+		}
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		public function nuevo():void{
+			init();
+			tipoAccion = 1; //INSERTAR
+			vg_codigo = "";
+			
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlProd = new XML(event.result);
+				
+				if(_xmlProd.elements().length() >0){
+					formateaProducto();
+					dgProductos.dataProvider = acProductos;
+					
+				}
+					
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+				
+			});
+			params[0] = "3";
+			params[1] = "";
+			wsCat.getCatalogoGral.send(61, params);
+		}
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				var vCodigo:String = vg_codigo;
+				var vDias_Atraso:Number = Number(txtDiasAtraso.text);
+				var vLocalidades:Number = Number(txtLocalidades.text);
+				var vPeriodicidad:String = rdgPeriodicidad.selectedValue.toString();
+				
+				var n:int = 0;
+				var acCdgTPC:ArrayCollection = destGrid.dataProvider as ArrayCollection;
+				var aCdgTPC:Array = new Array;
+				
+				for(var i:int = 0; i < acCdgTPC.length; i++){
+					aCdgTPC[n] = acCdgTPC[i].codigo;
+					n++;
+				}
+				
+				if(aCdgTPC.length > 0){
+					Application.application.bloquear();				
+					initConexion();
+					du.sCursor();
+											
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+							
+						if(res.substr(0,1) == "1")
+							cerrar();
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.setAccionParametrosBankaool.send(vCodigo, vLocalidades, vPeriodicidad, vDias_Atraso, aCdgTPC, tipoAccion);
+				}
+				else{
+					Alert.show("Asigne al menos un producto.",titulo,4,null,null,global.iAlert);
+				}
+			}
+		}
+		
+		private function valida():Boolean{
+			var iaDias_Atraso:Array = Validator.validateAll([Dias_atrasoV]);
+			var iaLocalidades:Array = Validator.validateAll([LocalidadesV]);	
+			
+			if(iaDias_Atraso.length > 0){
+				Alert.show("Debe capturar los días de atraso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaLocalidades.length > 0){
+				Alert.show("Debe capturar las localidades menores.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(!rdbCatorcenal.selected && !rdbMensual.selected && !rdbQuincenal.selected && !rdbSemanal.selected){
+				Alert.show("Debe elegir al periodicidad.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+							
+			return true;
+		}
+		]]>
+	</mx:Script>
+
+	<!-- CARGA INFO PARAMETRO -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfo(pXmlDatos:XML):void{
+			init();
+			tipoAccion = 2; //ACTUALIZAR
+			vg_codigo = pXmlDatos.CODIGO;
+					
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			Application.application.bloquear();
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+				_xmlProd = new XML(event.result);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+					_xmlProdAsig = new XML(event.result);
+					
+					if(_xmlProdAsig.elements().length() >0){
+						rdgPeriodicidad.selectedValue = pXmlDatos.PERIODICIDAD;
+						txtDiasAtraso.text = pXmlDatos.DIAS_ATRASO;
+						txtLocalidades.text = pXmlDatos.LOCALIDADES;		
+												
+						formateaProductoAsignado();
+						formateaProducto();					
+						
+						for(var j:int = 0; j < acProductosAsignados.length; j++){
+							for(var x:int = 0; x < acProductos.length; x++){
+								if (acProductos[x].codigo.toString() == acProductosAsignados[j].codigo.toString()){
+									acProductos.removeItemAt(x);
+								}
+							}
+						}
+						
+						dgProductos.dataProvider = acProductos;
+						destGrid.dataProvider = acProductosAsignados;
+					}
+					else{
+						Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+						
+				});
+				params[0] = "2";
+				params[1] = vg_codigo;
+				wsCat.getCatalogoGral.send(61, params);
+			});
+			params[0] = "3";
+			params[1] = "";
+			wsCat.getCatalogoGral.send(61, params);
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- DRAG DROP -->
+	<mx:Script>
+		<![CDATA[
+		private function setDragInitator(event:MouseEvent, id:String):void{
+            dropInitiator = id;
+        }
+        
+        private function doDragEnter(event:DragEvent):void {
+        	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+            var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+            var drop:Boolean = true;
+            
+            if(dropInitiator != dropTarget.id){
+            	if (dataInfo != null){
+                	for(var i:int = 0; i < dataInfo.length; i++){
+                    	if(dataInfo[i].nombre == items[0].nombre) 
+                    		drop = false;
+                 	}
+             	}
+				if(drop){
+                    DragManager.showFeedback(DragManager.MOVE);
+                    DragManager.acceptDragDrop(dropTarget);
+                }
+            }
+        }
+		private function doDragDrop(event:DragEvent):void{   
+        	var i:int;     
+            var dropTarget:DataGrid = DataGrid(event.currentTarget);
+           	doDragExit(event);  
+            var items:Array = event.dragSource.dataForFormat("items") as Array;
+            var dropLoc:int = dropTarget.calculateDropIndex(event); 
+				
+			indice = dropLoc;
+				
+            for(i = 0; i < items.length; i++){                 
+            	IList(dropTarget.dataProvider).addItemAt(items[i], dropLoc);
+            }
+        }
+        private function doDragExit(event:DragEvent):void{
+            var dropTarget:DataGrid = DataGrid(event.currentTarget);          
+            dropTarget.hideDropFeedback(event);
+        }
+		]]>
+	</mx:Script>
+	
+	<mx:TabNavigator id="tabNav" width="481" height="291" x="6" y="10" creationPolicy="all">
+		<mx:Canvas label="Datos" width="100%" height="100%">
+			<mx:Canvas x="274.75" y="32" width="180" height="70" styleName="canvasMod">
+				<mx:RadioButtonGroup id="rdgPeriodicidad"/>
+				<mx:RadioButton id="rdbSemanal" x="10" y="5" label="Semanal" groupName="rdgPeriodicidad" value="S" tabIndex="3"/>
+				<mx:RadioButton id="rdbQuincenal" x="10" y="37" label="Quincenal" groupName="rdgPeriodicidad" value="Q" tabIndex="4"/>
+				<mx:RadioButton id="rdbCatorcenal" x="97" y="5" label="Bisemanal" groupName="rdgPeriodicidad" value="C" tabIndex="5"/>
+				<mx:RadioButton id="rdbMensual" x="97" y="37" label="Mensual" groupName="rdgPeriodicidad" value="M" tabIndex="6"/>
+			</mx:Canvas>
+			<mx:Label x="274.75" y="10" text="Periodicidad:" id="lblPeriodicidad"/>
+			<mx:Canvas x="11" y="129" width="457" height="117" styleName="canvasMod">
+				<mx:DataGrid id="dgProductos" x="10" y="10" width="215" height="95"
+					sortableColumns="false" allowMultipleSelection="false"  
+				    dragMoveEnabled="true" mouseDown="setDragInitator(event, 'dgProductos')" 
+				    dragEnter="doDragEnter(event);"
+				    dragExit="doDragExit(event);"                    
+				    dragDrop="doDragDrop(event);"        
+				    dragEnabled="true">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PRODUCTOS DISPONIBLES" dataField="nombre" width="70"/>
+					</mx:columns>
+				</mx:DataGrid>
+				<mx:DataGrid id="destGrid" x="230" y="10" height="95" width="215" allowMultipleSelection="true" 
+					sortableColumns="false" dragMoveEnabled="true" mouseDown="setDragInitator(event, 'destGrid')"
+				    dragEnter="doDragEnter(event);" dragExit="doDragExit(event);" dragDrop="doDragDrop(event);" 		    
+				    dragEnabled="true">
+					<mx:columns>
+						<mx:DataGridColumn headerText="PRODUCTOS ASIGNADOS" dataField="nombre" width="70"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:Canvas>
+			<mx:Label x="11" y="110" text="Productos:" id="lblIntegH1"/>
+			<mx:Canvas x="14.75" y="32" width="252" height="70" styleName="canvasMod">
+				<mx:Label x="50" y="9" text="Días de Atraso:" id="lblDiasAtraso"/>
+				<mx:TextInput x="138" y="7" width="90" id="txtDiasAtraso" tabIndex="1" restrict="0-9"/>
+				<mx:Label x="10" y="39" text="Localidades Menores a:" id="lblLocalidades"/>
+				<mx:TextInput x="138" y="37" width="90" id="txtLocalidades" tabIndex="2" restrict="0-9"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="442" y="309" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40" tabIndex="7"/>
+	<mx:Button id="btnAceptar" x="394" y="309" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40" tabIndex="8"/>
+</mx:TitleWindow>

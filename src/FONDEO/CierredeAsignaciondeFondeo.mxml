@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
+	width="100%" height="100%" creationComplete="init()" creationPolicy="all" 
+	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*" xmlns:GENERAL="GENERAL.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.*;
+			import mx.events.CollectionEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.DataGridEventReason;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.MoveEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var vResult:ValidationResultEvent;
+			public var openEffect:Effect = new Fade();
+			
+			public var wsMS:WebService;
+			public var fecha:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function enviar():void{
+				//registra el cierre de asignacion de Fondeo
+				if(valida() == true){
+					fecha = dtfFecSaldo.text;
+					
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+							
+						du.closeWs(wsMS);
+						du.rCursor();
+						Application.application.desbloquear();
+							
+						if(res.substr(0,1) == "1"){
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();							
+						}	
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.setCierreAsignaFondeo.send(fecha);
+				}
+			}
+						
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				titulo = "Cierre de Asignación de Fondeo";
+				lblTitulo.text = titulo.toUpperCase();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function limpiar():void{
+				dtfFecSaldo.selectedDate = null;
+			}
+			
+			public function valida():Boolean{
+				if(dtfFecSaldo.text == ""){
+					Alert.show("Debe seleccionar la fecha de cálculo del Saldo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+	        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="280" height="170" id="canvas1">
+		<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="16.5" y="53.5" width="247" height="70.5" styleName="canvasMod" id="canvas2">
+			<mx:Label id="lblFecSaldo" x="10" y="12" text="Fecha Cálculo de Saldos:"/>
+			<mx:DateField id="dtfFecSaldo" width="110" x="67.5" y="34.5"/>
+		</mx:Canvas>
+		<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25" id="lblCriterios"/>
+		<mx:Button x="104.5" y="136" label="Aceptar" width="71" height="24" click="enviar()" id="btnAceptar"/>
+	</mx:Canvas>
+</mx:Canvas>

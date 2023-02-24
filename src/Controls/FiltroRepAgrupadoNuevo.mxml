@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" xmlns:ns1="*">
+	
+<mx:Metadata>
+	[Event(name="enviar", type="enviar")]
+</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;	
+			
+			public var wsMS:WebService;
+			public var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function cargaAsesor(ev:Event):void{
+				habilitaControles(true);
+			}	
+			
+			private function habilitaControles(estatus:Boolean):void{
+				btnEnviar.enabled = estatus;
+				btnLimpiar.enabled = estatus;
+			}	
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				global = new Globales();
+				du = new Utils();
+				this.rep = rep;
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;
+				limpiar();
+				ctrlFiltro.addEventListener("cargaAsesor",cargaAsesor);
+			}		
+						
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				//habilitaControles(false);
+				ctrlFiltro.limpiar();
+				fec = Application.application._Current_Fecha;
+				if(currentState == null)
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFecha1.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				nivel.selectedValue = 3;
+				
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha límite del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function obtieneAsesor():String{
+				return ctrlFiltro.obtieneAsesor();	
+			}
+			
+			public function obtieneCoord():String{
+				return ctrlFiltro.obtieneCoord();
+			}
+			
+			public function obtieneRegion():String{
+				return ctrlFiltro.obtieneRegion();
+			}
+			
+			public function obtieneSucursal():String{
+				return ctrlFiltro.obtieneSucursal();
+			}
+			
+			public function obtieneFecha():String{
+				return dtfFecha.text;
+			}
+			public function obtieneFecha1():String{
+				return dtfFecha1.text;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="12" y="10" width="271.95" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="13.95" y="53.5" width="270" height="210" styleName="canvasMod" id="canvas2">
+		<ns1:CtrlFiltroInfoRSCG id="ctrlFiltro" x="6" y="5" />
+	</mx:Canvas>
+	<mx:Canvas x="13.95" y="271.5" width="270" height="88" styleName="canvasMod" id="canvas1">
+		<mx:DateField id="dtfFecha" x="115" y="15" width="111"/>
+		<mx:Label x="42" y="17" text="Fecha Inicio:" id="label1"/>
+		<mx:DateField id="dtfFecha1" x="115" y="47" width="111"/>
+		<mx:Label x="52" y="49" text="Fecha Fin:" id="label4"/>
+	</mx:Canvas>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+</mx:Canvas>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="236" 
+	height="170" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="vPorcInc" source="{txtPorcInc}" property="text" 
+	invalid="{txtPorcInc.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsIncC:WebService;
+		private var wsIncR:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Parámetro Incentivos Coordinador";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtCodigo.text = pXmlInfo.CODIGO;
+			txtPorcInc.text = pXmlInfo.PORC_INC;
+			
+			txtCodigo.editable = false;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mPorcInc:Number = Number(txtPorcInc.text);
+				
+				initConexionIncR();
+				du.sCursor();
+				Application.application.bloquear()
+				
+				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncCoord);
+				wsIncR.setAccionParametrosIncCoord.send(mCodigo, mPorcInc, tipoAccion);
+			}
+		}
+		
+		private function initConexionIncC():void{				
+			wsIncC = new WebService();			
+			wsIncC.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsIncC.loadWSDL();
+		}
+		
+		private function initConexionIncR():void{				
+			wsIncR = new WebService();			
+			wsIncR.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsIncR.loadWSDL();
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Parámetro Incentivos Coordinador";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function setAccionParametrosIncCoord(event:ResultEvent):void{
+			wsIncR.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncCoord);
+			wsIncR = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaPorcInc:Array = Validator.validateAll([vPorcInc]);
+		
+			if (iaPorcInc.length != 0){
+				Alert.show("Debe capturar el porcentaje de incentivo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="217" height="40" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="44" y="10" text="Código:" id="lblCodigo"/>
+		<mx:TextInput id="txtCodigo" x="93" y="7" width="78" editable="true" maxChars="6"/>
+	</mx:Canvas>
+	<mx:Canvas x="9" y="54" width="218" height="40" styleName="canvasMod">
+		<mx:Label x="10" y="10" text="Porcentaje Incentivo:" id="lblPorcInc"/>
+		<mx:TextInput id="txtPorcInc" x="123" y="7" width="57" editable="true" change="validaMonto(event)"/>
+		<mx:Label x="188" y="10" text="%" id="lblPorc1" width="28"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="138" y="102" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="186" y="102" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.core.DragSource;
+			import mx.events.*;
+            import mx.managers.DragManager;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+
+			[Bindable]
+			public var _xmlInfo:XML = new XML();
+			
+			public var _xmlAse:XML = new XML(); 
+			
+			public var wsMS:WebService;
+			public var indice:int;
+			public var asesor:String;
+			public var titulo:String;
+			private var du:Utils;	
+			private var global:Globales;
+			private var dropInitiator:String
+			
+			public var aseObj:ArrayCollection = new ArrayCollection();
+			
+			/*public function agregarGrupo(event:MouseEvent):void{
+				var dataInfo:ArrayCollection = destGrid.dataProvider as ArrayCollection
+				dataInfo[indice].FECHA = fecha; 
+				destGrid.dataProvider = dataInfo;
+			}*/			
+			
+			private function cargarGrupos(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var asesor:String;
+				
+				if(tipo == 1)
+					asesor = cboAseOrigen.selectedItem.CODIGO;
+				else if(tipo == 2)
+					asesor = cboAseDestino.selectedItem.CODIGO;
+				
+				if(asesor != ""){
+					du.initWsCat(wsCat);
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlInfo = new XML(evt.result.toString()); 
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if(_xmlInfo.elements().length() > 0){
+							if(tipo == 1)
+								dgOrigen.dataProvider = formateaGrupos(_xmlInfo);
+							else if(tipo == 2)
+								dgDestino.dataProvider = formateaGrupos(_xmlInfo);
+						}
+						else{
+							if(tipo == 1)
+								dgOrigen.dataProvider = null;
+							else if(tipo == 2)
+								dgDestino.dataProvider = null;
+						}
+					});
+					params[0] = asesor;
+					wsCat.getListado.send(86, params);
+				}
+				else{
+					if(tipo == 1)
+						dgOrigen.dataProvider = null;
+					else if(tipo == 2)
+						dgDestino.dataProvider = null;
+				}
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function formateaPers(datos:String):void{
+				var oItem:Object;
+				var array:Array;
+				var arr:ArrayCollection;
+					
+				oItem = new Object();
+				oItem.CODIGO = "";
+				oItem.NOMBREC = "--Seleccionar--";
+					
+				var xml:XMLDocument = new XMLDocument( datos ); 
+	     		var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+	     		var data:Object = decoder.decodeXML( xml );  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				aseObj = new ArrayCollection(array);
+				aseObj.addItemAt(oItem,0);
+			}
+			
+			private function formateaGrupos(info:XML):ArrayCollection{
+				var infoObj:ArrayCollection = new ArrayCollection();
+				var cont:int = info.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CODIGO = info.Table[i].CODIGO;
+					oItem.GRUPO = info.Table[i].GRUPO;
+					oItem.CICLO = info.Table[i].CICLO;
+					oItem.SITUACION = info.Table[i].SITUACION;
+					oItem.ACTUALIZA = "N";
+					item.push(oItem);
+				}
+				infoObj = new ArrayCollection(item);
+				return infoObj;
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				
+				titulo = "Reasignación de Cartera";
+				lblTitulo.text = titulo.toUpperCase();
+				dgDestino.dataProvider = new ArrayCollection([]); 
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAse = new XML(evt.result.toString()); 
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if(_xmlAse.elements().length() > 0){
+						formateaPers(evt.result.toString()); 
+						cboAseOrigen.dataProvider = aseObj;
+						cboAseDestino.dataProvider = aseObj;
+					}
+				});
+				params[0] = "";
+				wsCat.getCatalogoGral.send(8, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function setDragInitator(event:MouseEvent, id:String):void{
+                dropInitiator = id;
+            }
+            
+            private function doDragEnter(event:DragEvent):void{
+            	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+            	var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+            	var items:Array = event.dragSource.dataForFormat("items") as Array;
+                   
+                var drop:Boolean = true;
+                
+                if(dropInitiator != dropTarget.id){
+                	if(cboAseDestino.selectedIndex == 0)
+                		drop = false;
+                	if (dataInfo.length > 0){
+	                	for(var n:int = 0; n < dataInfo.length; n++){
+	                    	if(dataInfo[n].CODIGO == items[0].CODIGO){ 
+	                    		drop = false;
+	                    	}
+	                 	}
+             		}		
+                	if(drop){
+                        DragManager.showFeedback(DragManager.MOVE);
+                        DragManager.acceptDragDrop(dropTarget);
+                    }
+                }
+            }
+
+            private function doDragDrop(event:DragEvent):void{        
+	            var dropTarget:DataGrid = DataGrid(event.currentTarget);
+	            var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+	            var items:Array = event.dragSource.dataForFormat("items") as Array;
+	            var dropLoc:int = dropTarget.calculateDropIndex(event); 
+					
+				indice = dropLoc;
+				
+				if (dataInfo.length > 0){
+                	for(var n:int = 0; n < dataInfo.length; n++){
+                    	if(dataInfo[n].CODIGO == items[0].CODIGO){ 
+                    		Alert.show("Registro de grupo asignado duplicado.", titulo, 4, null, null, global.iAlert);
+                    		return;
+                    	}
+                 	}
+             	}
+	            for(var i:int = 0; i < items.length; i++){          
+	            	IList(dropTarget.dataProvider).addItemAt(items[i], dropLoc);
+	            	doDragExit(event);
+	            }
+            }
+            
+            private function doDragExit(event:DragEvent):void{
+            	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+            	var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+            	
+            	dataInfo[indice].ACTUALIZA = "S"; 
+				dgDestino.dataProvider = dataInfo;
+            	
+                dropTarget.hideDropFeedback(event);
+            }
+            
+            private function limpiar():void{
+            	cboAseOrigen.selectedIndex = 0;
+            	cboAseDestino.selectedIndex = 0;
+            	dgOrigen.dataProvider = null;
+            	dgDestino.dataProvider = null;
+            }
+            
+            private function validar():void{
+           		var asesor:String = cboAseDestino.selectedItem.CODIGO;
+				var dataInfo:ArrayCollection = dgDestino.dataProvider as ArrayCollection;
+				var registro:Array = new Array();
+				 
+		 		if (dataInfo.length > 0){
+		 			var n:int = 0;
+			 		for(var i:int = 0; i < dataInfo.length; i++){
+			 			if(dataInfo[i].ACTUALIZA == "S"){
+				 			registro[n] = dataInfo[i].CODIGO + "," + dataInfo[i].CICLO;
+				 			n += 1;
+				 		}
+				 	}
+				 	
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = new String(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						if(res.substr(0,1) == "1"){
+							Alert.show("Operación realizada exitosamente.", titulo, Alert.OK, null, null, global.iInfo);
+							limpiar();
+						}
+						else
+							Alert.show(res.substr(2,res.length-1), titulo, 4, null, null, global.iAlert);	
+					});
+					wsMS.setReasignacionCartera.send(asesor, registro, Application.application.U_ID);		 		
+		 		}
+				else if (dataInfo.length == 0)
+					Alert.show("Debe asignar un registro al asesor seleccionado.", titulo, 4, null, null, global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="880" height="350" id="canvas1">
+		<mx:Button id="btnCerrar" x="797.5" y="315" label="Limpiar" click="limpiar()"/>
+		<mx:Button id="btnAceptar" x="718.5" y="315" label="Guardar" click="validar()"/>
+		<mx:DataGrid id="dgOrigen" x="17.5" y="92" width="420" height="215"
+			allowMultipleSelection="false" dragMoveEnabled="true" mouseDown="setDragInitator(event, &apos;dropList&apos;)" 
+			dragEnabled="true">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="GRUPO" width="180"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:DataGrid id="dgDestino" x="445.5" y="92" height="215" width="420" allowMultipleSelection="true"  
+		    dragMoveEnabled="true" mouseDown="setDragInitator(event, &apos;dgDestino&apos;)"
+		    dragEnter="doDragEnter(event)" dragDrop="doDragDrop(event)" dragEnabled="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="GRUPO" width="180"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Canvas id="cnvOrigen" x="17.5" y="39" width="420" height="45" styleName="canvasMod">
+			<mx:Label id="lblAseOrigen" x="10" y="13" text="Asesor Origen:"/>
+			<mx:ComboBox id="cboAseOrigen" labelField="NOMBREC" x="97" y="10" width="311" change="cargarGrupos(1)"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDestino" x="445.5" y="39" width="420" height="45" styleName="canvasMod">
+			<mx:Label id="lblAseDestino" x="10" y="13" text="Asesor Destino:"/>
+			<mx:ComboBox id="cboAseDestino" labelField="NOMBREC" x="101" y="10" width="311" change="cargarGrupos(2)"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="17.5" y="10" width="420" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

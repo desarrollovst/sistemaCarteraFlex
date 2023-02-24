@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar la informacion de los recursos-->
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		
+			public var _xmlOri:XML = new XML();
+			public var _xmlDest:XML = new XML();
+			
+			public var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionOri:int;
+			private var accionDest:int;
+			private var indOri:int;
+			private var indDest:int;
+			private var vScroll:Number;
+			private var titulo:String;
+			
+			private function actualizarDestino(event:Event):void{
+				buscarDestino(1);
+			}
+			
+			private function actualizarOrigen(event:Event):void{
+				buscarOrigen(1);
+			}
+			
+			private function buscarOrigen(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodOri.text != "" || txtOrigen.text != ""){
+					btnBuscarOri.setFocus();
+					dgOrigen.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					if(tipo == 1)
+						Application.application.bloquear();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlOri = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					
+						if (_xmlOri.elements().length() > 0){
+							dgOrigen.dataProvider = _xmlOri.Table;
+							
+							if(accionOri == 2){
+								dgOrigen.validateNow();
+								dgOrigen.verticalScrollPosition = vScroll;
+								dgOrigen.selectedIndex = indOri;
+								this.accionOri = 0;
+							}
+						}		
+					});
+					params[0] = txtCodOri.text;
+					params[1] = txtOrigen.text;
+					//Obtiene informacion del Origen de los Recursos
+					wsCat.getListado.send(42, params);
+				}	
+			}
+			
+			private function buscarDestino(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodDest.text != "" || txtDestino.text != ""){
+					btnBuscarDest.setFocus();
+					dgDestino.dataProvider = null;
+				
+					du.initWsCat(wsCat);
+				 	if (tipo == 1)
+						Application.application.bloquear();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlDest = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					
+						if (_xmlDest.elements().length() > 0){
+							dgDestino.dataProvider = _xmlDest.Table;
+							
+							if(accionDest == 2){
+								dgDestino.validateNow();
+								dgDestino.verticalScrollPosition = vScroll;
+								dgDestino.selectedIndex = indDest;
+								this.accionDest = 0;
+							}
+						}	
+					});
+					params[0] = txtCodDest.text;
+					params[1] = txtDestino.text;
+					//Obtiene informacion del Destino de los Recursos
+					wsCat.getListado.send(43, params);
+				}
+			}
+			
+			private function eliminarDestino():void{
+				Alert.show("¿Desea eliminar el Destino del Recurso?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarDest,global.iQuest);
+			}
+			
+			private function eliminarOrigen():void{
+				Alert.show("¿Desea eliminar el Origen del Recurso?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarOri,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indOri = -1;
+				this.indDest = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Información de Recursos";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function manejadorEliminarDest(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codDest:String = dgDestino.selectedItem.CODIGO;
+					initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionDestRec);
+					wsMS.setAccionDestRec.send(3, codDest, "", "");
+			    } 
+			}
+			
+			private function manejadorEliminarOri(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codOri:String = dgOrigen.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionOriRec);
+					wsMS.setAccionOriRec.send(3, codOri, "", "");
+			    } 
+			}
+			
+			public function mostrarFormDestRec(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO 
+				var comMttoDest:MttoDestino = new MttoDestino();
+				comMttoDest = MttoDestino(PopUpManager.createPopUp(this,MttoDestino,true));
+				switch(tipo){
+					case 1: 
+						comMttoDest.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDestino);
+						PopUpManager.centerPopUp(comMttoDest);
+						comMttoDest.init(tipo, "");
+						break;
+					case 2: 
+						if (dgDestino.selectedIndex >= 0){
+							accionDest = tipo; 
+							var codDest:String = dgDestino.selectedItem.CODIGO;
+							var indice:int = dgDestino.selectedIndex;
+							iniVar();
+							this.indDest = indice;
+							this.vScroll = dgDestino.verticalScrollPosition;
+							comMttoDest.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDestino);
+							PopUpManager.centerPopUp(comMttoDest);
+							comMttoDest.init(tipo, codDest);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Tasa",titulo,4,null,null,global.iAlert);
+					break;
+				}
+			}
+			
+			public function mostrarFormOriRec(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoOri:MttoOrigen = new MttoOrigen();
+				comMttoOri = MttoOrigen(PopUpManager.createPopUp(this,MttoOrigen,true)); 
+				switch(tipo){
+					case 1: 
+						comMttoOri.addEventListener(Event.REMOVED_FROM_STAGE, actualizarOrigen);
+						PopUpManager.centerPopUp(comMttoOri);
+						comMttoOri.init(tipo, "");
+						break;
+					case 2: 
+						if (dgOrigen.selectedIndex >= 0){
+							accionOri = tipo;
+							var codOri:String = dgOrigen.selectedItem.CODIGO;
+							var indice:int = dgOrigen.selectedIndex;
+							iniVar();
+							this.indOri = indice;
+							this.vScroll = dgOrigen.verticalScrollPosition;
+							comMttoOri.addEventListener(Event.REMOVED_FROM_STAGE, actualizarOrigen);	
+							PopUpManager.centerPopUp(comMttoOri);
+							comMttoOri.init(tipo, codOri);
+						}
+						else
+							Alert.show("Debe seleccionar el registro del Instrumento de Crédito",titulo,4,null,null,global.iAlert); 
+						break;
+				}
+			}
+			
+			private function setAccionOriRec(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOriRec);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarDestino(1);
+				else
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+			}
+
+			private function setAccionDestRec(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDestRec);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarOrigen(1);
+				else
+					Alert.show("Error en el proceso: " + res,titulo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="480">
+		<mx:Label x="18" y="10" text="ORIGEN DE RECURSOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18.5" y="243" text="DESTINO DE RECURSOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="31.5" y="39" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodOri" x="12" y="7" text="Código:"/>
+			<mx:Label id="lblOrigen" x="135" y="7" text="Descripción:"/>
+			<mx:TextInput id="txtCodOri" x="64" y="5" width="50" enter="buscarOrigen(1)" maxChars="3"/>
+			<mx:TextInput id="txtOrigen" x="210.5" y="5" width="276" enter="buscarOrigen(1)" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarOri" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarOrigen(1)" toolTip="Buscar Origen" width="40" />
+			<mx:Button id="btnEditarOri" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormOriRec(2)" toolTip="Editar Origen" width="40"/>
+			<mx:Button id="btnAgregarOri" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormOriRec(1)" toolTip="Registrar Origen" width="40"/>
+			<mx:Button id="btnEliminarOri" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarOrigen()" enabled="false" toolTip="Eliminar Origen" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgOrigen" x="10" y="10" width="700.5" height="124" sortableColumns="false" 
+				draggableColumns="false" resizableColumns="false" itemDoubleClick="mostrarFormOriRec(2)" 
+				doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="DESCTIPO" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas id="cnvTasa" x="18.5" y="315" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgDestino" x="10" y="10" width="704.5" height="124" sortableColumns="false" draggableColumns="false" 
+				resizableColumns="false" doubleClickEnabled="true" doubleClick="mostrarFormDestRec(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="DESCTIPO" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="31.5" y="270" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodDest" x="10" y="7" text="CODIGO:" width="53"/>
+			<mx:Label id="lblDestino" x="128" y="7" text="DESCRIPCION:" width="83.5"/>
+			<mx:TextInput id="txtCodDest" x="64" y="5" width="50" enter="buscarDestino(1)" maxChars="3"/>
+			<mx:TextInput id="txtDestino" x="210.5" y="5" width="276" enter="buscarDestino(1)" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="270" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarDest" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarDestino(1)" toolTip="Buscar Destino" width="40" />
+			<mx:Button id="btnEditarDest" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormDestRec(2)" toolTip="Editar Destino" width="40"/>
+			<mx:Button id="btnAgregarDest" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormDestRec(1)" toolTip="Registrar Destino" width="40"/>
+			<mx:Button id="btnEliminarDest" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarDestino()" enabled="false" toolTip="Eliminar Destino" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

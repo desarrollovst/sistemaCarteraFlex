@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="813" height="513" 
+	title="CURSOS DE CAPACITACIÓN" fontWeight="normal" xmlns:Forms="CAPACITACION.Forms.*" xmlns:Data="Data.*">
+	
+	<mx:Validator id="vNombre" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!--Componente que permite observar el mantenimiento de los cursos de una capacitación-->
+	<mx:Script>
+	<![CDATA[
+		import mx.messaging.channels.StreamingAMFChannel;
+		import Data.DatosDir;
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		import mx.validators.Validator;	
+				
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var infoDir:DatosDir;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;
+		
+		private var _xmlConsultoria:XML = new XML();
+		private var _xmlInstructor:XML = new XML();
+		private var _xmlPrograma:XML = new XML();
+		private var _xmlTipoCapa:XML = new XML();
+		private var _xmlModalidad:XML = new XML();
+		private var _xmlNivel:XML = new XML();
+		private var _xmlTipoPart:XML = new XML();
+		
+		public var acConsultoria:ArrayCollection = new ArrayCollection();
+		public var acInstructor:ArrayCollection = new ArrayCollection();
+		public var acPrograma:ArrayCollection = new ArrayCollection();
+		public var acTipoCapa:ArrayCollection = new ArrayCollection();
+		public var acModalidad:ArrayCollection = new ArrayCollection();
+		public var acNivel:ArrayCollection = new ArrayCollection();
+		public var acTipoPart:ArrayCollection = new ArrayCollection();
+		public var acHoraIni:ArrayCollection = new ArrayCollection();
+		public var acMinIni:ArrayCollection = new ArrayCollection();
+		public var acHoraFin:ArrayCollection = new ArrayCollection();
+		public var acMinFin:ArrayCollection = new ArrayCollection();
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function Edicion(pxmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición de Curso";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			var wsCatCap:WebService = new WebService;
+			var params:Array = new Array;
+			var i:int = 0;
+						
+			Application.application.bloquear();
+			du.initWsCatCap(wsCatCap);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlPrograma = new XML(event.result);
+				if (_xmlPrograma.elements().length() > 0){
+					
+					du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+						_xmlConsultoria = new XML(event.result);
+						if (_xmlConsultoria.elements().length() > 0){
+								
+							du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+								_xmlInstructor = new XML(event.result);
+								if(_xmlInstructor.elements().length() > 0){
+									
+									du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+									_xmlTipoCapa = new XML(event.result);
+									if (_xmlTipoCapa.elements().length() > 0){
+																			
+										du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+											_xmlModalidad = new XML(event.result);
+											if (_xmlModalidad.elements().length() > 0){
+																							
+												du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+													_xmlNivel = new XML(event.result);
+													if (_xmlNivel.elements().length() > 0){
+																											
+														du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+															_xmlTipoPart = new XML(event.result);
+															
+															if (_xmlTipoPart.elements().length() > 0){
+																
+																formateaPrograma();
+																cbxPrograma.dataProvider = acPrograma;
+																formateaConsultoria();
+																cbxConsultoria.dataProvider = acConsultoria;
+																formateaTipoCapa();
+																cbxTipoCap.dataProvider = acTipoCapa;
+																formateaModalidad();
+																cbxModalidad.dataProvider = acModalidad;
+																formateaNivel();
+																cbxNivel.dataProvider = acNivel;
+																formateaTipoPart();
+																cbxTipoPart.dataProvider = acTipoPart;
+																
+																txtCodigo.text = pxmlInfo.CODIGO;
+																txtNombre.text = pxmlInfo.NOMBRE;
+																dtfInicio.text = pxmlInfo.INICIO;
+																dtfFin.text = pxmlInfo.FIN;
+																
+																txtTotHrs.text = pxmlInfo.HORAS;
+																txtTotPart.text = pxmlInfo.PARTICIPANTES;
+																
+																txtCosto.text = global.formatoDecimal(Number(pxmlInfo.COSTO).toString());
+																rbgPagado.selectedValue = pxmlInfo.PAGADO;
+																
+																if(pxmlInfo.ACTIVO == "S")
+																	chkActivo.selected = true;
+																else 
+																	chkActivo.selected = false;
+																	
+																for(i = 0; i < acPrograma.length; i++){
+																	if (acPrograma[i].codigo.toString() == pxmlInfo.CDGPROG){
+																		cbxPrograma.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acConsultoria.length; i++){
+																	if (acConsultoria[i].codigo.toString() == pxmlInfo.CDGCONS){
+																		cbxConsultoria.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																formateaHorario();
+																cbxHoraI.dataProvider = acHoraIni;
+																cbxMinutoI.dataProvider = acMinIni;
+																cbxHoraF.dataProvider = acHoraFin;
+																cbxMinutoF.dataProvider = acMinFin;
+																
+																for(i = 0; i < acHoraIni.length; i++){
+																	if (acHoraIni[i].codigo.toString() == pxmlInfo.HHI){
+																		cbxHoraI.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acMinIni.length; i++){
+																	if (acMinIni[i].codigo.toString() == pxmlInfo.MII){
+																		cbxMinutoI.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acHoraFin.length; i++){
+																	if (acHoraFin[i].codigo.toString() == pxmlInfo.HHF){
+																		cbxHoraF.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acMinFin.length; i++){
+																	if (acMinFin[i].codigo.toString() == pxmlInfo.MIF){
+																		cbxMinutoF.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																formateaInstructor();
+																cbxInstructor.dataProvider = acInstructor;
+																
+																for(i = 0; i < acInstructor.length; i++){
+																	if (acInstructor[i].codigo.toString() == pxmlInfo.CDGINST){
+																		cbxInstructor.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acTipoCapa.length; i++){
+																	if (acTipoCapa[i].codigo.toString() == pxmlInfo.CDGCAPTIP){
+																		cbxTipoCap.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acModalidad.length; i++){
+																	if (acModalidad[i].codigo.toString() == pxmlInfo.CDGMODA){
+																		cbxModalidad.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acNivel.length; i++){
+																	if (acNivel[i].codigo.toString() == pxmlInfo.CDGNIVEL){
+																		cbxNivel.selectedIndex = i;
+																		break;
+																	}
+																}
+																
+																for(i = 0; i < acTipoPart.length; i++){
+																	if (acTipoPart[i].codigo.toString() == pxmlInfo.CDGPARTIP){
+																		cbxTipoPart.selectedIndex = i;
+																		break;
+																	}
+																}
+																	
+																infoDir = new DatosDir();
+																infoDir.cdgEntFed = pxmlInfo.CDGEF;
+																infoDir.entFed = pxmlInfo.NOMEF; 
+																infoDir.cdgMun = pxmlInfo.CDGMU;
+																infoDir.municipio = pxmlInfo.NOMMU;
+																infoDir.cdgLoc = pxmlInfo.CDGLO;
+																infoDir.localidad = pxmlInfo.NOMLO;
+																
+																formDatosEfMuLo.init(infoDir);
+																
+																txtCalle.text = pxmlInfo.CALLE;
+																txtObservaciones.text = pxmlInfo.OBSERVACIONES;
+																
+																txtNombre.editable = false;
+																dtfInicio.enabled = false;
+																dtfFin.enabled = false;
+																
+																cbxHoraI.enabled = false;
+																cbxMinutoI.enabled = false;
+																cbxHoraF.enabled = false;
+																cbxMinutoF.enabled = false;
+															}	
+															else{
+																Alert.show("No se encontraron tipos de participantes registrados.",titulo,4,null,null,global.iAlert);
+																btnAceptar.enabled = false;
+															}
+															
+															du.closeWs(wsCatCap);
+															du.rCursor();
+															Application.application.desbloquear();	
+														});
+														
+														params[0] = "";
+														params[1] = "";
+														params[2] = "S";
+														wsCatCap.getInfoCapacitacion.send(7, params);
+													}
+													else{
+														du.closeWs(wsCatCap);
+														du.rCursor();
+														Application.application.desbloquear();
+														Alert.show("No se encontraron niveles de capacitación registrados.",titulo,4,null,null,global.iAlert);
+														btnAceptar.enabled = false;
+													}
+												});
+												
+												params[0] = "";
+												params[1] = "";
+												params[2] = "S";
+												wsCatCap.getInfoCapacitacion.send(6, params);
+											}
+											else{
+												du.closeWs(wsCatCap);
+												du.rCursor();
+												Application.application.desbloquear();
+												Alert.show("No se encontraron modalidades de capacitación registrados.",titulo,4,null,null,global.iAlert);
+												btnAceptar.enabled = false;
+											}
+										});
+										
+										params[0] = "";
+										params[1] = "";
+										params[2] = "S";
+										wsCatCap.getInfoCapacitacion.send(4, params);
+									}
+									else{
+										du.closeWs(wsCatCap);
+										du.rCursor();
+										Application.application.desbloquear();
+										Alert.show("No se encontraron tipos de capacitación registrados.",titulo,4,null,null,global.iAlert);
+										btnAceptar.enabled = false;
+									}
+								});
+								
+								params[0] = "";
+								params[1] = "";
+								params[2] = "S";
+								wsCatCap.getInfoCapacitacion.send(5, params);
+								}
+								else{
+									du.closeWs(wsCatCap);
+									du.rCursor();
+									Application.application.desbloquear();
+									Alert.show("No se encontraron instructores de capacitación registrados.",titulo,4,null,null,global.iAlert);
+									btnAceptar.enabled = false;
+								}
+							});
+							
+							params[0] = "";
+							params[1] = "";
+							params[2] = "S";
+							wsCatCap.getInfoCapacitacion.send(3, params);
+						}
+						else{
+							du.closeWs(wsCatCap);
+							du.rCursor();
+							Application.application.desbloquear();
+							Alert.show("No se encontraron consultorias registradas.",titulo,4,null,null,global.iAlert);
+							btnAceptar.enabled = false;
+						}
+					});
+					params[0] = "";
+					params[1] = "";
+					params[2] = "S";
+					wsCatCap.getInfoCapacitacion.send(2, params);
+				}
+				else{
+					du.closeWs(wsCatCap);
+					du.rCursor();
+					Application.application.desbloquear();
+					Alert.show("No se encontraron programas registrados.",titulo,4,null,null,global.iAlert);
+					btnAceptar.enabled = false;
+				}
+			});
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(1, params);
+		}
+		
+		private function enviar():void{
+			infoDir = new DatosDir();
+			formDatosEfMuLo.enviarDatosDir(infoDir);
+				
+			if(valida()){
+				var mCodigo:String = txtCodigo.text;
+				var mNombre:String = txtNombre.text;
+				var mPrograma:String = cbxPrograma.selectedItem.codigo;
+				var mConsultoria:String = cbxConsultoria.selectedItem.codigo;
+				var mInstructor:String = cbxInstructor.selectedItem.codigo;
+				var mTipoCap:String = cbxTipoCap.selectedItem.codigo;
+				var mModalidad:String = cbxModalidad.selectedItem.codigo;
+				var mNivel:String = cbxNivel.selectedItem.codigo;
+				var mTipoPar:String = cbxTipoPart.selectedItem.codigo;
+				var mCdgEf:String = infoDir.cdgEntFed;
+				var mCdgMu:String = infoDir.cdgMun;
+				var mCdgLo:String = infoDir.cdgLoc;
+				var mCalle:String = txtCalle.text;
+				var mObservacion:String = txtObservaciones.text;
+				var mCosto:Number = 0;
+				var mHoras:Number = 0;
+				var mParticipantes:Number = 0;
+				var mPagado:String = rbgPagado.selectedValue.toString();
+				var mActivo:String = ""; 
+				
+				var vHoraIni:String = "";
+				var vMinIni:String = "";
+				var vHoraFin:String = "";
+				var vMinFin:String = "";
+				
+				vHoraIni = cbxHoraI.selectedItem.codigo;
+				vMinIni = cbxMinutoI.selectedItem.codigo;
+				vHoraFin = cbxHoraF.selectedItem.codigo;
+				vMinFin = cbxMinutoF.selectedItem.codigo;
+									
+				var mFechaInicio:String = dtfInicio.text + " " + vHoraIni + ":" + vMinIni;
+				var mFechaFin:String = dtfFin.text + " " + vHoraFin + ":" + vMinFin;
+				
+				var occurs:int = txtCosto.text.split(",").length - 1;
+				var costoStr:String;
+				var i:int;
+				
+				costoStr = txtCosto.text;
+				
+				for(i = 0; i<= occurs; i++){
+					costoStr = costoStr.replace(',','');
+					costoStr = costoStr.replace('$','');
+				}
+				
+				if(txtCosto.text != "")
+					mCosto = Number(costoStr);
+					
+				if(txtTotHrs.text != "")
+					mHoras = Number(txtTotHrs.text);
+					
+				if(txtTotPart.text != "")
+					mParticipantes = Number(txtTotPart.text);
+				
+				if(chkActivo.selected)
+					mActivo = "S";
+				else
+					mActivo = "N";
+					
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionCpCurso.send( mCodigo, mNombre, mFechaInicio, mFechaFin, mObservacion, mCdgEf, mCdgMu, mCdgLo
+				, mCalle, mConsultoria, mInstructor, mPrograma, mTipoCap, mModalidad, mNivel, mTipoPar, mCosto
+				, mPagado, mHoras, mParticipantes, mActivo, tipoAccion);
+			}
+		}
+		
+		private function formateaConsultoria():void{
+			var cont:int = _xmlConsultoria.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acConsultoria.removeAll();
+			acConsultoria.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlConsultoria.Table[i].CODIGO;
+				oItem.descripcion = _xmlConsultoria.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acConsultoria = new ArrayCollection(item);
+		}
+		
+		private function formateaHorario():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--";
+			item.push(oItem);
+			
+			for(i = 0; i <= 23; i++){
+				oItem = new Object();
+				
+				if(i < 10){
+					oItem.codigo = "0" + i;
+					oItem.descripcion = "0" + i;
+				} 
+			    else{
+			    	oItem.codigo = i;
+					oItem.descripcion = i;
+			    }
+					
+				item.push(oItem);
+			}
+			
+			acHoraIni = new ArrayCollection(item);
+			acHoraFin = new ArrayCollection(item);
+			
+			item = new Array
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--";
+			item.push(oItem);
+			
+			for(i = 0; i <= 59; i++){
+				oItem = new Object();
+				
+				if(i < 10){
+					oItem.codigo = "0" + i;
+					oItem.descripcion = "0" + i;
+				} 
+			    else{
+			    	oItem.codigo = i;
+					oItem.descripcion = i;
+			    }
+			    
+				item.push(oItem);
+			}
+			
+			acMinIni = new ArrayCollection(item);
+			acMinFin = new ArrayCollection(item);
+		}
+		
+		private function formateaInstructor():void{
+			var cont:int = _xmlInstructor.elements().length();
+			var consultoria:String = cbxConsultoria.selectedItem.codigo;
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acInstructor.removeAll();
+			acInstructor.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+
+			if(cbxConsultoria.selectedIndex > 0){
+				for(i = 0; i < cont; i++){
+					if(_xmlInstructor.Table[i].CDGCONS == consultoria){
+						oItem = new Object();
+						oItem.codigo = _xmlInstructor.Table[i].CODIGO;
+						oItem.descripcion = _xmlInstructor.Table[i].NOMBRE;
+						item.push(oItem);
+					}
+				}
+			}
+			
+			acInstructor = new ArrayCollection(item);
+		}
+		
+		private function formateaModalidad():void{
+			var cont:int = _xmlModalidad.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acModalidad.removeAll();
+			acModalidad.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlModalidad.Table[i].CODIGO;
+				oItem.descripcion = _xmlModalidad.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acModalidad = new ArrayCollection(item);
+		}
+		
+		private function formateaNivel():void{
+			var cont:int = _xmlNivel.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acNivel.removeAll();
+			acNivel.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlNivel.Table[i].CODIGO;
+				oItem.descripcion = _xmlNivel.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acNivel = new ArrayCollection(item);
+		}
+		
+		private function formateaTipoPart():void{
+			var cont:int = _xmlTipoPart.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acTipoPart.removeAll();
+			acTipoPart.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlTipoPart.Table[i].CODIGO;
+				oItem.descripcion = _xmlTipoPart.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acTipoPart = new ArrayCollection(item);
+		}
+		
+		private function formateaPrograma():void{
+			var cont:int = _xmlPrograma.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acPrograma.removeAll();
+			acPrograma.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlPrograma.Table[i].CODIGO;
+				oItem.descripcion = _xmlPrograma.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acPrograma = new ArrayCollection(item);
+		}
+		
+		private function formateaTipoCapa():void{
+			var cont:int = _xmlTipoCapa.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acTipoCapa.removeAll();
+			acTipoCapa.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlTipoCapa.Table[i].CODIGO;
+				oItem.descripcion = _xmlTipoCapa.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			
+			acTipoCapa = new ArrayCollection(item);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServCap.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function Nuevo():void{
+			var wsCatCap:WebService = new WebService;
+			var params:Array = new Array;
+			
+			global = new Globales();
+			du = new Utils();
+			
+			tipoAccion = 1;
+			
+			this.title = "Nuevo Curso";
+			
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			infoDir = null;
+			formDatosEfMuLo.init(infoDir);
+			
+			Application.application.bloquear();
+			du.initWsCatCap(wsCatCap);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlPrograma = new XML(event.result);
+				
+				if (_xmlPrograma.elements().length() > 0){
+					formateaPrograma();
+					cbxPrograma.dataProvider = acPrograma;
+					
+					du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+						_xmlConsultoria = new XML(event.result);
+												
+						if (_xmlConsultoria.elements().length() > 0){
+							formateaConsultoria();
+							cbxConsultoria.dataProvider = acConsultoria;
+							formateaInstructor();
+							cbxInstructor.dataProvider = acInstructor;
+							
+							du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+								_xmlTipoCapa = new XML(event.result);
+								
+								if (_xmlTipoCapa.elements().length() > 0){
+									formateaTipoCapa();
+									cbxTipoCap.dataProvider = acTipoCapa;
+									
+									du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+										_xmlModalidad = new XML(event.result);
+										
+										if (_xmlModalidad.elements().length() > 0){
+											formateaModalidad();
+											cbxModalidad.dataProvider = acModalidad;
+											
+											du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+												_xmlNivel = new XML(event.result);
+												
+												if (_xmlNivel.elements().length() > 0){
+													formateaNivel();
+													cbxNivel.dataProvider = acNivel;
+													
+													du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+														_xmlTipoPart = new XML(event.result);
+														
+														du.closeWs(wsCatCap);
+														du.rCursor();
+														Application.application.desbloquear();
+														
+														if (_xmlTipoPart.elements().length() > 0){
+															formateaTipoPart();
+															cbxTipoPart.dataProvider = acTipoPart;		
+															
+															formateaHorario();
+															cbxHoraI.dataProvider = acHoraIni;
+															cbxMinutoI.dataProvider = acMinIni;
+															cbxHoraF.dataProvider = acHoraFin;
+															cbxMinutoF.dataProvider = acMinFin;
+																														
+															txtCosto.text = "0";
+															txtTotHrs.text = "0";
+															txtTotPart.text = "0";
+															rdbPagadoNo.selected = true;
+														}
+														else{
+															du.closeWs(wsCatCap);
+															du.rCursor();
+															Application.application.desbloquear();
+															Alert.show("No se encontraron tipos de participantes registrados.",titulo,4,null,null,global.iAlert);
+															btnAceptar.enabled = false;
+														}
+													});
+													
+													params[0] = "";
+													params[1] = "";
+													params[2] = "S";
+													wsCatCap.getInfoCapacitacion.send(7, params);
+												}
+												else{
+													du.closeWs(wsCatCap);
+													du.rCursor();
+													Application.application.desbloquear();
+													Alert.show("No se encontraron niveles de capacitación registrados.",titulo,4,null,null,global.iAlert);
+													btnAceptar.enabled = false;
+												}
+											});
+											
+											params[0] = "";
+											params[1] = "";
+											params[2] = "S";
+											wsCatCap.getInfoCapacitacion.send(6, params);
+										}
+										else{
+											du.closeWs(wsCatCap);
+											du.rCursor();
+											Application.application.desbloquear();
+											Alert.show("No se encontraron modalidades de capacitación registrados.",titulo,4,null,null,global.iAlert);
+											btnAceptar.enabled = false;
+										}
+									});
+									
+									params[0] = "";
+									params[1] = "";
+									params[2] = "S";
+									wsCatCap.getInfoCapacitacion.send(4, params);
+								}
+								else{
+									du.closeWs(wsCatCap);
+									du.rCursor();
+									Application.application.desbloquear();
+									Alert.show("No se encontraron tipos de capacitación registrados.",titulo,4,null,null,global.iAlert);
+									btnAceptar.enabled = false;
+								}
+							});
+							
+							params[0] = "";
+							params[1] = "";
+							params[2] = "S";
+							wsCatCap.getInfoCapacitacion.send(5, params);
+						}
+						else{
+							du.closeWs(wsCatCap);
+							du.rCursor();
+							Application.application.desbloquear();
+							Alert.show("No se encontraron consultorias registradas.",titulo,4,null,null,global.iAlert);
+							btnAceptar.enabled = false;
+						}
+					});
+					params[0] = "";
+					params[1] = "";
+					params[2] = "S";
+					wsCatCap.getInfoCapacitacion.send(2, params);
+				}
+				else{
+					du.closeWs(wsCatCap);
+					du.rCursor();
+					Application.application.desbloquear();
+					Alert.show("No se encontraron programas registrados.",titulo,4,null,null,global.iAlert);
+					btnAceptar.enabled = false;
+				}
+			});
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(1, params);
+		}
+		
+		private function QuitaMontoFormato():void{
+			var occurs:int = txtCosto.text.split(",").length - 1;
+			
+			for(var i:int = 0; i<= occurs; i++){
+				txtCosto.text = txtCosto.text.replace(',','');
+			}
+		}
+		
+		private function seleccionaInstructor():void{
+			var wsCatCap:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCatCap(wsCatCap);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlInstructor = new XML(event.result);
+					
+				du.closeWs(wsCatCap);
+				du.rCursor();
+								
+				if (_xmlInstructor.elements().length() > 0){
+					formateaInstructor();
+					cbxInstructor.dataProvider = acInstructor;}
+			});
+			
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(3, params);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function valida():Boolean{
+			var iaNombre:Array = Validator.validateAll([vNombre]);
+		
+			if (iaNombre.length != 0){
+				Alert.show("Debe capturar el nombre del curso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfInicio.text == ""){
+				Alert.show("Debe de asignar la fecha inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFin.text == ""){
+				Alert.show("Debe de asignar la fecha fin.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var fInicio:Date = DateField.stringToDate(dtfInicio.text, "DD/MM/YYYY");
+			var fFin:Date = DateField.stringToDate(dtfFin.text, "DD/MM/YYYY");
+			var hoy:Date = new Date();
+			
+			if(fFin < fInicio ){
+				Alert.show("La fecha fin no puede ser menor a la fecha inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxHoraI.selectedIndex == 0){
+				Alert.show("Seleccione la hora inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMinutoI.selectedIndex == 0){
+				Alert.show("Seleccione los minutos de la hora inicio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxHoraF.selectedIndex == 0){
+				Alert.show("Seleccione la hora fin.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMinutoF.selectedIndex == 0){
+				Alert.show("Seleccione los minutos de la hora fin.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxPrograma.selectedIndex == 0){
+				Alert.show("Seleccione un programa.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxConsultoria.selectedIndex == 0){
+				Alert.show("Seleccione una consultoria.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxInstructor.selectedIndex == 0){
+				Alert.show("Seleccione un instructor.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxTipoCap.selectedIndex == 0){
+				Alert.show("Seleccione un tipo de capacitación.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxModalidad.selectedIndex == 0){
+				Alert.show("Seleccione una modalidad.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxNivel.selectedIndex == 0){
+				Alert.show("Seleccione un nivel.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxTipoPart.selectedIndex == 0){
+				Alert.show("Seleccione un tipo de participantes.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (infoDir.guarda == false){
+				Alert.show("Debe capturar los datos de la ubicación",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+				
+			if (txtCalle.text == ""){
+				Alert.show("Debe capturar los datos de la ubicación.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		private function validaMontoFormato():void{
+			txtCosto.text = global.formatoDecimal(Number(txtCosto.text).toString());
+		}
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Button id="btnAceptar" x="667" y="443" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="27"/>
+	<mx:Button id="btnCancelar" x="739" y="443" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="28"/>
+	<mx:Canvas x="10" y="10" width="392" height="195" styleName="canvasMod">
+		<mx:RadioButtonGroup id="rbgPagado"/>
+		<mx:Label x="20" y="15" text="Código:" id="lblCodigo"/>
+		<mx:Label x="16" y="50" text="Nombre:" id="lblNombre"/>
+		<mx:Label x="29" y="85" text="Inicio:" id="lblInicio"/>
+		<mx:Label x="234" y="85" text="Fin:" id="lblFin"/>
+		<mx:TextInput id="txtCodigo" x="69" y="13" width="61" maxChars="6" editable="false" tabIndex="1"/>
+		<mx:TextInput id="txtNombre" x="69" y="48" width="311" maxChars="100" tabIndex="2"/>
+		<mx:DateField x="69" y="83" width="116" id="dtfInicio" showToday="true" tabIndex="3" disabledColor="black"/>
+		<mx:DateField x="264" y="83" width="116" id="dtfFin" showToday="true" tabIndex="4" disabledColor="black"/>
+		<mx:CheckBox x="324" y="13" label="Activo" id="chkActivo" tabIndex="26"/>
+		<mx:Label x="124" y="121" text=":" id="lblS1" width="6"/>
+		<mx:Label x="4" y="121" text="Hora Inicio:" id="lblHorarioI"/>
+		<mx:Label x="208" y="121" text="Hora Fin:" id="lblHorarioI0"/>
+		<mx:Label x="10" y="155" text="Total de Horas:" id="lblTotHrs"/>
+		<mx:TextInput id="txtTotHrs" x="96" y="153" width="57" tabIndex="9" restrict="0-9"/>
+		<mx:Label x="204" y="155" text="Total de Participantes:" id="lblParticipantes"/>
+		<mx:TextInput id="txtTotPart" x="323" y="153" width="57" tabIndex="10" restrict="0-9"/>
+		<Data:CustomComboBox id="cbxHoraI" labelField="descripcion" x="69" y="118" width="54" disabledColor="black"/>
+		<Data:CustomComboBox id="cbxMinutoI" labelField="descripcion" x="131" y="118" width="54" disabledColor="black"/>
+		<mx:Label x="319" y="121" text=":" id="lblS0" width="6"/>
+		<Data:CustomComboBox id="cbxHoraF" labelField="descripcion" x="264" y="118" width="54" disabledColor="black"/>
+		<Data:CustomComboBox id="cbxMinutoF" labelField="descripcion" x="326" y="118" width="54" disabledColor="black"/>
+	</mx:Canvas>
+	<mx:Canvas x="410" y="10" width="392" height="195" styleName="canvasMod">
+		<mx:Label x="78" y="107" text="Calle:" id="lblCalle"/>
+		<mx:TextInput id="txtCalle" x="123.5" y="105" width="259.5" height="80" tabIndex="21" maxChars="200"/>
+		<Forms:FormDatosEfMuLo id="formDatosEfMuLo" x="10" height="175" y="10" width="370"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="209" width="392" height="227" styleName="canvasMod">
+		<mx:Label x="44" y="42" text="Consultoria" id="lblConsultoria"/>
+		<mx:Label x="49" y="72" text="Instructor:" id="lblInstructor"/>
+		<mx:Label x="49" y="12" text="Programa:" id="lblPrograma"/>
+		<mx:Label x="10" y="102" text="Tipo Capacitación:" id="lblTipoCap"/>
+		<mx:Label x="47" y="132" text="Modalidad:" id="lblModalidad"/>
+		<mx:Label x="72" y="162" text="Nivel:" id="lblNivel"/>
+		<mx:Label x="10" y="192" text="Tipo Participantes:" id="lblTipoPart"/>
+		<mx:ComboBox x="111" y="40" width="261" id="cbxConsultoria" labelField="descripcion" change="seleccionaInstructor()" tabIndex="12"></mx:ComboBox>
+		<mx:ComboBox x="111" y="70" width="261" id="cbxInstructor" labelField="descripcion" tabIndex="13"></mx:ComboBox>
+		<mx:ComboBox x="111" y="10" width="261" id="cbxPrograma" labelField="descripcion" tabIndex="11"></mx:ComboBox>
+		<mx:ComboBox x="111" y="100" width="261" id="cbxTipoCap" labelField="descripcion" tabIndex="14"></mx:ComboBox>
+		<mx:ComboBox x="111" y="130" width="261" id="cbxModalidad" labelField="descripcion" tabIndex="15"></mx:ComboBox>
+		<mx:ComboBox x="111" y="160" width="261" id="cbxNivel" labelField="descripcion" tabIndex="16"></mx:ComboBox>
+		<mx:ComboBox x="111" y="190" width="261" id="cbxTipoPart" labelField="descripcion" tabIndex="17"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Canvas x="410" y="209" width="393" height="61" styleName="canvasMod">
+		<mx:Label x="26.5" y="21" text="Costo del Curso:" id="lblCostoCurso"/>
+		<mx:TextInput id="txtCosto" x="119.5" y="19" width="81" tabIndex="22" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)"/>
+		<mx:RadioButton x="286.5" y="19" label="Si" id="rdbPagadoSi" groupName="rbgPagado" value="S" tabIndex="23"/>
+		<mx:RadioButton x="327.5" y="19" label="No" id="rdbPagadoNo" groupName="rbgPagado" value="N" tabIndex="24"/>
+		<mx:Label x="234.5" y="21" text="Pagado:" id="lblPagado"/>
+	</mx:Canvas>
+	<mx:Canvas x="410" y="274" width="393" height="162" styleName="canvasMod">
+		<mx:Label x="10" y="5" text="Observaciones:" id="lblObservaciones"/>
+		<mx:TextInput id="txtObservaciones" x="10" y="24" width="371" height="126" tabIndex="25"/>
+	</mx:Canvas>
+</mx:TitleWindow>

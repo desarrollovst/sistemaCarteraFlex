@@ -1,0 +1,215 @@
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	creationPolicy="all" creationComplete="initApp()" xmlns:control="Controls.*" 	
+	xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;	
+			import mx.effects.*;
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			public var openEffect:Effect = new Fade();
+					
+			private var _xmlVeh:XML =  new XML();
+			private var _xmlHist:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var tipoAccion:int;
+			private var region:String;
+			private var sucursal:String;
+			private var cdgveh:String;
+			private var usuAsig:String;
+			private var fecha:String;
+			private var kilometraje:Number;
+			private var fecAsig:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function activar(band:Boolean):void{
+				btnAgregar.enabled = band;
+				btnDesplegar.enabled = band;
+			}
+			
+			private function actualizarSegVeh(event:Event):void{
+				buscarInfo(2);
+			}
+			
+			private function agregarRegistro():void{
+				var item:Object = new Object;
+				item.region = region;
+				item.sucursal = sucursal;
+				item.codigo = cdgveh;
+				item.usuAsig = usuAsig;
+				item.fecAsig = fecAsig;
+				
+				var comMttoSeg:MttoSegVehiculo = new MttoSegVehiculo();
+				comMttoSeg = MttoSegVehiculo(PopUpManager.createPopUp(this,MttoSegVehiculo,true));
+				comMttoSeg.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSegVeh);
+				PopUpManager.centerPopUp(comMttoSeg);
+				comMttoSeg.init(item);
+			}
+			
+			private function buscarInfo(tipo:int):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				tipoAccion = tipo;
+				if(valida()){
+					region = comFiltroRS.obtieneRegion();
+					sucursal = comFiltroRS.obtieneSucursal();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{	
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if(tipoAccion == 1){
+							_xmlVeh = new XML(evt.result.toString());
+							
+							dgReporte.dataProvider = null;
+							
+							if(_xmlVeh.elements().length() > 0){
+								dgReporte.dataProvider = _xmlVeh.Table;
+								btnAgregar.enabled = false;	
+								btnDesplegar.enabled = false;
+								dgHistorialVeh.dataProvider = null;
+							}
+							else
+								Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						}	
+						else if(tipoAccion == 2){
+							_xmlHist = new XML(evt.result.toString());
+							
+							dgHistorialVeh.dataProvider = null;
+							
+							if(_xmlHist.elements().length() > 0)
+								dgHistorialVeh.dataProvider = _xmlHist.Table;
+							else
+								Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);							
+						}
+					});
+					params[0] = region;
+					params[1] = sucursal;
+					params[2] = cdgveh;
+					params[3] = tipoAccion;
+					wsCat.getListado.send(83, params);
+				}
+			}	
+			
+			public function cancelar():void{
+				btnAgregar.enabled = true;
+				dgReporte.enabled = true;
+			}
+			
+			private function formatoMonto(item:Object, column:DataGridColumn):String{    
+                var formato:String = "";
+                formato = global.formatoDecimal(item.KILOMETRAJE.toString());
+    			return formato;
+	        }
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				titulo = "Seguimiento de Vehículo";
+				lblTitulo.text = titulo.toUpperCase();
+				comFiltroRS.init(true);
+				btnAgregar.enabled = false;	
+				btnDesplegar.enabled = false;
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpia():void{
+				comFiltroRS.limpiar();
+				dgReporte.dataProvider = null;
+				btnAgregar.enabled = false;
+				btnDesplegar.enabled = false;
+				dgHistorialVeh.dataProvider = null;
+			}
+			
+			public function seleccionaRegistro():void{
+				dgHistorialVeh.dataProvider = null;
+				activar(false);
+				if (dgReporte.selectedIndex >= 0){
+					activar(true);
+					cdgveh = dgReporte.selectedItem.CODIGO;
+					usuAsig = dgReporte.selectedItem.USUARIO;
+					fecAsig = dgReporte.selectedItem.FASIGNACION;
+				}
+				else
+					activar(false);
+			}
+						
+			public function valida():Boolean{
+				if(comFiltroRS.cboRegion.selectedIndex <= 0){
+					Alert.show("Seleccione la región.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(comFiltroRS.cboSucursal.selectedIndex <= 0){
+					Alert.show("Seleccione la sucursal.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+		]]>
+	</mx:Script>
+	<mx:Canvas width="640" height="620" backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+		<mx:Canvas x="10" y="62" width="270" height="108" styleName="canvasMod" id="canvas1">
+			<control:CtrlFiltroInfoRS id="comFiltroRS" x="10" y="4" />
+		</mx:Canvas>
+		<mx:Label x="10" y="40" text="Criterios de Selección" width="124.25"/>
+		<mx:Label x="20" y="400" text="Regitro de Kilometraje" width="124.25" id="lblDatos" visible="false"/>
+		<mx:Canvas x="10" y="178" width="620" height="181" id="canvas2" styleName="canvasMod">
+			<Data:RowColorDataGrid itemClick="seleccionaRegistro()" id="dgReporte" sortableColumns="true" x="10" y="10" width="600" 
+				height="160" horizontalScrollPolicy="on" itemDoubleClick="buscarInfo(2)" doubleClickEnabled="true">
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO_VEHICULO" dataField="CODIGO" width="80" visible="false"/>
+					<mx:DataGridColumn headerText="MARCA" dataField="MARCA" width="90"/>
+					<mx:DataGridColumn headerText="MODELO" dataField="MODELO" width="80"/>
+					<mx:DataGridColumn headerText="SERIE" dataField="SERIE" width="150"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="380"/>
+					<mx:DataGridColumn headerText="NOMBRE DEL USUARIO" dataField="NOM_USUARIO" width="230"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>	
+		<mx:Button id="btnAgregar" x="505" y="143" icon="@Embed(source='assets/images/add.png')" click="agregarRegistro()" toolTip="Agregar Registro" width="40"/>
+		<mx:Button id="limpiar" x="553" y="143"  label="Limpiar" click="limpia()" enabled="true" height="27"/>
+		<mx:Button x="457" y="144" click="buscarInfo(1)" id="btnBuscar" toolTip="Buscar" icon="@Embed(source='assets/images/iconBusq.png')" width="40"/>
+		<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="10" y="400" width="620" height="200" id="canvas3" styleName="canvasMod">
+			<Data:RowColorDataGrid id="dgHistorialVeh" sortableColumns="true" x="10" y="10" width="600.05" visible="true" height="180" horizontalScrollPolicy="on">
+				<Data:columns>
+					<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="80" />
+					<mx:DataGridColumn headerText="KILOMETRAJE" dataField="KILOMETRAJE" width="100" labelFunction="{formatoMonto}"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Button x="581" y="367" click="buscarInfo(2)" id="btnDesplegar" toolTip="Desplegar Información" icon="@Embed(source='assets/images/folder.png')" width="40"/>
+	</mx:Canvas>
+</mx:Canvas>

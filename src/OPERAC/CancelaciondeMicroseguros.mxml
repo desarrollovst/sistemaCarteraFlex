@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Cancelacion de Microseguros-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;			
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;  
+			          
+			private var _xmlAcred:XML = new XML();
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			private var acred:Array;
+			private var cdgpms:Array;
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var codigo:String;
+			private var ciclo:String;
+			private var clns:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+		
+			private function calculaRegSel():Number{
+				var listaAcred:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+				var cont:Number = 0;
+				
+				for (var i:int = 0; i < listaAcred.length; i++){
+					if(listaAcred[i].REGISTRO == true)
+						cont++;
+				}
+				return cont;
+			}
+		
+			private function buscarAseg():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodigo.text != "" && txtCiclo.text != ""){
+					codigo = txtCodigo.text;
+					ciclo = txtCiclo.text;
+					clns = "G";
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlAcred = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+				
+						if (_xmlAcred.elements().length() > 0){
+							formateaListaAcred();
+							dgInfo.dataProvider = acredObj;
+						}		
+						else
+							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					}); 
+					params[0] = codigo;
+					params[1] = ciclo;
+					params[2] = clns;
+					params[3] = Application.application.U_ID;
+					wsCat.getInfoGeneral.send(15, params);
+				}	
+				else
+					Alert.show("Debe capturar el código de grupo y ciclo.",titulo,4,null,null,global.iAlert);
+			}
+			
+			private function enviar():void{
+				if(valida()){
+					formateaRegAcred();
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					wsMS.setOmiteMicroseguro.send(codigo, ciclo, clns, acred, cdgpms, Application.application.U_ID);
+				}
+			}
+			
+			private function formateaListaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.REGISTRO = false;
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMCL = _xmlAcred.Table[i].NOMCL;
+					oItem.CDGPMS = _xmlAcred.Table[i].CDGPMS;
+					oItem.NOMPMS = _xmlAcred.Table[i].NOMPMS;
+					oItem.NOMNS = _xmlAcred.Table[i].NOMNS;
+					item.push(oItem);
+				}
+				acredObj = new ArrayCollection(item);
+			}
+			
+			private function formateaRegAcred():void{
+				var n:int;
+				var cont:int;
+				var listaAcred:ArrayCollection = dgInfo.dataProvider as ArrayCollection;  
+				
+				cont = listaAcred.length;
+				acred = new Array;
+				cdgpms = new Array;
+				
+				n = 0;
+				
+				for(var i:int = 0; i < cont; i++){
+					if (listaAcred[i].REGISTRO == true){
+						acred[n] = listaAcred[i].CDGCL;
+						cdgpms[n] = listaAcred[i].CDGPMS;
+						n++;
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Cancelación de Microseguro";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			private function limpiar():void{
+				txtCodigo.text = "";
+				txtCiclo.text = "";
+				dgInfo.dataProvider = null;	
+				lblControl.text = "";
+			}
+			
+			public function seleccionaRegAcred(event:Event):void{
+				var ind:int = dgInfo.selectedIndex;
+				var vScroll:Number = dgInfo.verticalScrollPosition;
+				acredObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+			}
+			
+			private function valida():Boolean{
+				if(calculaRegSel() == 0){	
+					Alert.show("Seleccione al menos un registro para realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="530" height="480">
+		<mx:Canvas id="cnvDetalle" x="10" y="92" width="510" height="348" styleName="canvasMod" visible="true" enabled="true">
+			<mx:DataGrid id="dgInfo" x="10" y="10" width="488" height="326" horizontalScrollPolicy="auto">
+				<mx:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.seleccionaRegAcred(event)" width="25" fontSize="10" verticalCenter="0"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+					<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="210"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="NOMNS" width="110"/>
+					<!--<mx:DataGridColumn headerText="TIPO PRODUCTO" dataField="NOMPMS" width="110"/>-->
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvEncabezado" x="48" y="39" width="434" height="45" styleName="canvasMod">
+			<mx:Label id="lblCodGrupo" x="51.7" y="12" text="Código:" width="50" textAlign="right"/>
+			<mx:Label id="lblCiclo" x="185.7" y="12" text="Ciclo:" width="45" textAlign="right"/>
+			<mx:TextInput id="txtCodigo" x="109.7" y="10" width="68" enter="buscarAseg()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="238.7" y="10" width="50" enter="buscarAseg()" maxChars="2" restrict="0-9"/>
+			<mx:Button id="btnBuscar" x="318.25" y="10" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAseg()" toolTip="Buscar Acreditados" />
+		</mx:Canvas>
+		<mx:Button id="btnCancelar" x="352" y="445" label="Cancelar" click="enviar()" toolTip="Cancelar" width="80"/>
+		<mx:Button id="btnLimpiar" x="440" y="445" label="Limpiar" click="limpiar()" toolTip="Limpiar" width="80"/>
+		<mx:Label id="lblControl" x="10" y="447" width="294" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

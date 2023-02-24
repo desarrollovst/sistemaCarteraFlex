@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" height="240">
+	
+	<mx:Validator id="codAseV" source="{txtAsesor}" property="text" 
+	invalid="{txtAsesor.setFocus()}" triggerEvent="" requiredFieldError="Código de Asesor Requerido"/>
+	<mx:Validator id="fecIniV" source="{dtfFecIni}" property="text" 
+	invalid="{dtfFecIni.setFocus()}" triggerEvent="" requiredFieldError="Fecha Inicio Requerida"/>
+	<mx:Validator id="montoV" source="{txtMonto}" property="text" 
+	invalid="{txtMonto.setFocus()}" triggerEvent="" requiredFieldError="Monto Requerido"/>
+	<mx:Validator id="fecFinV" source="{dtfFecFin}" property="text" 
+	invalid="{dtfFecFin.setFocus()}" triggerEvent="" requiredFieldError="Fecha Fin Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosConvenio;
+		import Data.EventConvenio;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosConvenio;
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoConvenio(codAse:String,fecIni:String,fecFin:String,monto:Number):void{
+			init();
+			tipoAccion = 2; 
+			
+			info = new DatosConvenio();
+			//Datos del convenio de Asesor
+			info.cdgAse = codAse;
+			info.fecIni = fecIni;
+			info.fecFin = fecFin;
+			info.monto = monto;
+			
+			llenaRegistros();
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosConvenio();
+				
+			var invalidArray:Array = Validator.validateAll([codAseV, fecIniV, fecFinV, montoV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgAse = txtAsesor.text;
+				info.fecIni = dtfFecIni.text;
+				info.fecFin = dtfFecFin.text;
+				info.monto = Number(txtMonto.text);
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function guardaConvenio():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionConvenio);
+			wsMS.setAccionConvenio.send(tipoAccion, info.cdgAse, info.fecIni, info.fecFin, info.monto);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			this.title = "Tipo de Asesor";
+			titulo = "Mantenimiento de Tipo de Asesor";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 500;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			txtAsesor.editable = false;
+		
+			txtAsesor.text = info.cdgAse;
+			dtfFecIni.text = info.fecIni;
+			dtfFecFin.text = info.fecFin;
+			txtMonto.text = info.monto.toString();
+		}
+			
+		public function registraInfoConvenio():void{
+			init();
+			tipoAccion = 1;
+			
+			info = null;
+			
+			txtAsesor.setFocus();
+			txtAsesor.editable = true;
+		}
+		
+		private function setAccionConvenio(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionConvenio);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaDatosConv(event:EventConvenio):void{
+			info = event.customProp;
+		}
+		
+		private function validaFinal():void{
+			if (info.guarda == true)
+				guardaConvenio();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="338" height="145" styleName="canvasMod">
+		<mx:Label id="lblCodAse" x="61" y="12" text="Nómina Asesor"/>
+		<mx:TextInput id="txtAsesor" x="148" y="10" width="80" maxChars="2"/>
+		<mx:Label id="lblFecIni" x="75" y="44" text="Fecha Inicio:"/>
+		<mx:DateField id="dtfFecIni" x="148" y="42" width="100"/>
+		<mx:Label id="lblFecFin" x="85" y="76" text="Fecha Fin:"/>
+		<mx:DateField id="dtfFecFin" x="148" y="74" width="100"/>
+		<mx:Label id="lblMonto" x="85" y="108" text="Incentivo:"/>
+		<mx:TextInput id="txtMonto" x="148" y="106" width="80"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="163" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="163" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

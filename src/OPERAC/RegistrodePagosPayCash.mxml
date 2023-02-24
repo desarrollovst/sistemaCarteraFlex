@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="140" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:SetProperty name="width" value="610"/>
+			<mx:SetProperty name="height" value="480"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvTotal" x="296" y="30" width="300" height="440" styleName="canvasMod">
+					<mx:Label id="lblEtiqNumero" x="5" y="10" text="NÚMERO / MONTO MOVIMIENTOS:" fontSize="16"/>
+					<mx:Label id="lblNumero" x="5" y="33" width="283" height="40" textAlign="center" fontSize="32"/>
+					<mx:Label id="lblEtiqPagos" x="6" y="81" text="DEPÓSITOS CRÉDITOS:" fontSize="16"/>
+					<mx:Label id="lblPagos" x="5" y="104" width="253" height="40" textAlign="center" fontSize="32"/>
+					<mx:Label id="lblEtiqGL" x="5" y="152" text="DEPÓSITOS GARANTÍAS:" fontSize="16"/>
+					<mx:Label id="lblGL" x="5" y="175" width="253" height="40" textAlign="center" fontSize="32"/>
+					<mx:Label id="lblEtiqNoIden" x="5" y="223" text="NO IDENTIFICADOS:" fontSize="16"/>
+					<mx:Label id="lblNoIden" x="5" y="246" width="253" height="40" textAlign="center" fontSize="32"/>
+					<mx:Label id="lblEtiqMovsDup" x="5" y="294" text="DEPÓSITOS DUPLICADOS DÍA:" fontSize="16"/>
+					<mx:Label id="lblMovsDup" x="5" y="318" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(0)"/>
+					<mx:Label id="lblEtiqMovsDupAyer" x="5" y="366" text="DEPÓSITOS DUPLICADOS ANT:" fontSize="16"/>
+					<mx:Label id="lblMovsDupAyer" x="5" y="390" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(1)"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="296" y="11" text="Resultado" width="124.25"/>
+			</mx:AddChild>
+			<mx:RemoveChild target="{button1}"/>
+			<mx:SetProperty target="{button2}" name="x" value="115.5"/>
+			<mx:SetProperty target="{button2}" name="y" value="101.5"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var fecha:String;
+			private var info:String;
+			private var usuario:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var _xmlRep:XML = new XML();
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de Pagos PayCash";
+				lblTitulo.text = titulo.toUpperCase();
+				usuario = Application.application.U_ID;
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlAdCred.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function initConexionRep():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				if (currentState == "resultado")
+					currentState = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+			
+			private function mostrarPagosDup(tipo:int):void{
+				var objMtto:Sprite = new Sprite();
+				objMtto = this;	
+				var comDetalle:DetallePagosDup = new DetallePagosDup();
+				comDetalle = DetallePagosDup(PopUpManager.createPopUp(objMtto,DetallePagosDup,true));
+				PopUpManager.centerPopUp(comDetalle);
+				comDetalle.init(tipo.toString(), this.fecha);	
+			}
+			
+			private function registrar():void{
+				var movimientos:Number = 0;
+				var montoMovs:Number = 0;
+				if(validar()){			
+					this.fecha = dtfFecha.text;
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						if(res.substr(0,1) == "1"){
+							initConexionRep();
+							du.sCursor();
+							
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+								_xmlRep = new XML(evt.result.toString());
+								
+								du.rCursor();
+								du.closeWs(wsMS);
+								Application.application.desbloquear();
+								
+								if(_xmlRep.elements().length() > 0){
+									currentState = "resultado";
+									movimientos = Number(_xmlRep.Table[0].MOVIMIENTOS);
+									montoMovs = Number(_xmlRep.Table[0].MONTO_MOVS);
+									lblNumero.text = movimientos.toString() + ' - ' + global.formatoMoneda(montoMovs.toString());
+									lblPagos.text = Number(_xmlRep.Table[0].PAGOS).toString();
+									lblGL.text = Number(_xmlRep.Table[0].GL).toString();
+									lblNoIden.text = Number(_xmlRep.Table[0].NOIDEN).toString();
+									lblMovsDup.text = Number(_xmlRep.Table[0].MOVS_DUP).toString();
+									lblMovsDupAyer.text = Number(_xmlRep.Table[0].MOVS_DUP_ANT).toString();
+								}
+								else
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							});
+							wsMS.getRepPagosPayCash.send(fecha);
+						}
+						else{
+							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);	
+							Application.application.desbloquear();
+						}
+					});
+					wsMS.setRegistroPagosPayCash.send(fecha, usuario);
+				}
+			}
+				
+			private function validar():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de los depósitos.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53" width="264.05" height="40.5" styleName="canvasMod" id="canvas1">
+		<mx:Label x="55.5" y="8.5" text="Fecha:" textAlign="right" id="label1"/>
+		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="73.5" y="105" label="Registrar" click="registrar()" id="button1"/>
+	<mx:Button x="158.5" y="105" label="Limpiar" click="limpiar()" id="button2"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" id="label2"/>
+</mx:Canvas>

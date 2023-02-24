@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="250" xmlns:Data="Data.*">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="descripcionV" source="{txtDescripcion}" property="text" 
+	invalid="{txtDescripcion.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:NumberValidator id="critV" source="{cboCritRiesgo}" property="selectedIndex" 
+	invalid="{cboCritRiesgo}" minValue="1" triggerEvent="" lowerThanMinError="Criterio de Riesgo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosTipoPers;
+		import Data.EventTipoPers;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosTipoPers;
+		
+		private var _xmlTipo:XML = new XML();
+		private var _xmlCrit:XML = new XML();
+		
+		private var critObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaTipoPers(codigo:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			tipoAccion = 2; 
+			this.title = "Edición " + titulo;
+			info = new DatosTipoPers();
+			//Datos del Tipo de Persona
+			du.initWsCat(wsCat);
+			du.sCursor();
+	
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlTipo = new XML(evt.result.toString()); 
+			
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlTipo.elements().length() > 0){
+					llenaRegistros();
+				}
+			});
+			params[0] = codigo;
+			//Obtiene detalle de informacion del Tipo de Persona
+			wsCat.getInfoRegistro.send(28, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([codigoV, descripcionV, critV]);
+		
+			if(invalidArray.length == 0){	
+				info.codigo = txtCodigo.text;
+				info.descripcion = txtDescripcion.text;
+				info.cdgCrit = cboCritRiesgo.selectedItem.id;
+				info.guarda = true;
+			}
+			else
+				info.guarda = false;
+			validaFinal();
+		}
+		
+		private function formateaCriterio():void{
+			var i:int;
+			var cont:int = _xmlCrit.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "0";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlCrit.Table[i].CODIGO.toString();
+				oItem.descripcion = _xmlCrit.Table[i].DESCRIPCION.toString();
+				item.push(oItem);
+			}
+			critObj = new ArrayCollection(item);
+		}
+		
+		public function guardaTipoPers():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoPers);
+			wsMS.setAccionTipoPers.send(tipoAccion, info.codigo, info.descripcion, info.cdgCrit);	
+		}
+	
+		public function init(tipo:int, codigo:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Tipo de Persona";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 500;
+			openEffect.play([this]);
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+	
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlCrit = new XML(evt.result.toString()); 
+			
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlCrit.elements().length() > 0){
+					formateaCriterio();
+					cboCritRiesgo.dataProvider = critObj;
+				}
+				if(tipo == 1)
+					registraTipoPers();
+				else if(tipo == 2)
+					cargaTipoPers(codigo);
+			});
+			params[0] = "TP";
+			wsCat.getListado.send(44, params);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			txtCodigo.setFocus();
+			txtCodigo.editable = false;
+			
+			txtCodigo.text = _xmlTipo.Table[0].CODIGO;
+			txtDescripcion.text = _xmlTipo.Table[0].DESCRIPCION;
+			
+			for(var i:int = 0; i < critObj.length; i++){
+				if(critObj[i].id == _xmlTipo.Table[0].CDGCRRI){
+					cboCritRiesgo.selectedIndex = i;
+					break;		
+				}
+			}
+		}
+			
+		public function registraTipoPers():void{
+			tipoAccion = 1;
+			this.title = "Nuevo " + titulo;
+			info = new DatosTipoPers();
+			
+			txtCodigo.setFocus();
+			txtCodigo.editable = true;
+		}
+		
+		private function setAccionTipoPers(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoPers);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosTipo(event:EventTipoPers):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaTipoPers();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="380" height="160" styleName="canvasMod">
+		<mx:Label id="lblCodigo" x="36.75" y="12" text="Código:"/>
+		<mx:Label id="lblDescripcion" x="12.75" y="44" text="Descripción:"/>
+		<mx:Canvas x="10" y="101" width="358" height="40" styleName="canvasMod">
+			<Data:CustomComboBox id="cboCritRiesgo" labelField="descripcion" x="10" y="7" width="336"/>
+		</mx:Canvas>
+		<mx:Label id="lblCriterio" x="10" y="82" text="Criterio de Riesgo"/>
+		<mx:TextInput id="txtCodigo" x="85.75" y="10" width="50" maxChars="3"/>
+		<mx:TextInput id="txtDescripcion" x="85.75" y="42" width="282.25"/>
+		</mx:Canvas>
+	<mx:Button id="btnAceptar" x="302" y="178" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="350" y="178" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

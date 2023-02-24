@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="398" height="364" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<!-- Informe que obtiene los promedios por mes y por sucursal -->
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+					
+			private var du:Utils;
+			private var fecha:String;
+			private var titulo:String;
+			private var global:Globales;
+			private var rep:String;
+			
+			private var _xmlReg:XML =  new XML();
+			private var _xmlSucursal:XMLList = new XMLList;
+			
+			private var regObj:ArrayCollection = new ArrayCollection();
+			private var sucursalObj:ArrayCollection = new ArrayCollection();
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}
+								
+			public function cargaRegion():void{
+				_xmlReg = Application.application._xmlReg;
+				formateaRegion();
+				cboRegion.dataProvider = regObj;
+			}		
+			
+			public function cargaSucursal():void{
+				_xmlSucursal = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+				formateaSucursal();
+				cboSucursal.dataProvider = sucursalObj;
+			}
+			
+			private function formateaSucursal():void{
+				var cont:int = _xmlSucursal.length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				sucursalObj.removeAll();
+				sucursalObj.refresh();	
+				sucursalObj.addItem(agregaInicial("000", "--Seleccionar--"))
+				sucursalObj.source = sucursalObj.source.concat(item);
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlSucursal.CODIGO[i].toString();
+					oItem.nombre = _xmlSucursal.NOMBRE[i].toString();
+					item.push(oItem);
+				}
+				sucursalObj.source = sucursalObj.source.concat(item);
+			}			
+			
+			private function formateaRegion():void{
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				regObj.removeAll();
+				regObj.refresh();	
+				regObj.addItem(agregaInicial("000", "--Seleccionar--"))
+				
+				for(var i:int = 0; i < cont; i++){
+					if(_xmlReg.Table[i].CODIGO != '004'){
+						oItem = new Object();
+						oItem.codigo = _xmlReg.Table[i].CODIGO;
+						oItem.nombre = _xmlReg.Table[i].NOMBRE;
+						item.push(oItem);
+					}
+				}
+				regObj.source = regObj.source.concat(item);
+			}
+			
+			private function generar():void{
+				if(valida()){
+					if(rep != "-1"){
+						var consulta:String = global.urlInf;
+						var id:String = "&id=" + rep;
+						var mes:String = "&mes=" + cbxMes.selectedItem.id;
+						var anio:String = "&anioI=" + cbxAnio.selectedItem.id;
+						var sucursal:String = "&su=" + cboSucursal.selectedItem.codigo;
+						var opcion:String = "&op=" + cbxDiasMora.selectedItem.id;
+						consulta = consulta + id + mes + anio + sucursal + opcion;
+						
+						var request:URLRequest = new URLRequest(consulta); 
+						navigateToURL(request,"_blank");
+					}
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "7";
+				titulo = "Informe - Indicadores Prom. Mensual por Sucursal";
+				lblTitulo.text = titulo.toUpperCase();
+				
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+				
+				cargaRegion();
+								
+				sucursalObj.removeAll();
+				sucursalObj.refresh();	
+				sucursalObj.addItem(agregaInicial("000", "--Seleccionar--"))
+				cboSucursal.dataProvider = sucursalObj;
+				
+				var oItem:Object;
+				var item:Array = new Array();
+				var acDiasMora:ArrayCollection;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Todos--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Menor o Igual a 60 días";
+				item.push(oItem);
+								
+				acDiasMora = new ArrayCollection(item);
+				cbxDiasMora.dataProvider = acDiasMora;
+				
+				cbxDiasMora.selectedIndex = 0;
+			}		
+			
+			private function modificaRegion():void{
+				cargaSucursal();
+			}
+		
+			public function valida():Boolean{
+				if (cboRegion.selectedIndex == 0){
+					Alert.show("Seleccione la región.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				else if (cboSucursal.selectedIndex == 0){
+					Alert.show("Seleccione la sucursal.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxAnio.selectedIndex == 0){
+					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="370" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="370.05" height="267.5" styleName="canvasMod">
+		<mx:Label x="33.8" y="10" text="Región:" width="63.800003" height="20"/>
+		<mx:ComboBox id="cboRegion" x="33.8" y="29" labelField="nombre" change="modificaRegion()" width="204.4"></mx:ComboBox>
+		<mx:Label x="33.8" y="59" text="Sucursal:" width="81" height="23"/>
+		<mx:ComboBox id="cboSucursal" x="33.8" y="80" labelField="nombre" width="204.4"></mx:ComboBox>
+		<mx:Label x="33.8" y="157" text="Año:" width="41" height="20"/>
+		<mx:ComboBox x="33.8" y="176" width="72" id="cbxAnio" labelField="id"></mx:ComboBox>
+		<mx:Label x="33.8" y="109" text="Mes:" width="41" height="20"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="33.8" y="128" width="111"/>
+		<mx:Label x="34.3" y="207" text="Dias de Mora:" width="81" height="20" id="lblDiasMora"/>
+		<mx:ComboBox x="33.8" y="224.5" id="cbxDiasMora" labelField="nombre"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="317" y="329" label="Generar" click="generar()"/>
+</mx:Canvas>

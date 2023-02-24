@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" backgroundAlpha="1.0" creationPolicy="all"
+	creationComplete="initApp()"  xmlns:Data="Data.*" x="12.5" y="42">
+
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+		import Data.DatosBitacoraEliminacion;
+		import Data.DatosBitacoraEliminacionDatos;
+         
+        private var infoDBE:DatosBitacoraEliminacion;
+        private var infoDBED:DatosBitacoraEliminacionDatos; 
+        
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		private var du:Utils;
+      	
+      	private var orgFond:Array;
+      	private var lineaCred:Array;
+      	private var disp:Array;
+      	private var frepSdo:Array;
+      	private var grupo:Array;
+      	private var ciclo:Array;
+      	private var acre:Array;
+      	
+        private var infoObj:ArrayCollection = new ArrayCollection();
+		private var _xmlRep:XML = new XML();
+		private var _xmlDatos:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (*.xls)", "*.xls");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        private function buscaMonto():void{
+        	if(dgInfo.rowCount > 0){
+        		if(formateaInfo()){
+        		
+        		infoDBE = new DatosBitacoraEliminacion;
+        		infoDBED = new DatosBitacoraEliminacionDatos;
+        		
+        		var tipo:Number = 2; // CARGA EL MONTO A ELIMINAR
+        		infoDBE.codigo = "";
+        		infoDBE.fecha = "";
+        		//infoDBE.cdgpe = "HUGO";
+        		infoDBE.cdgpe = Application.application.U_ID;
+        		infoDBE.descricpcion = "";
+        		infoDBE.cdgib = "";
+        		infoDBE.cdgcb = "";
+        		infoDBE.felimina = dtFecha.text;
+        		
+        		infoDBED.codigo = "";
+        		infoDBED.cdgbiteli = "";
+        		infoDBED.estatus = "";
+        		        		
+	        	initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				//Servicio invocado en la etapa de marca de clientes mediante archivo
+				wsMS.addEventListener(ResultEvent.RESULT, cargaMonto);
+				wsMS.setBajaFondeoArchivo.send(infoDBE.codigo, infoDBE.fecha, infoDBE.cdgpe, infoDBE.descricpcion, infoDBE.cdgib
+										, infoDBE.cdgcb, infoDBE.felimina, orgFond, lineaCred, disp, acre, grupo, ciclo, frepSdo
+										, infoDBED.estatus, tipo);
+											
+				}
+        	}
+        }
+        
+        public function cargarInfo():void{
+        	if(valida()){
+	        	if(formateaInfo()){
+	        		
+	        		infoDBE = new DatosBitacoraEliminacion;
+	        		infoDBED = new DatosBitacoraEliminacionDatos;
+	        		
+	        		var tipo:Number = 1; // ALTA EN BITACORA_ELIMINA
+	        		infoDBE.codigo = "";
+	        		infoDBE.fecha = "";
+	        		//infoDBE.cdgpe = "HUGO";
+	        		infoDBE.cdgpe = Application.application.U_ID;
+	        		infoDBE.descricpcion = "ELIMINA_FONDEO_ABC_MANUAL";
+	        		infoDBE.cdgib = "";
+	        		infoDBE.cdgcb = "";
+	        		infoDBE.felimina = dtFecha.text;
+	        		
+	        		infoDBED.codigo = "";
+	        		infoDBED.cdgbiteli = "";
+	        		infoDBED.estatus = "EN PROCESO";
+	        		        		
+		        	initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					//Servicio invocado en la etapa de marca de clientes mediante archivo
+					wsMS.addEventListener(ResultEvent.RESULT, BuscaListaBitacora);
+					wsMS.setBajaFondeoArchivo.send(infoDBE.codigo, infoDBE.fecha, infoDBE.cdgpe, infoDBE.descricpcion, infoDBE.cdgib
+											, infoDBE.cdgcb, infoDBE.felimina, orgFond, lineaCred, disp, acre, grupo, ciclo, frepSdo
+											, infoDBED.estatus, tipo);
+	        	}
+        	}
+        }
+        
+        private function cargaMonto(event:ResultEvent):void{
+        	wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, cargaMonto);
+			wsMS = null;
+			
+        	var res:String = event.result.toString();
+        	lblMonto.text = "Monto asignado: " + global.formatoMoneda(res.toString());
+        }
+        
+        private function valida():Boolean{
+        	if(dtFecha.text == ""){
+        	 	Alert.show("Seleccione la fecha para realizar el proceso.",titulo,4,null,null,global.iAlert);
+        	 	return false;
+        	}
+        	return true;
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);
+		}
+        
+        public function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	var i:int;
+			orgFond = new Array;
+			lineaCred = new Array;
+			disp = new Array;
+			acre = new Array;
+			grupo = new Array;
+			ciclo = new Array;
+			frepSdo = new Array;
+			
+			for (i = 0; i < info.length; i++){
+				orgFond[i] = info[i].CDGORF;
+				lineaCred[i] = info[i].CDGLC;
+				disp[i] = info[i].CDGDISP;
+				acre[i] = info[i].CDGCL;
+				grupo[i] = info[i].CDGNS;
+				ciclo[i] = info[i].CICLO;
+				frepSdo[i] = info[i].FREPSDO;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.load();
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+               
+        private function fileReference_Complete(event:Event):void{
+            try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            dtFecha.visible = true;
+	            lblFecha.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 1; row<noOfRows;row++)
+	                    {
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0;col<noOfColumns;col++)
+	                        {
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell!=null)
+	                            {
+	                            	cellValue =(cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	}
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = (noOfRows - 1) + " Registro(s) Encontrado(s)";
+	                    buscaMonto();
+	                }
+	            }
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+	            dtFecha.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.CDGORF = cellValue;
+            else if(index == 1)
+                cellObject.CDGLC = cellValue;
+            else if(index == 2)
+                cellObject.CDGDISP = cellValue;
+            else if(index == 3)
+            	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
+                cellObject.FREPSDO = global.formatoFechaExcel(Number(cellValue));
+            else if(index == 4)
+                cellObject.CDGNS = cellValue;
+            else if(index == 5)
+                cellObject.CICLO = cellValue;
+            else if(index == 6)
+                cellObject.CDGCL = cellValue;                
+        }
+      
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Baja Archivo Asignación Fondeo";
+	      	lblTitulo.text = titulo.toUpperCase();  
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}	
+	    
+	    private function BuscaListaBitacora(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, BuscaListaBitacora);
+			wsMS = null;
+			
+			var res:String = event.result.toString(); //cadena de vuelta que contiene el ultimo codigo ingresado en la base de datos
+			var vCodigo:String = res.slice(-6, res.length); // Obtiene el codigo que se acaba de insertar para realizar la busqueda
+			
+			if (res.substr(0,1) == "1"){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				dgInfo.dataProvider = null;	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();
+					
+					if(_xmlRep.elements().length() > 0){
+						var cont:int = _xmlRep.elements().length();	
+						dgInfo.dataProvider = _xmlRep.Table;
+						lblResultado.text = cont + " Registro(s) Procesado(s)";
+						btnCargar.visible = false;
+						dtFecha.visible = false;
+						lblFecha.visible = false;
+						btnExportar.visible = true;
+					}
+					else
+						Alert.show("No se puede consultar el reporte.",titulo,4,null,null,global.iAlert);
+									
+				});
+				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de fondeo
+				wsMS.getRepBitacoraElimina.send(vCodigo);	 
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);			
+		}
+	     
+    ]]>
+  	</mx:Script>
+	<mx:Canvas x="0" y="0" width="710" height="608" backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+		<mx:Canvas x="10" y="41" width="689" height="557" styleName="canvasMod">
+			<mx:DataGrid id="dgInfo" x="10" y="10" width="667" height="353" horizontalScrollPolicy="auto">
+				<mx:columns>
+					<mx:DataGridColumn headerText="FONDEADOR" dataField="CDGORF" width="90"/>
+					<mx:DataGridColumn headerText="LINEA CRÉDITO" dataField="CDGLC" width="100"/>
+					<mx:DataGridColumn headerText="DISPOSICIÓN" dataField="CDGDISP" width="90"/>
+					<mx:DataGridColumn headerText="FECHA CALCULO" dataField="FREPSDO" width="110"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+					<mx:DataGridColumn headerText="ACREEDOR" dataField="CDGCL" width="80"/>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="80"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="294.5" y="465" click="exportar()"/>
+			<mx:Label id="lblResultado" x="227.5" y="372" width="232" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+			<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="395.5" y="428"/>
+			<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="227.5" y="428" width="160"/>
+			<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="289.5" y="502" click="cargarInfo()"/>
+			<mx:Label x="257" y="464" text="Fecha:" id="lblFecha"/>
+			<mx:DateField x="303" y="465" width="127" enabled="false" id="dtFecha" showToday="true"/>
+			<mx:Label id="lblMonto" x="227.5" y="399" width="232" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

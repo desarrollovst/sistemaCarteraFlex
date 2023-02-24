@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="394" height="178">
+	<mx:states>
+		<mx:State name="control">
+			<mx:RemoveChild target="{lblCURP}"/>
+			<mx:RemoveChild target="{txtCURP}"/>
+			<mx:SetProperty target="{lblCausa}" name="x" value="18.25"/>
+			<mx:SetProperty target="{lblCausa}" name="y" value="13"/>
+			<mx:SetProperty target="{cboCausa}" name="x" value="123.25"/>
+			<mx:SetProperty target="{cboCausa}" name="y" value="10"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="50"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="68"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="68"/>
+			<mx:SetProperty name="height" value="140"/>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+		[Event(name="cerrar", type="cerrar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var _xmlCausa:XML = new XML();
+		
+		public var causaObj:ArrayCollection = new ArrayCollection();
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var tipoCausa:String;
+		public var titulo:String;
+		
+		public function cargaInfoListaNegra(curp:String, causa:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			
+			txtCURP.editable = false;
+			txtCURP.text = curp;
+			
+			for(var i:int = 0; i < causaObj.length; i++){
+				if(causa == causaObj[i].id){
+					cboCausa.selectedIndex = i;
+					break;
+				}		
+			}
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+            dispatchEvent(new Event("cerrar"));
+		}
+	
+		public function enviar():void{
+			if(valida()){
+				if(tipoAccion == 3 || tipoAccion == 4){
+					dispatchEvent(new Event("enviar"));
+					var playReverse:Boolean = true;   
+		            closeEffect.duration = 500;
+		            closeEffect.play([this], playReverse);
+		            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+				}
+				else
+					guardaListaNegra()
+			}
+		}
+		
+		private function formateaCausa():void{
+			var cont:int = _xmlCausa.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+				
+			oItem = new Object();
+			oItem.id = "0";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlCausa.Table[i].CODIGO;	
+				oItem.desc = _xmlCausa.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			causaObj = new ArrayCollection(item);
+		}
+		
+		public function guardaListaNegra():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionListaNegra);
+			wsMS.setAccionListaNegra.send(tipoAccion, txtCURP.text, cboCausa.selectedItem.id, Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, curp:String = "", causa:String = ""):void{
+			//tipo = 1 registro de lista negra
+			//tipo = 2 edicion de informacion
+			//tipo = 3 la ventana se utiliza para obtener datos de causa de alta
+			//tipo = 4 la ventana se utiliza para obtener datos de causa de baja
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Lista Negra";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1 || tipo == 2 || tipo == 3)
+				tipoCausa = "A";
+			else if(tipo == 4)
+				tipoCausa = "B";			
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlCausa = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlCausa.elements().length() > 0){
+					formateaCausa();
+					cboCausa.dataProvider = causaObj;
+				}
+				if(tipo == 1)
+					registraListaNegra();
+				else if(tipo == 2)
+					cargaInfoListaNegra(curp, causa);
+				else if(tipo == 3 || tipo == 4){
+					currentState = "control";
+					this.title = "Lista Negra";
+					tipoAccion = tipo; 	
+				}	
+			});
+			params[0] = tipoCausa;
+			wsCat.getCatalogoGral.send(30, params);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function registraListaNegra():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			
+			txtCURP.setFocus();
+			txtCURP.editable = true;
+		}
+		
+		private function setAccionListaNegra(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionListaNegra);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function valida():Boolean{
+			if(currentState == ""){
+				if (txtCURP.text == ""){
+					Alert.show("Debe capturar la CURP del acreditado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+			}
+			if (cboCausa.selectedIndex == 0){
+				Alert.show("Debe seleccionar la causa de Lista Negra.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="374" height="80" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCURP" x="72" y="12" text="CURP:"/>
+		<mx:TextInput id="txtCURP" x="115" y="10" width="160.5"/>
+		<mx:ComboBox id="cboCausa" x="115" y="44" width="230.5" labelField="desc"/>
+		<mx:Label id="lblCausa" x="10" y="47" text="Causa Lista Negra:"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="296" y="98" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="344" y="98" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

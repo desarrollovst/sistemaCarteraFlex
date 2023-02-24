@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar detalles de la Informacion Personal-->
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		
+			public var _xmlEnt:XML = new XML();
+			public var _xmlTipo:XML = new XML();
+			
+			public var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionEnt:int;
+			private var accionTipo:int;
+			private var indEnt:int;
+			private var indTipo:int;
+			private var vScroll:Number;
+			private var titulo:String;
+			
+			private function actualizarEntidad(event:Event):void{
+				buscarEntidad(1);
+			}
+			
+			private function actualizarTipoPers(event:Event):void{
+				buscarTipoPers(1);
+			}
+			
+			private function buscarEntidad(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodEnt.text != "" || txtEntidad.text != ""){
+					btnBuscarEnt.setFocus();
+					dgEntidad.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					if(tipo == 1)
+						Application.application.bloquear();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlEnt = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					
+						if (_xmlEnt.elements().length() > 0){
+							dgEntidad.dataProvider = _xmlEnt.Table;
+							
+							if(accionEnt == 2){
+								dgEntidad.validateNow();
+								dgEntidad.verticalScrollPosition = vScroll;
+								dgEntidad.selectedIndex = indEnt;
+								this.accionEnt = 0;
+							}
+						}		
+					});
+					params[0] = txtCodEnt.text;
+					params[1] = txtEntidad.text;
+					//Obtiene informacion del Origen de los Recursos
+					wsCat.getListado.send(45, params);
+				}	
+			}
+			
+			private function buscarTipoPers(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodTipo.text != "" || txtTipoPers.text != ""){
+					btnBuscarTipo.setFocus();
+					dgTipoPers.dataProvider = null;
+				
+					du.initWsCat(wsCat);
+				 	if (tipo == 1)
+						Application.application.bloquear();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlTipo = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					
+						if (_xmlTipo.elements().length() > 0){
+							dgTipoPers.dataProvider = _xmlTipo.Table;
+							
+							if(accionTipo == 2){
+								dgTipoPers.validateNow();
+								dgTipoPers.verticalScrollPosition = vScroll;
+								dgTipoPers.selectedIndex = indTipo;
+								this.accionTipo = 0;
+							}
+						}	
+					});
+					params[0] = txtCodTipo.text;
+					params[1] = txtTipoPers.text;
+					//Obtiene informacion del Tipo de Persona
+					wsCat.getListado.send(46, params);
+				}
+			}
+			
+			private function eliminarTipoPers():void{
+				Alert.show("¿Desea eliminar el registro de Tipo de Persona?",titulo, Alert.YES|Alert.NO,null, manejadorEliminarTipo,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indEnt = -1;
+				this.indTipo = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Información Personal";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function manejadorEliminarTipo(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codTipo:String = dgTipoPers.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoPers);
+					wsMS.setAccionTipoPers.send(3, codTipo);
+			    } 
+			}
+			
+			public function mostrarFormEntidad(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoEnt:MttoEntidad = new MttoEntidad();
+				comMttoEnt = MttoEntidad(PopUpManager.createPopUp(this,MttoEntidad,true)); 
+				switch(tipo){
+					case 2: 
+						if (dgEntidad.selectedIndex >= 0){
+							accionEnt = tipo;
+							var codEnt:String = dgEntidad.selectedItem.CODIGO;
+							var indice:int = dgEntidad.selectedIndex;
+							iniVar();
+							this.indEnt = indice;
+							this.vScroll = dgEntidad.verticalScrollPosition;
+							comMttoEnt.addEventListener(Event.REMOVED_FROM_STAGE, actualizarEntidad);	
+							PopUpManager.centerPopUp(comMttoEnt);
+							comMttoEnt.init(tipo, codEnt);
+						}
+						else
+							Alert.show("Debe seleccionar el registro del Instrumento de Crédito",titulo,4,null,null,global.iAlert); 
+						break;
+				}
+			}
+			
+			public function mostrarFormTipoPers(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO 
+				var comMttoTipo:MttoTipoPers = new MttoTipoPers();
+				comMttoTipo = MttoTipoPers(PopUpManager.createPopUp(this,MttoTipoPers,true));
+				switch(tipo){
+					case 1: 
+						comMttoTipo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipoPers);
+						PopUpManager.centerPopUp(comMttoTipo);
+						comMttoTipo.init(tipo, "");
+						break;
+					case 2: 
+						if (dgTipoPers.selectedIndex >= 0){
+							accionTipo = tipo; 
+							var codTipo:String = dgTipoPers.selectedItem.CODIGO;
+							var indice:int = dgTipoPers.selectedIndex;
+							iniVar();
+							this.indTipo = indice;
+							this.vScroll = dgTipoPers.verticalScrollPosition;
+							comMttoTipo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipoPers);
+							PopUpManager.centerPopUp(comMttoTipo);
+							comMttoTipo.init(tipo, codTipo);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Tasa",titulo,4,null,null,global.iAlert);
+					break;
+				}
+			}
+			
+			private function setAccionEntidad(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEntidad);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarEntidad(1);
+				else
+					Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+			}
+
+			private function setAccionTipoPers(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoPers);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarTipoPers(1);
+				else
+					Alert.show("Error en el proceso: " + res,titulo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="480">
+		<mx:Label x="18" y="10" text="ENTIDAD FEDERATIVA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18.5" y="243" text="TIPO DE PERSONA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="31.5" y="39" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodEnt" x="11" y="7" text="Código:"/>
+			<mx:Label id="lblEntidad" x="153" y="7" text="Nombre:"/>
+			<mx:TextInput id="txtCodEnt" x="64" y="5" width="50" enter="buscarEntidad(1)" maxChars="3"/>
+			<mx:TextInput id="txtEntidad" x="210.5" y="5" width="276" enter="buscarEntidad(1)" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="39" width="108" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarEnt" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarEntidad(1)" toolTip="Buscar Entidad" width="40" />
+			<mx:Button id="btnEditarEnt" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormEntidad(2)" toolTip="Editar Entidad" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgEntidad" x="10" y="10" width="700.5" height="124" sortableColumns="false" 
+				draggableColumns="false" resizableColumns="false" itemDoubleClick="mostrarFormEntidad(2)" 
+				doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="NOMBRE" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="DESCTIPO" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas id="cnvTasa" x="18.5" y="315" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgTipoPers" x="10" y="10" width="704.5" height="124" sortableColumns="false" draggableColumns="false" 
+				resizableColumns="false" doubleClickEnabled="true" doubleClick="mostrarFormTipoPers(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="DESCTIPO" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="31.5" y="270" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodTipo" x="10" y="7" text="CODIGO:" width="53"/>
+			<mx:Label id="lblTipoPers" x="128" y="7" text="DESCRIPCION:" width="83.5"/>
+			<mx:TextInput id="txtCodTipo" x="64" y="5" width="50" enter="buscarTipoPers(1)" maxChars="3"/>
+			<mx:TextInput id="txtTipoPers" x="210.5" y="5" width="276" enter="buscarTipoPers(1)" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="270" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscarTipo" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarTipoPers(1)" toolTip="Buscar Tipo de Persona" width="40" />
+			<mx:Button id="btnEditarTipo" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormTipoPers(2)" toolTip="Editar Tipo de Persona" width="40"/>
+			<mx:Button id="btnAgregarTipo" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormTipoPers(1)" toolTip="Registrar Tipo de Persona" width="40"/>
+			<mx:Button id="btnEliminarTipo" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarTipoPers()" enabled="false" toolTip="Eliminar Tipo de Persona" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

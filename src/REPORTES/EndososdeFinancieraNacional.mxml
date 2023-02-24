@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="238" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*" 
+		verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;		
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;			
+			
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+									 	
+			private function generar():void{
+				 if(compMesAnio.valida()){				 	
+					var id:String = "&id=57";
+					 
+					var sucursal:String = comFiltroRep.obtieneSucursal();	
+					if(sucursal == "000"){
+						sucursal = "&sucursal="
+					} else {
+						sucursal = "&sucursal=" + sucursal;;
+					}								 					
+					var usuario:String = "&usuario=" + Application.application.U_ID;									
+					var mes:String = "&mes=" + compMesAnio.obtieneMes();
+					var anio:String = "&anio=" + compMesAnio.obtieneAnio();
+					var consulta:String = global.urlPdf + id + sucursal + usuario + mes + anio;
+					var request:URLRequest = new URLRequest(consulta); 
+                  	navigateToURL(request,"_blank");
+				 }
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Endosos de Financiera Nacional";	
+				lblTitulo.text = titulo.toUpperCase();
+				comFiltroRep.init("0",titulo,"coordState");	
+				compMesAnio.init(titulo);	
+			}								
+			
+			private function limpiar():void{			
+				compMesAnio.limpiar();
+				comFiltroRep.limpiar();				
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="10" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Button x="76" y="203.5" label="Generar" click="generar()"/>
+	<mx:Button x="155" y="203.5" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<control:FiltroRepSuc id="comFiltroRep" width="302" x="0" height="122.5" y="0" verticalScrollPolicy="off" horizontalScrollPolicy="off"/>
+	<mx:Canvas x="18.35" y="130.5" width="265.3333" height="65" styleName="canvasMod">
+		<control:FiltroMesAnio id="compMesAnio" y="6.5" x="10" width="243.3"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="220" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:control="Controls.*">
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:SetProperty name="width" value="560"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvTotal" x="280" y="52" width="270" height="305" styleName="canvasMod">
+					<mx:Label id="lblEtiqTotal" x="5" y="10" text="TOTAL A PAGAR:" fontSize="16"/>
+					<mx:Label id="lblTotal" x="5" y="33" width="253" height="40" textAlign="center" fontSize="32" selectable="true"/>
+					<mx:Label id="lblEtiqCap" x="6" y="81" text="CAPITAL:" fontSize="16"/>
+					<mx:Label id="lblCapital" x="5" y="104" width="253" height="40" textAlign="center" fontSize="32" selectable="true"/>
+					<mx:Label id="lblEtiqInt" x="5" y="152" text="INTERÉS:" fontSize="16"/>
+					<mx:Label id="lblInteres" x="5" y="175" width="253" height="40" textAlign="center" fontSize="32" selectable="true"/>
+					<mx:Label id="lblEtiqCond" x="5" y="223" text="CONDONACIÓN DE INTERÉS:" fontSize="16"/>
+					<mx:Label id="lblCond" x="5" y="246" width="253" height="40" textAlign="center" fontSize="32" selectable="true"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="280" y="33" text="Resultado" width="124.25"/>
+			</mx:AddChild>
+			<mx:SetProperty name="height" value="370"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Blur duration="500" target="{this.cnvTotal}"/>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.core.Application;
+		import mx.containers.TitleWindow;	
+		import mx.formatters.NumberFormatter;
+		import mx.controls.Alert;
+		import mx.effects.easing.Elastic;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.utils.ObjectUtil;
+		import mx.validators.Validator;
+	
+		private var _xmlRep:XML =  new XML();
+		
+		public var wsMS:WebService;
+		public var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+					
+		private function generar(event:Event):void{
+			var capital:Number = 0;
+			var interes:Number = 0;
+			if(comFiltroGrupoCiclo.valida()){
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(_xmlRep.elements().length() > 0){
+						currentState = "resultado";
+						capital = Number(_xmlRep.Table[0].SALDO_CAP);
+						interes = Number(_xmlRep.Table[0].SALDO_INT);
+						lblTotal.text = global.formatoMoneda((capital + interes).toString());
+						lblCapital.text = global.formatoMoneda(capital.toString());
+						lblInteres.text = global.formatoMoneda(interes.toString());
+						lblCond.text = global.formatoMoneda(_xmlRep.Table[0].COND_INT);	
+					}
+					else
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+				});
+				wsMS.getRepSimulacion.send(comFiltroGrupoCiclo.obtieneGrupo(), comFiltroGrupoCiclo.obtieneCiclo(), 
+										   comFiltroGrupoCiclo.obtieneFecha());	
+			}
+		}			
+					
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Simulador de Cobro";
+			comFiltroGrupoCiclo.init("0", titulo, "fecha");
+			comFiltroGrupoCiclo.addEventListener("enviar",generar);
+			comFiltroGrupoCiclo.addEventListener("limpiar",limpiar);
+		}		
+						
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function limpiar(event:Event):void{
+			currentState = "";
+			lblCapital.text = "";
+		}
+		]]>
+	</mx:Script>
+	<control:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+</mx:Canvas>

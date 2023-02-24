@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="306" height="212" title="Mantenimiento de Calificación de Acreditado ABC" fontWeight="normal">
+	
+	<mx:Validator id="atrasominV" source="{txtAtrasoMin}" property="text" 
+	invalid="{txtAtrasoMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="atrasomaxV" source="{txtAtrasoMax}" property="text" 
+	invalid="{txtAtrasoMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="calificacionV" source="{txtCalificacion}" property="text" 
+	invalid="{txtCalificacion.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+		
+	<!--Componente que permite observar el mantenimiento de la calificación de acreditado ABC-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosCalifAcreABC;
+		import Data.EventCalifAcreABC;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		[Bindable]
+		private var info:DatosCalifAcreABC;
+		
+		private var _xmlDatos:XML = new XML();
+					
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		private var titulo:String;
+		private var tipoAccion:Number;
+		private var vg_codigo:String;
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Calificación de acreditado ABC";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		public function nuevo():void{
+			init();
+			tipoAccion = 1; //INSERTAR
+			vg_codigo = "";
+		}
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		]]>
+	</mx:Script>
+		
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosCalifAcreABC();
+				info.codigo = vg_codigo;
+				info.atrasomin = Number(txtAtrasoMin.text);
+				info.atrasomax = Number(txtAtrasoMax.text);
+				info.calificacion = txtCalificacion.text;
+				
+				Application.application.bloquear();				
+				initConexion();
+				du.sCursor();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1")
+						cerrar();
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionCatCalifClABC.send(info.codigo, info.atrasomin, info.atrasomax, info.calificacion, tipoAccion);					
+			}
+		}
+		private function valida():Boolean{
+			var iaAtrasoMin:Array = Validator.validateAll([atrasominV]);
+			var iaAtrasoMax:Array = Validator.validateAll([atrasomaxV]);
+			var iaCalificacion:Array = Validator.validateAll([calificacionV]);	
+			
+			if(iaAtrasoMin.length > 0){
+				Alert.show("Debe capturar el atraso mínimo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(iaAtrasoMax.length > 0){
+				Alert.show("Debe capturar el atraso máximo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(iaCalificacion.length > 0){
+				Alert.show("Debe capturar la calificación.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+						
+			return true;
+		}
+		]]>
+	</mx:Script>
+		
+	<!-- CARGA INFO CALIFICACION -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfo(pXmlDatos:XML):void{
+			init();
+			tipoAccion = 2; //ACTUALIZAR
+			vg_codigo = pXmlDatos.CODIGO;
+							
+			txtAtrasoMin.text = pXmlDatos.ATRASOMIN;
+			txtAtrasoMax.text = pXmlDatos.ATRASOMAX;
+			txtCalificacion.text = pXmlDatos.CALIFICACION;
+		}
+		]]>
+	</mx:Script>
+	
+	<mx:Button id="btnAceptar" x="160" y="140" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="4"/>
+	<mx:Button id="btnCancelar" x="232" y="140" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="5"/>
+		<mx:RadioButtonGroup id="rdgDocOri"/>
+		<mx:RadioButtonGroup id="rdgPagado"/>
+		<mx:RadioButtonGroup id="rdgSexo"/>
+		<mx:Canvas x="10" y="26" width="287" height="106" styleName="canvasMod">
+				<mx:Label id="lblSaldo" x="78" y="72" text="Calificación:"/>
+				<mx:TextInput id="txtAtrasoMin" x="149" y="9" width="65" tabIndex="1" restrict="0-9"/>
+				<mx:Label id="lblAtrasoMin" x="67" y="11" text="Atraso Mínimo:"/>
+				<mx:Label id="lblAtrasoMax" x="61" y="42" text="Atraso Máximo:"/>
+				<mx:TextInput id="txtAtrasoMax" x="149" y="40" width="65" tabIndex="2" restrict="0-9"/>
+				<mx:TextInput x="149" y="70" width="65" id="txtCalificacion" tabIndex="3"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosAcre" x="10" y="5" text="Datos de Calificación de Acreditado ABC:" width="238" fontSize="11" fontWeight="normal"/>
+</mx:TitleWindow>

@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="OPERAC.*" layout="absolute" 
+	width="390" height="452" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.*">
+	
+	<mx:Validator id="vInteres" source="{txtInteres}" property="text" 
+	invalid="{txtInteres.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+		
+	<!--Componente de Parametros para reporte de cheques cobrados mensual-->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.List;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.collections.IList;
+			import mx.core.DragSource;
+			import mx.events.ValidationResultEvent;
+			import mx.events.FlexEvent;
+			import mx.effects.*;
+			import mx.events.*;
+			import mx.events.EffectEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.effects.easing.Elastic;
+			import mx.graphics.Stroke;
+			import mx.managers.PopUpManager;
+			import mx.managers.DragManager;
+			import mx.rpc.events.FaultEvent;	
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.states.State;
+			import mx.validators.Validator;	
+			import mx.collections.SortField;
+      		import mx.collections.Sort;
+		
+			private var vResult:ValidationResultEvent;
+			
+			private var openEffect:Effect = new WipeDown();
+			private var closeEffect:Effect = new WipeDown();
+		
+			private var _xmlBancos:XML = new XML();
+			private var _xmlCuentas:XML = new XML();
+			private var _xmlInteres:XML = new XML();
+			private var _xmlDatos:XML = new XML();
+			
+			private var acBancos:ArrayCollection = new ArrayCollection();
+			private var acCuentas:ArrayCollection = new ArrayCollection();
+			private var acMes:ArrayCollection = new ArrayCollection();
+			private var acAnio:ArrayCollection = new ArrayCollection();
+			private var acInteres:ArrayCollection = new ArrayCollection();
+			
+			private var aAnio:Array;
+			private var aMes:Array;
+			private var aInteres:Array;
+						
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var tipoAccion:int;
+			
+			private function agregar():void{
+				if(validaLista()){
+					var oItem:Object;
+					var item:Array = new Array;
+					
+					for(var i:int; i < acInteres.length; i ++){
+						oItem = new Object();
+						oItem.ANIO = acInteres[i].ANIO;
+						oItem.MES = acInteres[i].MES;
+						oItem.MESDESC = acInteres[i].MESDESC;
+						oItem.INTERES = acInteres[i].INTERES;
+						item.push(oItem);
+					}
+					
+					oItem = new Object();
+					oItem.ANIO = Number(cbxAnio.selectedItem.id);
+					oItem.MES = Number(cbxMes.selectedItem.id);
+					oItem.MESDESC = cbxMes.selectedItem.nombre.toUpperCase();
+					oItem.INTERES = Number(txtInteres.text);
+					item.push(oItem);
+					
+					acInteres = new ArrayCollection(item);
+					
+					var sortField:SortField = new SortField();
+					sortField.name = "ANIO";
+					sortField.numeric = true;
+					
+					var sortField2:SortField = new SortField();
+					sortField2.name = "MES";
+					sortField2.numeric = true;
+					
+					var sort:Sort = new Sort();
+					sort.fields = [sortField, sortField2];
+					sort.reverse();
+					
+					acInteres.sort = sort;
+					acInteres.refresh();
+					
+					if(acInteres.length > 0){
+						dgDatos.dataProvider = null;
+						dgDatos.dataProvider = acInteres;
+						txtInteres.text = "";
+					}
+				}
+			}
+			
+			private function buscarInteres():void{
+				_xmlInteres = null;
+				dgDatos.dataProvider = null;
+				acInteres = new ArrayCollection();
+					
+				if(cbxBanco.selectedIndex > 0 && cbxCuenta.selectedIndex > 0) {
+			   		var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					var banco:String = cbxBanco.selectedItem.codigo;
+					var cuenta:String = cbxCuenta.selectedItem.codigo;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+										
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlInteres = new XML(event.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if(_xmlInteres.elements().length() > 0){
+							formateaInteres();
+							dgDatos.dataProvider = acInteres;
+						}
+					});
+					params[0] = banco;
+					params[1] = cuenta;
+					params[2] = "0";
+					params[3] = "0";
+					wsCat.getListado.send(77, params);
+			 	}
+			}
+			
+			public function cargaInfo(pXmlDatos:XML):void{
+				init();
+				tipoAccion = 2;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array
+				var i:int;
+				_xmlDatos = pXmlDatos;
+										
+				if(_xmlDatos.elements().length() > 0) {
+					Application.application.bloquear();
+					du.initWsCat(wsCat);
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+						_xmlBancos = new XML(event.result);
+						
+						if(_xmlBancos.elements().length() > 0){
+							formateaBancos();
+							cbxBanco.dataProvider = acBancos;
+														
+							for(i = 0; i < acBancos.length; i++){
+								if(acBancos[i].codigo.toString() == _xmlDatos.CDGIB){
+									cbxBanco.selectedIndex = i;
+								}
+							} 
+							
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlCuentas = new XML(evt.result.toString());
+								
+								if(_xmlCuentas.elements().length() > 0){
+									formateaCuentas(_xmlDatos.CDGIB);
+									cbxCuenta.dataProvider = acCuentas;
+									
+									for(i = 0; i < acCuentas.length; i++){
+										if(acCuentas[i].codigo.toString() == _xmlDatos.CDGCB){
+											cbxCuenta.selectedIndex = i;
+										}
+									}
+									
+									du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+										_xmlInteres = new XML(event.result);
+										
+										du.closeWs(wsCat);
+										du.rCursor();
+										Application.application.desbloquear();
+										
+										if(_xmlInteres.elements().length() > 0){
+											formateaInteres();
+											
+											dgDatos.dataProvider = null;
+											dgDatos.dataProvider = acInteres;
+										
+											cbxAnio.dataProvider = global.formateaAnio();
+											cbxMes.dataProvider = global.formateaMes();
+										
+											cbxBanco.enabled = false;
+											cbxCuenta.enabled = false;
+										}
+										else
+											Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+									});
+									params[0] = _xmlDatos.CDGIB;
+									params[1] = _xmlDatos.CDGCB;
+									params[2] = "0";
+									params[3] = "0";
+									wsCat.getListado.send(77, params);
+								}
+								else
+									Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+							});
+							params[0] = _xmlDatos.CDGIB;
+							wsCat.getListado.send(69, params);
+						}
+						else
+							Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = "";
+					wsCat.getCatalogoGral.send(42, params);
+				}
+				else
+					Alert.show("No se pudo cargar la información.",titulo,4,null,null,global.iAlert);
+			}
+			
+			private function cerrar():void{
+				var playReverse:Boolean = true;   
+	            closeEffect.duration = 500;
+	            closeEffect.play([this], playReverse);
+	            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			}
+			
+			private function eliminar():void{
+				if(dgDatos.selectedIndex >= 0){
+					if(dgDatos.selectedItem.ANIO != "")
+						Alert.show("¿Desea eliminar el interés seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+					else
+						Alert.show("Seleccione un interés a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+				else
+					Alert.show("¿Desea eliminar el interés seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminar,global.iQuest);
+			}
+			
+			private function enviar():void{	
+				//TIPO 1 - INSERTA (tipoAccion)
+				//TIPO 2 - ACTUALIZA (tipoAccion)
+				if(valida()){
+					var cdgib:String = cbxBanco.selectedItem.codigo;
+					var cdgcb:String = cbxCuenta.selectedItem.codigo;
+										
+					aAnio = new Array;
+					aMes = new Array;
+					aInteres = new Array;
+					
+					var n:int = 0;
+			
+					for(var i:int = 0; i < acInteres.length; i++){
+						if (acInteres[i].ANIO != ""){
+							aAnio[n] = acInteres[i].ANIO;
+							aMes[n] = acInteres[i].MES;
+							aInteres[n] = acInteres[i].INTERES;
+							n++;
+						}
+					}
+					if(aInteres.length > 0){
+						initConexion();
+						du.sCursor();
+						Application.application.bloquear();
+												
+						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+							var res:String = evt.result.toString();
+							
+							du.rCursor();
+							du.closeWs(wsMS);
+							Application.application.desbloquear();
+								
+							if(res.substr(0,1) == "1")
+								cerrar();
+							else
+								Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+						}); 
+						wsMS.setAccionParametrosPolComGas.send(cdgib, cdgcb, aAnio, aMes, aInteres, tipoAccion);
+					}
+					else
+						Alert.show("Debe de agregar al menos un interés.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			private function formateaBancos():void{
+				var cont:int = _xmlBancos.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlBancos.Table[i].CODIGO;	
+					oItem.nombre = _xmlBancos.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				acBancos = new ArrayCollection(item);
+			}
+			
+			private function formateaCuentas(cdgib:String):void{
+				var cont:int = _xmlCuentas.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				var i:int;
+				acCuentas =  new ArrayCollection();
+				
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.numero = "--Seleccionar--";
+				item.push(oItem);
+				
+				if(cdgib != ""){
+					for (i = 0; i < cont; i++){
+						if(_xmlCuentas.Table[i].CDGIB == cdgib){
+							oItem = new Object();
+							oItem.codigo = _xmlCuentas.Table[i].CODIGO;	
+							oItem.numero = _xmlCuentas.Table[i].NUMERO;
+							item.push(oItem);
+						}
+					}
+				}
+				acCuentas = new ArrayCollection(item);
+				cbxCuenta.dataProvider = acCuentas;
+				cbxCuenta.selectedIndex = 0;
+			}
+				
+			private function formateaInteres():void{
+				var cont:int = _xmlInteres.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+								
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.ANIO = _xmlInteres.Table[i].ANIO;	
+					oItem.MES = _xmlInteres.Table[i].MES;
+					oItem.MESDESC = _xmlInteres.Table[i].MESDESC;
+					oItem.INTERES = _xmlInteres.Table[i].INTERES;
+					item.push(oItem);
+				}
+				acInteres = new ArrayCollection(item);
+			}
+										
+			private function init():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Parámetros de Póliza de Gastos por Interés";
+			}	
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function limpiar():void{
+				txtInteres.text = "";
+			}
+			
+			public function nuevo():void{
+				init();
+				tipoAccion = 1;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array
+							
+				Application.application.bloquear();
+				du.initWsCat(wsCat);
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					_xmlBancos = new XML(event.result);
+					
+					if(_xmlBancos.elements().length() > 0){
+						formateaBancos();
+						cbxBanco.dataProvider = acBancos;
+						cbxBanco.selectedIndex = 0;
+					
+						du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+							_xmlCuentas = new XML(event.result);
+							
+							formateaCuentas("");
+							cbxCuenta.dataProvider = acCuentas;
+							cbxCuenta.selectedIndex = 0;
+							
+							cbxAnio.dataProvider = global.formateaAnio();
+							cbxMes.dataProvider = global.formateaMes();
+							
+						});
+						params[0] = _xmlDatos.CDGIB;
+						wsCat.getListado.send(69, params);
+					}
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				});
+				params[0] = "";
+				wsCat.getCatalogoGral.send(42, params);
+			}
+			
+			private function manejadorEliminar(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var anio:Number = Number(dgDatos.selectedItem.ANIO);
+					var mes:Number = Number(dgDatos.selectedItem.MES);
+					var interes:Number = Number(dgDatos.selectedItem.INTERES);
+					
+					for(var i:int = 0; i < acInteres.length; i++){
+						if(acInteres[i].ANIO == anio && acInteres[i].MES == mes && acInteres[i].INTERES == interes){
+							break;	
+						}
+					}
+					acInteres.removeItemAt(i);
+					if(acInteres.length > 0){
+						dgDatos.dataProvider = null;
+						dgDatos.dataProvider = acInteres;
+					}
+			    } 
+			}
+									
+			private function terminarEfecto(event:EffectEvent):void{
+				closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function valida():Boolean{
+				if(cbxBanco.selectedIndex == 0){
+					Alert.show("Debe seleccionar un banco.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxCuenta.selectedIndex == 0){
+					Alert.show("Debe seleccionar una cuenta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+								
+				return true;
+			}
+			
+			private function validaLista():Boolean{	
+				var iaInteres:Array = Validator.validateAll([vInteres]);
+					
+				if(cbxAnio.selectedIndex == 0){
+					Alert.show("Debe seleccionar el año.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(cbxMes.selectedIndex == 0){
+					Alert.show("Debe seleccionar el mes.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				if(iaInteres.length > 0){
+					Alert.show("Debe capturar el interés.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				for(var i:int; i < acInteres.length; i ++){
+					if(acInteres[i].ANIO == cbxAnio.selectedItem.id && acInteres[i].MES == cbxMes.selectedItem.id){
+						Alert.show("El interés ya se encuentra dado de alta.",titulo,4,null,null,global.iAlert);
+						return false;	
+					}
+				}
+				return true;
+			}
+		
+			private function validaInteres(event:Event):void{
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+	
+				if (vResult.type!=ValidationResultEvent.VALID)
+	            	TextInput(event.currentTarget).text = "";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="21.25" y="10" width="348.5" height="80" styleName="canvasMod">
+		<mx:ComboBox x="78" y="10" width="247" id="cbxBanco" labelField="nombre" change="formateaCuentas(cbxBanco.selectedItem.codigo)"/>
+		<mx:Label x="21.5" y="13" text="Banco:" width="48.5" height="20" textAlign="right" id="lblBanco"/>
+		<mx:ComboBox x="78" y="40" width="247" id="cbxCuenta" labelField="numero" change="buscarInteres()"/>
+		<mx:Label x="21.5" y="42" text="Cuenta:" width="48.5" height="20" textAlign="right" id="lblCuenta"/>
+	</mx:Canvas>
+	<mx:Canvas x="20.75" y="98" width="349" height="65" styleName="canvasMod">
+		<mx:Button id="btnAceptar" x="298" y="29.5" icon="@Embed(source='assets/images/add.png')" click="agregar()" width="40" tabIndex="19"/>
+		<mx:Label x="212" y="9" text="Interés:" width="58" height="20" id="lblComision"/>
+		<mx:TextInput id="txtInteres" x="212" y="28.5" width="70" change="validaInteres(event)"/>
+		<mx:Label x="10" y="10.5" text="Mes" width="81" height="20"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="10" y="29" width="111"/>
+		<mx:Label x="132" y="10.5" text="Año" width="72" height="20"/>
+		<mx:ComboBox id="cbxAnio" labelField="id" x="132" y="29" width="72"/>
+	</mx:Canvas>
+	<mx:Canvas x="19.75" y="171" width="349.5" height="200" styleName="canvasMod">
+		<mx:DataGrid id="dgDatos" x="10" y="10" width="280" height="180" 
+			sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on">										
+			<mx:columns>
+				<mx:DataGridColumn headerText="AÑO" dataField="ANIO" width="50" />
+				<mx:DataGridColumn headerText="MES" dataField="MESDESC" width="90" />
+				<mx:DataGridColumn headerText="INTERES" dataField="INTERES" width="80" />
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnEliminar" x="298" y="10" icon="@Embed(source='assets/images/iconCancel.png')" click="eliminar()" width="40" tabIndex="18"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="329.25" y="379" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40" tabIndex="18"/>
+	<mx:Button id="btnGuardar0" x="281.25" y="379" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40" tabIndex="19"/>
+</mx:TitleWindow>

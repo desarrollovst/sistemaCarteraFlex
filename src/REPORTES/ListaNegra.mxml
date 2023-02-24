@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="298" height="354" backgroundAlpha="1.0" 
+	 backgroundColor="#FFFFFF" creationPolicy="all" xmlns:control="Controls.*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+			import flash.external.ExternalInterface;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.events.IndexChangedEvent;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML = new XML();	
+			private var _xmlReg:XML = new XML();			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Lista Negra";
+				comFiltroRep.init("0",titulo,"",false);			
+				
+				_xmlReg = Application.application._xmlReg;
+				if( _xmlReg.elements().length() > 1){					
+					btnGenerarExcel.visible = true;
+				}	
+				else {					
+					btnGenerarExcel.visible = false;
+				}
+			}	
+			
+			public function enviar():void{
+				if(valida() == true){
+				 	var consulta:String;							
+					var fecIni:String = "&fecha=" + dtfFechaIni.text; 
+					var fecFin:String = "&fechaFin=" + dtfFechaFin.text; 
+					var region:String;
+					var sucursal:String;
+					var asesor:String;
+					var nomRegion:String;
+					var nomSucursal:String;
+					var nomAsesor:String;
+					
+					var id:String = "&id=55";			
+					 									 
+					if(comFiltroRep.obtieneRegion() != "000"){
+						region = "&region=" + comFiltroRep.obtieneRegion();
+					}else {
+						region = "";
+					}
+					
+					if(comFiltroRep.obtieneSucursal() != "000"){
+						sucursal = "&sucursal=" +  comFiltroRep.obtieneSucursal();
+					}else {
+						sucursal = "";
+					}
+					
+					if(comFiltroRep.obtieneAsesor() != "000000"){
+						asesor = "&asesor=" + comFiltroRep.obtieneAsesor();
+					}else {
+						asesor = "";
+					}
+					consulta = global.urlPdf + id + fecIni + fecFin + region + sucursal + asesor;
+					var request:URLRequest = new URLRequest(consulta); 
+                  	navigateToURL(request,"_blank");
+				}
+				else {
+					Alert.show("Seleccione un rango de fechas.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}
+			
+		    private function ejecuta():void{
+		    	if(valida() == true){										
+					var fecIni:String = dtfFechaIni.text; 
+					var fecFin:String = dtfFechaFin.text; 
+					var region:String;
+					var sucursal:String;
+					var asesor:String;
+					var filtros:String = "";
+					
+					if(comFiltroRep.obtieneRegion() != "000"){
+						region =  comFiltroRep.obtieneRegion();
+						filtros += ". REGION: " + comFiltroRep.obtieneNomRegion();
+					}else {
+						region = "";
+						filtros += ". REGION: TODAS" ;
+					}
+					
+					if(comFiltroRep.obtieneSucursal() != "000"){
+						sucursal =  comFiltroRep.obtieneSucursal();
+						filtros += ", SUCURSAL: " +  comFiltroRep.obtieneNomSucursal();
+					}else {
+						sucursal = "";
+						filtros += ", SUCURSAL: TODAS" ;
+					}
+					
+					if(comFiltroRep.obtieneAsesor() != "000000"){
+						asesor =  comFiltroRep.obtieneAsesor();
+						filtros += ", ASESOR: " + comFiltroRep.obtieneNomAsesor();
+					}else {
+						asesor = "";
+						filtros += ", ASESOR: TODOS";
+					}
+					
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());									
+						du.rCursor();
+						Application.application.desbloquear();
+						du.closeWs(wsMS);
+							
+						dgInfo.dataProvider = null;
+														
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();  
+							dgInfo.dataProvider =  _xmlRep.Table;							
+							var dgE:ExcelExportXls = new ExcelExportXls();
+							dgE.loadDGInExcel(dgInfo,null,titulo.toUpperCase() + filtros);								
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						 
+						}
+					});
+					wsMS.getRepListaNegra.send(fecIni, fecFin, region, sucursal, asesor);
+				}
+				else {
+					Alert.show("Seleccione un rango de fechas.",titulo,4,null,null,global.iAlert);
+				}
+		    }
+		    
+		    private function limpiar():void{
+		    	dgInfo.dataProvider = null;
+		    	dtfFechaIni.text = "";
+		    	dtfFechaFin.text = "";
+		    	comFiltroRep.init("0",titulo,"",false);
+		    }
+		    
+		    private function valida():Boolean{
+		    	if (dtfFechaIni.text == "" || dtfFechaFin.text == ""){
+		    		return false;
+		      	} else 
+		      		return true;
+		    }
+				
+		]]>
+	</mx:Script>
+	<control:FiltroRepAsesor id="comFiltroRep" width="298" left="0" height="225" y="0" verticalScrollPolicy="off" horizontalScrollPolicy="off"/>
+	<mx:Button x="217" y="320" label="PDF" click="enviar()" id="btnGenerar" enabled="true"/>
+	<mx:Button x="138" y="320" label=" Excel" click="ejecuta()" id="btnGenerarExcel" width="71"/>
+	<mx:Button x="24" y="321" label="Limpiar" width="72" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Canvas x="17" y="233" width="264" height="80" styleName="canvasMod" id="canvas0" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:DateField id="dtfFechaIni" x="83" y="8" width="111"/>
+		<mx:DateField id="dtfFechaFin" x="83" y="42" width="111"/>
+		<mx:Label x="10" y="44" text="Fecha Final:" id="label0"/>
+		<mx:Label x="10" y="10" text="Fecha Inicio:" id="label1"/>
+		<mx:DataGrid id="dgInfo" x="0" y="87.5" width="252" height="93.4" horizontalScrollPolicy="auto" visible="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NOMBRE DEL CLIENTE" dataField="CLIENTE" width="120"/>
+				<mx:DataGridColumn headerText="NÚMERO DEL CLIENTE" dataField="CDGCL" width="110"/>
+				<mx:DataGridColumn headerText="NOMBRE DEL GRUPO" dataField="NOM_GRUPO" width="190"/>
+				<mx:DataGridColumn headerText="NÚMERO DEL GRUPO" dataField="CDGNS" width="150"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="180"/>
+				<mx:DataGridColumn headerText="FECHA INGRESO A LN" dataField="ALTA" width="150"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOM_ASESOR" width="180"/>
+				<mx:DataGridColumn headerText="NÚMERO DE NÓMINA" dataField="NUM_NOMINA" width="150"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="ZONA" dataField="ZONA" width="150"/>
+				<mx:DataGridColumn headerText="MOTIVO DE INGRESO A LN" dataField="DESCRIPCION" width="150"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+</mx:Canvas>

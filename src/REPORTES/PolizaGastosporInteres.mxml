@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="900" height="500" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			private var wsMS:WebService;
+			private var mes:String;
+			private var mesNom:String;
+			private var anio:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales; 
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " de " + mesNom + " del " + anio);		
+			}
+					
+			private function generar():void{
+				if(compMesAnio.valida()){
+					mes = compMesAnio.obtieneMes();
+					mesNom = compMesAnio.obtieneNomMes();
+					anio = compMesAnio.obtieneAnio();
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						dgReporte.dataProvider = null;
+													
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;	
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getRepPolizaGastosInteres.send(anio, mes, Application.application.U_ID);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Poliza Gastos por Interés";
+				compMesAnio.init(titulo);
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				dgReporte.dataProvider = null;
+				compMesAnio.limpiar();
+			}
+				
+		]]>
+	</mx:Script>
+	 <mx:DateFormatter id="dtfFecha" formatString="DD/MM/YYYY"/>
+
+	<mx:Label id="lblTitulo" x="15" y="10" width="230" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="14.95" y="53.5" width="230.05" height="68.5" styleName="canvasMod">
+		<control:FiltroMesAnio id="compMesAnio" x="1.5" y="8" width="225"/>
+	</mx:Canvas>
+	<mx:Button x="54.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="132.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="15" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="860.05" visible="true" height="315" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Cuenta" dataField="CUENTA"/>
+			<mx:DataGridColumn headerText="Nombre" dataField="NOMBRE"/>
+			<mx:DataGridColumn headerText="Cargo M.E." dataField="CARGO_ME"/>
+			<mx:DataGridColumn headerText="Abono M.E." dataField="ABONO_ME"/>
+			<mx:DataGridColumn headerText="Cargo" dataField="CARGO"/>
+			<mx:DataGridColumn headerText="Abono" dataField="ABONO"/>
+			<mx:DataGridColumn headerText="Referencia" dataField="REFERENCIA"/>
+			<mx:DataGridColumn headerText="Concepto" dataField="CONCEPTO"/>
+			<mx:DataGridColumn headerText="Diario" dataField="DIARIO"/>
+			<mx:DataGridColumn headerText="Seg. Neg." dataField="SEGMENTO"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="775" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+</mx:Canvas>

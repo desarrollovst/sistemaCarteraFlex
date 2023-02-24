@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="780" height="388" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:local="*">
+
+	<!--Componente de Reporte de Conciliación de cheques por rango de fechas-->
+	<mx:Script>
+		<![CDATA[
+			import mx.formatters.DateFormatter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+
+			private var _xmlRep:XML =  new XML();
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var fechaInicio:String;
+			private var fechaFinal:String;
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fechaInicio + " al " + fechaFinal);		
+			}
+						
+			public function generar():void{
+				fechaInicio = dtFechaInicial.text;
+				fechaFinal = dtFechaFinal.text;
+				var usuario:String = Application.application.U_ID;
+				
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+					lblTotal.text = "";
+																			
+					if(_xmlRep.elements().length() > 0){
+						dgReporte.dataProvider = _xmlRep.Table;
+						lblTotal.text = _xmlRep.elements().length() + " Registro(s)";
+						btnExportar.enabled = true; 
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				wsMS.getRepConciliacionChequesMensual.send(fechaInicio, fechaFinal, usuario);
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de conciliación de cheques mensual";
+				lblTitulo.text = titulo.toUpperCase(); 
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtFechaInicial.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+			
+			public function validaFecha():void{
+				if(dtFechaInicial.selectedDate > dtFechaFinal.selectedDate){
+					dtFechaInicial.selectedDate = global.validaFecha(dtFechaInicial.selectedDate, dtFechaFinal.selectedDate,titulo);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Label id="lblTitulo" x="18" y="10" width="350" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="270.05" height="65.5" styleName="canvasMod">
+		<mx:Label x="10" y="10" text="Fecha Inicial" width="81" height="20" id="label2"/>
+		<mx:Label x="141.05" y="10" text="Fecha Final" width="81" height="20" id="label1"/>
+		<mx:DateField id="dtFechaInicial" x="10" y="28.5" width="111" showToday="true" change="validaFecha()"/>
+		<mx:DateField id="dtFechaFinal" x="141.05" y="28.5" width="111" showToday="true" change="validaFecha()"/>
+	</mx:Canvas>
+	<mx:Button x="71.75" y="127" label="Generar" click="generar()"/>
+	<mx:Button x="150.25" y="127" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="18.45" y="163" width="740.05" 
+		visible="true" height="186" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+		<Data:columns>
+			<mx:DataGridColumn headerText="FECHA CONCILIA" dataField="FCONCILIA" width="120"/>
+			<mx:DataGridColumn headerText="CHEQUE" dataField="NOCHEQUE" width="100"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="NOMIB" width="100"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>
+			<mx:DataGridColumn headerText="FECHA IMPRESION" dataField="FIMPRESION" width="120"/>
+			<mx:DataGridColumn headerText="COD. GRUPO" dataField="CDGNS" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMNS" width="130"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="100"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="100"/>
+			<mx:DataGridColumn headerText="TIPO" dataField="TIPO" width="100"/>
+			<mx:DataGridColumn headerText="COD. SUCURSAL" dataField="CDGCO" width="110"/>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="130"/>
+			<mx:DataGridColumn headerText="COD. CLIENTE" dataField="CDGCL" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE CLIENTE" dataField="NOMCL" width="130"/>
+			<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="100"/>
+			<mx:DataGridColumn headerText="COD. ASESOR" dataField="CDGOCPE" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMOCPE" width="130"/>
+			<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="100"/>
+			<mx:DataGridColumn headerText="FECHA COBRO" dataField="FCOBROREAL" width="100"/>
+			<mx:DataGridColumn headerText="CANTIDAD BANCO" dataField="CANTIDADBAN" width="130"/>
+			<mx:DataGridColumn headerText="DIF. CANTIDAD" dataField="DIFCANT" width="100"/>
+			<mx:DataGridColumn headerText="DIASTRANS" dataField="DIASTRANS" width="100"/>
+			<mx:DataGridColumn headerText="CHEQUE SUST." dataField="NOCHEQUESUS" width="100"/>
+			<mx:DataGridColumn headerText="FECHA CANCELACION" dataField="FCANCELACION" width="110"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Label id="lblTotal" x="18.45" y="357" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<mx:Button id="btnExportar" x="655.5" y="127" label="Exportar Excel" click="exportar()" enabled="false"/>
+</mx:Canvas>

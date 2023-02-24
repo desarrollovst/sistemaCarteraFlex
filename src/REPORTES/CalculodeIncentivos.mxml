@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="900" height="520" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.SortField;
+            import mx.collections.Sort;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;      
+			import mx.utils.ObjectUtil;
+			
+			private var arr:ArrayCollection;
+			private var _xmlRep:XML = new XML();
+			
+			private var wsInc:WebService;
+			private var wsRep:WebService;
+			private var mes:String;
+			private var mesNom:String;
+			private var anio:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales; 
+		
+			private function formateaFecha(rowItem:Object,column:DataGridColumn):String{
+				var valor:String;
+				valor = dtfFecha.format(rowItem.FechaIngreso);
+				return valor;
+			}
+			
+			private function formateaOpciones():void{
+				var anios:ArrayCollection;
+				var meses:ArrayCollection;
+				var anio:int;
+				var mes:int;
+				var fecha:Date;
+				var oItem:Object;
+				var item:Array;
+				
+				fecha = Application.application._Current_Fecha;
+				
+				//Asigna informacion de año de consulta
+				anio = fecha.getFullYear();
+				
+				item = new Array();
+				oItem = new Object();
+				oItem.id = anio.toString();	
+				item.push(oItem);
+				
+				anios = new ArrayCollection(item);
+				item = null;
+				//Asigna informacion de mes de consulta
+				
+				item = new Array();
+				mes = fecha.getMonth() - 1;
+				for(var i:int = 0; i < 2; i++){
+					oItem = new Object();
+					oItem.id = (mes + 1).toString();
+					oItem.nombre = global.modificaLetraIni(global.meses[mes]);
+					item.push(oItem);
+					mes++; 
+				}
+				meses = new ArrayCollection(item);
+				
+				compMesAnio.asignaMeses(meses);
+				compMesAnio.asignaAnios(anios);
+				lblTitulo.text = titulo.toUpperCase();
+			}
+			
+			private function formateaRep():void{
+				var array:Array;		
+				var xml:XMLDocument = new XMLDocument(_xmlRep.toString()); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				arr = new ArrayCollection(array);
+			} 
+		
+			private function generar():void{
+				currentState = null;
+				if(compMesAnio.valida()){
+					mes = compMesAnio.obtieneMes();
+					mesNom = compMesAnio.obtieneNomMes();
+					anio = compMesAnio.obtieneAnio();
+
+					dgReporte.dataProvider = null;
+					
+					Application.application.bloquear();
+					initConexionRep();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+									
+						du.rCursor();
+						du.closeWs(wsRep);
+
+						if(_xmlRep.elements().length() > 0){
+							initConexionInc();
+							du.sCursor();
+									
+							du.ejecutaWsMethod(wsInc,function(evt:ResultEvent):void {											
+								arr = evt.result.Tabla;
+								
+								du.rCursor();
+								du.closeWs(wsInc);
+								Application.application.desbloquear();
+															
+								if(arr.length > 0){
+									ordenarInfo(arr, "NumNom", true);
+									dgReporte.dataProvider = arr;
+									lblTotal.text = "Registros Procesados: " + arr.length;
+								}
+								else
+									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							});
+							wsInc.CalcularTablaIncentivosUsuario.send(mes, anio, Application.application.U_ID);
+						}
+						else{
+							Alert.show("No se encontró informacion de Incentivos.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							Application.application.desbloquear();
+						}
+					});
+					wsRep.getObtieneAsesoresUsuario.send(Application.application.U_ID);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Cálculo de Incentivos";
+				compMesAnio.init(titulo);
+				formateaOpciones();
+				limpiar();
+			}		
+			
+			private function initConexionRep():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+			
+			private function initConexionInc():void{				
+				wsInc = new WebService();			
+				wsInc.wsdl = Application.application.wsStr.wsdlInc.toString();
+				wsInc.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				currentState = null;
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				compMesAnio.limpiar();
+			}
+			
+			private function ordenarInfo(ar:ArrayCollection, fieldName:String, isNumeric:Boolean):void{
+				var dataSortField:SortField = new SortField();
+			    dataSortField.name = fieldName;
+			    dataSortField.numeric = isNumeric;
+			    var numericDataSort:Sort = new Sort();
+			    numericDataSort.fields = [dataSortField];
+			    ar.sort = numericDataSort;
+			    ar.refresh();
+			}
+				
+		]]>
+	</mx:Script>
+	 <mx:DateFormatter id="dtfFecha" formatString="DD/MM/YYYY"/>
+
+	<mx:Label id="lblTitulo" x="15" y="10" width="230" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="14.95" y="53.5" width="230.05" height="68.5" styleName="canvasMod">
+		<control:FiltroMesAnio id="compMesAnio" x="1.5" y="8" width="225"/>
+	</mx:Canvas>
+	<mx:Button x="54.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="132.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="15" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="860.05" visible="true" height="315" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="Oficina" width="150"/>
+			<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NumNom" width="110"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="NombreEmpleado" width="210"/>
+			<mx:DataGridColumn headerText="PUESTO" dataField="Puesto" width="90"/>
+			<mx:DataGridColumn headerText="FECHA INGRESO" dataField="FechaIngreso" labelFunction="{formateaFecha}" width="110"/>
+			<mx:DataGridColumn headerText="JEFE INMEDIATO" dataField="JefeInmediato" width="210"/>
+			<mx:DataGridColumn headerText="ANTIGÜEDAD EN MESES" dataField="AntiguedadMeses" width="150"/>
+			<mx:DataGridColumn headerText="CARTERA PROMEDIO" dataField="CarteraPromedio" width="140"/>
+			<mx:DataGridColumn headerText="TIPO ASESOR" dataField="TipoAsesor"/>
+			<mx:DataGridColumn headerText="ASIGNACION PAGO TIPO ASESOR" dataField="AsignacionPagoTipoAsesor" width="210"/>
+			<mx:DataGridColumn headerText="INCENTIVO MAXIMO A COBRAR" dataField="IncentivoMaximoCobrar" width="200"/>
+			<mx:DataGridColumn headerText="PONDERACION INCENTIVOS META COLOCACION" dataField="PonderacionIncentivoMetaColocacion" width="280"/>
+			<mx:DataGridColumn headerText="INCENTIVO MAXIMO POR CUMPLIMIENTO DE META" dataField="IncentivoMaximoCobrarCumplimientoMetaColocacion" width="290"/>
+			<mx:DataGridColumn headerText="META DE COLOCACION" dataField="MetaColocacion" width="150"/>
+			<mx:DataGridColumn headerText="COLOCACION DEL MES" dataField="Colocacion" width="150"/>
+			<mx:DataGridColumn headerText="% DE CUMPLIMIENTO COLOCACION" dataField="PorcentajeCumplimientoColocacion" width="210"/>
+			<mx:DataGridColumn headerText="INCENTIVO A COBRAR POR COLOCACION" dataField="IncentivoCobrarCumplimientoColocacion" width="240"/>
+			<mx:DataGridColumn headerText="TOTAL PAGAR POR COLOCACION" dataField="TotalCobrarColocacion" width="200"/>
+			<mx:DataGridColumn headerText="PONDERACION INCENTIVOS CLIENTES" dataField="PonderacionIncentivoMetaClientes" width="230"/>
+			<mx:DataGridColumn headerText="INCENTIVO MAXIMO POR CUMPLIMIENTO DE CLIENTES" dataField="IncentivoMaximoCobrarCumplimientoMetaClientes" width="310"/>
+			<mx:DataGridColumn headerText="META CLIENTES" dataField="MetaClientes" width="110"/>
+			<mx:DataGridColumn headerText="CLIENTES DEL MES" dataField="ClientesAtendidos" width="130"/>
+			<mx:DataGridColumn headerText="% DE CUMPLIMIENTO CLIENTES" dataField="PorcentajeCumplimientoClientes" width="190"/>
+			<mx:DataGridColumn headerText="INCENTIVO A COBRAR POR CLIENTES" dataField="IncentivoCobrarCumplimientoClientes" width="230"/>
+			<mx:DataGridColumn headerText="TOTAL PAGAR POR CLIENTES" dataField="TotalCobrarClientes" width="190"/>
+			<mx:DataGridColumn headerText="PONDERACION INCENTIVOS DESERCION" dataField="PonderacionIncentivoMetaDesercion" width="240"/>
+			<mx:DataGridColumn headerText="INCENTIVO MAXIMO POR DESERCION" dataField="IncentivoMaximoCobrarCumplimientoMetaDesercion" width="230"/>
+			<mx:DataGridColumn headerText="CLIENTES POR RENOVAR" dataField="ClientesPorRenovar" width="160"/>
+			<mx:DataGridColumn headerText="DESERCION PERMITIDA" dataField="DesercionPermitida" width="150"/>
+			<mx:DataGridColumn headerText="DESERCION DEL MES" dataField="DesercionReal" width="140"/>
+			<mx:DataGridColumn headerText="TOTAL PAGAR POR DESERCION" dataField="TotalCobrarDesercion" width="200"/>
+			<mx:DataGridColumn headerText="PONDERACION INCENTIVOS MORA" dataField="PonderacionIncentivoMetaMora" width="210"/>
+			<mx:DataGridColumn headerText="INCENTIVO MAXIMO POR EVALUACION DE MORA" dataField="IncentivoMaximoCobrarCumplimientoMetaMora" width="290"/>
+			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SaldoTotal"/>
+			<mx:DataGridColumn headerText="MORA PARA INCENTIVOS" dataField="MoraParaIncentivos" width="160"/>
+			<mx:DataGridColumn headerText="% MORA" dataField="PorcentajeEnMora"/>
+			<mx:DataGridColumn headerText="% PAGO POR MORA" dataField="PorcentajePagoPorMora" width="140"/>
+			<mx:DataGridColumn headerText="TOTAL PAGAR POR MORA" dataField="TotalCobrarMora" width="160"/>
+			<mx:DataGridColumn headerText="CALCULO INCENTIVO DEL MES" dataField="CalculoIncentivoMes" width="200"/>
+			<mx:DataGridColumn headerText="CONVENIOS INCENTIVOS" dataField="ConveniosIncentivos" width="160"/>
+			<mx:DataGridColumn headerText="INCENTIVO PRE-APROBADO" dataField="IncentivoPreAprobado" width="170"/>
+			<mx:DataGridColumn headerText="ANTIGÜEDAD EN MESES" dataField="AntiguedadMeses" width="160"/>
+			<mx:DataGridColumn headerText="GRUPOS REQUERIDOS" dataField="GruposRequeridos" width="140"/>
+			<mx:DataGridColumn headerText="GRUPOS ACTUALES" dataField="GruposActuales" width="130"/>
+			<mx:DataGridColumn headerText="CALIFICA POR NUMERO GRUPOS" dataField="CalificaPorNumeroGrupos" width="200"/>
+			<mx:DataGridColumn headerText="CLIENTES REQUERIDOS" dataField="ClientesRequeridos" width="160"/>
+			<mx:DataGridColumn headerText="CLIENTES ACTUALES" dataField="ClientesActuales" width="140"/>
+			<mx:DataGridColumn headerText="CALIFICA POR NUMERO CLIENTES" dataField="CalificaPorNumeroClientes" width="210"/>
+			<mx:DataGridColumn headerText="INCENTIVO FINAL" dataField="IncentivoFinal" width="130"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label id="lblTotal" x="17.95" y="489" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

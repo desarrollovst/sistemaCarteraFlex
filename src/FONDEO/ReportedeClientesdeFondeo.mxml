@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%"
+	xmlns:forms="forms.*" xmlns:Data="Data.*" xmlns:Administracion="Administracion.*"
+    creationPolicy="all" creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.ExcelExportXls;
+		import Data.Utils;
+		import mx.events.CloseEvent;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;
+		
+		private var _xmlOF:XML = new XML();
+		private var _xmlLC:XML = new XML();
+		private var _xmlRes:XML = new XML();
+		
+		public var orgObj:ArrayCollection = new ArrayCollection();
+		public var lineaObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var titulo:String;
+		public var texto:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function enviar():void{
+			if(valida()){
+				//asignacion de variables para realizar la consulta de seleccion
+				var cont:int;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				var lineaCred:String = cboLC.selectedItem.codigo;
+				var fecha:String = dtfFecha.text;
+				
+				Application.application.bloquear();
+				initConexionRep();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRes = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+					
+					if(_xmlRes.elements().length() > 0){
+						var cont:int = _xmlRes.elements().length();
+						dgReporte.dataProvider = _xmlRes.Table;
+						btnExportar.enabled = true;
+						lblTotal.text = cont.toString() + " Registro(s)";
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}	
+				});
+				wsMS.getRepClientesFondeo.send(orgFond, lineaCred, fecha);
+			}
+		}
+		
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			dgE.loadDGInExcel(dgReporte,null,titulo);		
+		}
+		
+		private function formateaLC():void{
+			var cont:int = _xmlLC.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			lineaObj.removeAll();
+			lineaObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.desc = "--Todas--";	
+			item.push(oItem);
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlLC.Table[i].CODIGO;
+				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			lineaObj = new ArrayCollection(item);
+		}
+		
+		private function formateaOF():void{
+			var cont:int = _xmlOF.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			orgObj.removeAll();
+			orgObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);	
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlOF.Table[i].NOMBRE;
+				oItem.codigo = _xmlOF.Table[i].CODIGO;
+				item.push(oItem);
+			}
+			orgObj = new ArrayCollection(item);
+		}
+		
+		public function init():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales(); 
+			du = new Utils();
+			titulo = "Reporte de Clientes de Fondeo";
+			lblTitulo.text = titulo.toUpperCase();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOF = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);	
+					
+				if(_xmlOF.elements().length() > 0){
+					formateaOF();
+					cboOF.dataProvider = orgObj;
+				}		
+			});
+			//Obtiene informacion de las Organizaciones Fondeadoras
+			wsCat.getCatalogoGral.send(29);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function limpiar():void{
+			dgReporte.dataProvider = null;
+			btnExportar.enabled = false;
+			cboOF.selectedIndex = 0;
+			cboLC.selectedIndex = 0;
+			cboLC.dataProvider = null;
+			dtfFecha.selectedDate = null;
+			lblTotal.text = "";
+		}
+		
+		public function seleccionarOF():void{
+			cboLC.dataProvider = null;
+			
+			if(cboOF.selectedIndex > 0){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var orgFond:String = cboOF.selectedItem.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				_xmlLC = null;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLC = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlLC.elements().length() > 0){
+						formateaLC();
+						cboLC.dataProvider = lineaObj;
+						cboLC.selectedIndex = 0;
+					}
+				});
+				params[0] = orgFond;
+				wsCat.getListado.send(21, params);
+			}	
+		}
+		
+		private function valida():Boolean{
+			if(cboOF.selectedIndex == 0){
+				Alert.show("Debe seleccionar la Organización Fondeadora.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFecha.text == ""){
+				Alert.show("Debe seleccionar la Fecha de Cálculo de Saldos.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas width="830" height="490" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Canvas id="cnvFondeo" x="21" y="55" width="350" height="110" styleName="canvasMod">
+			<mx:Label id="lblOF" x="31" y="12" text="Fondeadora:"/>
+			<mx:ComboBox id="cboOF" x="105" y="9" width="230" labelField="nombre" change="seleccionarOF()"></mx:ComboBox>
+			<mx:Label id="lblFecha" x="23" y="74" text="Fecha Saldos:"/>
+			<mx:DateField id="dtfFecha" x="105" y="72" width="100"></mx:DateField>
+			<mx:Label id="lblLC" x="26" y="43" text="Línea Crédito:"/>
+			<mx:ComboBox id="cboLC" x="105" y="40" width="230" labelField="desc"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Label id="lblFondeo" x="21" y="36" text="Criterios de Selección"/>
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button x="118.5" y="173" label="Generar" click="enviar()" />
+		<mx:Button x="197" y="173" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:DataGrid id="dgReporte" x="21" y="205" width="785.05" visible="true" height="246" horizontalScrollPolicy="on">
+			<mx:columns>
+				<mx:DataGridColumn headerText="ORG_ID" dataField="ORG_ID" width="70"/>
+				<mx:DataGridColumn headerText="CDGCL" dataField="CDGCL" width="70"/>
+				<mx:DataGridColumn headerText="CURP" dataField="CURP" width="160"/>
+				<mx:DataGridColumn headerText="IFE" dataField="IFE" width="100"/>
+				<mx:DataGridColumn headerText="PRIMAPE" dataField="PRIMAPE" width="110"/>
+				<mx:DataGridColumn headerText="SEGAPE" dataField="SEGAPE" width="110"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="130"/>
+				<mx:DataGridColumn headerText="NACIMIENTO" dataField="NACIMIENTO" width="90"/>
+				<mx:DataGridColumn headerText="EDO_NACIM" dataField="EDO_NACIM" width="90"/>
+				<mx:DataGridColumn headerText="SEXO" dataField="SEXO" width="60"/>
+				<mx:DataGridColumn headerText="TELEFONO" dataField="TELEFONO" width="90"/>
+				<mx:DataGridColumn headerText="EDO_CIVIL" dataField="EDO_CIVIL" width="80"/>
+				<mx:DataGridColumn headerText="CDGEF" dataField="CDGEF" width="60"/>
+				<mx:DataGridColumn headerText="CDGMU" dataField="CDGMU" width="60"/>
+				<mx:DataGridColumn headerText="CDGLO" dataField="CDGLO" width="70"/>
+				<mx:DataGridColumn headerText="CALLE" dataField="CALLE" width="180"/>
+				<mx:DataGridColumn headerText="NUM_EXT" dataField="NUM_EXT" width="80"/>
+				<mx:DataGridColumn headerText="NUM_INT" dataField="NUM_INT" width="80"/>
+				<mx:DataGridColumn headerText="COLONIA" dataField="COLONIA" width="100"/>
+				<mx:DataGridColumn headerText="CDGPOSTAL" dataField="CDGPOSTAL" width="90"/>
+				<mx:DataGridColumn headerText="METODOLOGIA" dataField="METODOLOGIA" width="100"/>
+				<mx:DataGridColumn headerText="NOMBRE_GPO" dataField="NOMBRE_GPO" width="180"/>
+				<mx:DataGridColumn headerText="ESCOLARIDAD" dataField="ESCOLARIDAD" width="100"/>
+				<mx:DataGridColumn headerText="ACTIVIDAD" dataField="ACTIVIDAD" width="80"/>
+				<mx:DataGridColumn headerText="FEC_INICIO_ACT" dataField="FEC_INICIO_ACT" width="110"/>
+				<mx:DataGridColumn headerText="UBI_NEG" dataField="UBI_NEG" width="70"/>
+				<mx:DataGridColumn headerText="PERS_TRAB" dataField="PERS_TRAB" width="80"/>
+				<mx:DataGridColumn headerText="INGRE_SEM" dataField="INGRE_SEM" width="80"/>
+				<mx:DataGridColumn headerText="ROL_HOGAR" dataField="ROL_HOGAR" width="90"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="120"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblTotal" x="21" y="459" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Button id="btnExportar" x="703.05" y="173" label="Exportar Excel" click="exportar()" enabled="false"/>
+	</mx:Canvas>
+</mx:Canvas>

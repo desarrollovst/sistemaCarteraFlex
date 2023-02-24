@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" >
+	
+	<!--Componente que permite observar el seguimiento de los diagnósticos de cancer y sus beneficiarios-->
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.DatosDiagnostico;
+			import Data.EventDiagnostico;
+			import Data.DatosDiagnosticoBeneficiario;
+			import Data.EventDiagnosticoBeneficiario;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+			private var infoDiag:DatosDiagnostico;
+			private var infoBenef:DatosDiagnosticoBeneficiario;
+			
+			private var _xmlAcre:XML = new XML();
+			private var _xmlDiag:XML = new XML();
+			private var _xmlBenef:XML = new XML();
+			private var _xmlMicro:XML = new XML();
+			private var dPermisos:XML = new XML();
+			
+			private var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var objMtto:Sprite = new Sprite();
+			
+			private var titulo:String;
+			
+			private var accionMicro:int;
+			private var accionDiag:int;
+			private var accionBenef:int;
+			
+			private var indMicro:int;
+			private var indDiag:int;
+			private var indBenef:int;
+			
+			private var vScrollMicro:Number;
+			private var vScrollDiag:Number;
+			private var vScrollBenef:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			private var alta:Boolean = new Boolean();
+			private var borrado:Boolean = new Boolean();
+			private var consulta:Boolean = new Boolean();
+			private var edicion:Boolean = new Boolean();
+		]]>
+	</mx:Script>
+			
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+			private function iniVar():void{
+				this.indMicro = -1;
+				this.vScrollMicro = -1;
+				
+				this.indDiag = -1;
+				this.vScrollDiag = -1;
+								
+				this.indBenef = -1;
+				this.vScrollBenef = -1;
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de diagnósticos";
+				lblTitulo.text = titulo.toUpperCase();
+				permisos();
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function activarContDiag(band:Boolean):void{
+				btnAgregarDiag.enabled = band;
+				btnDatosDiag.enabled = band;
+			}
+			private function activarContModDiag(band:Boolean):void{
+				btnEliminarDiag.enabled = band;
+				btnEditarDiag.enabled = band;
+			}
+			private function activarContBenef(band:Boolean):void{
+				if(alta == true)
+					btnAgregarBenef.enabled = band;
+					btnDatosBenef.enabled = band;
+			}
+			
+			private function activarContModBenef(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarBenef.enabled = band;
+				if(edicion == true)	
+					btnEditarBenef.enabled = band;
+			}
+		
+			private function activarContModDia(band:Boolean):void{
+				if(edicion == true)
+					btnEditarDiag.enabled = band;
+				if(borrado == true)
+					btnEliminarDiag.enabled = band;
+			}
+						
+			private function actualizarDiag(event:Event):void{
+				buscarListaDiag(1);
+			}
+			
+			private function actualizarBenef(event:Event):void{
+				buscarListaBenef(1);
+			}
+			
+			private function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/				
+						}
+					}
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			private function selecciona():void{
+				dgDiag.dataProvider = null;
+				seleccionaDiag();	
+				seleccionaBenef();
+						
+				if (dgMicro.selectedIndex >= 0)
+					activarContDiag(true);
+				else
+					activarContDiag(false);
+			}
+				
+			private function seleccionaDiag():void{
+				dgBenef.dataProvider = null;
+				
+				if (dgDiag.selectedIndex >= 0){
+					activarContModDiag(true);
+					activarContBenef(true);
+					activarContModBenef(false);
+				}
+				else{
+					activarContModDiag(false);
+					activarContBenef(false);
+					activarContModBenef(false);
+				}
+			}
+			
+			private function seleccionaBenef():void{
+				if (dgBenef.selectedIndex >= 0)
+					activarContModBenef(true);
+				else
+					activarContModBenef(false);
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- BUSCAR LISTAS -->
+	<mx:Script>
+		<![CDATA[
+			private function buscarListaMicro(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodAcre.text != "" || txtNombreAcre.text != "" || txtPaternoAcre.text != ""){
+					dgMicro.dataProvider = null;
+					dgDiag.dataProvider = null;
+					dgBenef.dataProvider = null;
+					
+					activarContDiag(false);
+					activarContModDiag(false);
+					activarContBenef(false);
+					activarContModBenef(false);
+					
+					if(tipo == 1)
+						Application.application.bloquear();
+						
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlMicro = new XML(event.result);
+						
+						if(_xmlMicro.elements().length() >0){
+							dgMicro.dataProvider = _xmlMicro.Table;
+							
+							if(accionMicro == 2){
+								dgMicro.validateNow();
+								dgMicro.verticalScrollPosition = vScrollMicro;
+								dgMicro.selectedIndex = indMicro;
+								this.accionMicro = 0;
+							}
+						}
+							
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+					});
+					params[0] = txtCodAcre.text;
+					params[1] = txtNombreAcre.text;
+					params[2] = txtPaternoAcre.text;
+					wsCat.getListado.send(71, params);
+				}
+			}
+			
+			private function buscarListaDiag(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (dgMicro.selectedIndex >= 0){
+					dgDiag.dataProvider = null;
+					dgBenef.dataProvider = null;
+					
+					activarContBenef(false);
+					activarContModBenef(false);
+					
+					if(dgDiag.selectedIndex >= 0)
+						activarContModDia(false);
+							
+					if(tipo == 1)
+						Application.application.bloquear();
+						
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlDiag = new XML(event.result);
+						
+						if (_xmlDiag.elements().length() > 0){
+							dgDiag.dataProvider = _xmlDiag.Table;
+							
+							if(accionDiag == 2){
+								dgDiag.validateNow();
+								dgDiag.verticalScrollPosition = vScrollDiag;
+								dgDiag.selectedIndex = indDiag;
+								this.accionDefun = 0;
+							}
+						}
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+					});
+					params[0] = dgMicro.selectedItem.CDGCL;
+					params[1] = dgMicro.selectedItem.CDGPMS;
+					params[2] = dgMicro.selectedItem.INICIO;
+					
+					wsCat.getListado.send(72, params);
+				}
+			}
+			
+			private function buscarListaBenef(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (dgDiag.selectedIndex >= 0){
+					dgBenef.dataProvider = null;
+
+					if (tipo == 1)
+						Application.application.bloquear();
+						
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+						_xmlBenef = new XML(event.result);
+						
+						if (_xmlBenef.elements().length() > 0){
+							dgBenef.dataProvider = _xmlBenef.Table;
+							
+							if(accionBenef == 2){
+								dgBenef.validateNow();
+								dgBenef.verticalScrollPosition = vScrollBenef;
+								dgBenef.selectedIndex = indBenef;
+								this.accionBenef = 0;
+							}
+						}
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();	
+					});
+					
+					params[0] = "";
+					params[1] = dgDiag.selectedItem.CODIGO;
+					params[2] = "";
+					wsCat.getListado.send(73, params);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- MUESTRA FORMULARIOS -->
+	<mx:Script>
+		<![CDATA[
+			private function mostrarFormDiag(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoDiag:MttoDiagnostico = new MttoDiagnostico(); 
+				if(edicion == true){
+					objMtto = this;	
+					accionDiag = tipo;
+					if(dgMicro.selectedIndex >= 0){						
+						switch(tipo){
+							case 1: 
+								comMttoDiag = MttoDiagnostico(PopUpManager.createPopUp(objMtto,MttoDiagnostico,true));
+								comMttoDiag.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDiag);
+								PopUpManager.centerPopUp(comMttoDiag);
+								comMttoDiag.registraInfoDiagnostico(_xmlMicro.Table[dgMicro.selectedIndex]);
+								break;
+							case 2:
+								if (dgDiag.selectedIndex >= 0){
+									comMttoDiag = MttoDiagnostico(PopUpManager.createPopUp(objMtto,MttoDiagnostico,true));	
+									comMttoDiag.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDiag);
+									PopUpManager.centerPopUp(comMttoDiag);
+									iniVar();
+									this.indDiag = dgDiag.selectedIndex;
+									this.vScrollDiag = dgDiag.verticalScrollPosition;
+									comMttoDiag.cargarInfoDiagnostico(_xmlDiag.Table[dgDiag.selectedIndex],_xmlMicro.Table[dgMicro.selectedIndex]);
+								}
+								else
+									Alert.show("Debe seleccionar el registro del diagnóstico.",titulo,4,null,null,global.iAlert); 
+								break;
+						}	
+					}
+				}
+			}
+						
+			private function mostrarFormDiagBenef(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoDiagBenef:MttoDiagnosticoBeneficiario = new MttoDiagnosticoBeneficiario(); 
+				if(edicion == true){
+					objMtto = this;
+					var vMontoDiag:Number = Number(_xmlMicro.Table[dgMicro.selectedIndex].MONTO_DIAGNOSTICO);
+					accionDiag = tipo;
+					switch(tipo){
+						case 1:
+							comMttoDiagBenef = MttoDiagnosticoBeneficiario(PopUpManager.createPopUp(objMtto,MttoDiagnosticoBeneficiario,true));
+							comMttoDiagBenef.addEventListener(Event.REMOVED_FROM_STAGE, actualizarBenef);
+							PopUpManager.centerPopUp(comMttoDiagBenef);
+							comMttoDiagBenef.registraInfoDiagBenef(_xmlDiag.Table[dgDiag.selectedIndex], _xmlMicro.Table[dgMicro.selectedIndex]);
+							break;
+						case 2: 
+							if (dgBenef.selectedIndex >= 0){
+								comMttoDiagBenef = MttoDiagnosticoBeneficiario(PopUpManager.createPopUp(objMtto,MttoDiagnosticoBeneficiario,true));	
+								comMttoDiagBenef.addEventListener(Event.REMOVED_FROM_STAGE, actualizarBenef);
+								PopUpManager.centerPopUp(comMttoDiagBenef);
+								iniVar();
+								this.indBenef = dgBenef.selectedIndex;
+								this.vScrollBenef = dgBenef.verticalScrollPosition;		
+								comMttoDiagBenef.cargarInfoDiagnosticoBenef(_xmlDiag.Table[dgDiag.selectedIndex], _xmlBenef.Table[dgBenef.selectedIndex], _xmlMicro.Table[dgMicro.selectedIndex]);
+							}
+							else
+								Alert.show("Debe seleccionar el registro del beneficiario.",titulo,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- ELIMINAR -->
+	<mx:Script>
+		<![CDATA[
+			private function eliminarDiag():void{
+				if(dgDiag.selectedIndex >= 0){
+					if(dgDiag.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el diagnóstico seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarDiag,global.iQuest);
+					else
+						Alert.show("Seleccione el diagnóstico a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			
+			private function manejadorEliminarDiag(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					infoDiag = new DatosDiagnostico();
+					infoDiag.codigo = dgDiag.selectedItem.CODIGO;
+					infoDiag.nombre1 = "";
+					infoDiag.nombre2 = "";
+					infoDiag.primape = "";
+					infoDiag.segape = "";
+					infoDiag.sexo = "";
+					infoDiag.nacimiento = "";
+					infoDiag.fdiagnostico = "";
+					infoDiag.edad = 0;
+					infoDiag.diagnostico = "";
+					infoDiag.cdgTipoDiag = "";
+					infoDiag.docorig = "";
+					infoDiag.pagado = "";
+					infoDiag.observaciones = "";
+					infoDiag.cdgcl = "";
+					infoDiag.cdgpms = "";
+					infoDiag.iniciopms = "";
+					infoDiag.cdgco = "";
+					infoDiag.cdgclns = "";
+					infoDiag.ciclo = "";
+					infoDiag.clns = "";
+					infoDiag.fregistro = "";
+					infoDiag.cdgpe = "";
+					infoDiag.factualiza = "";
+					infoDiag.actualizape = "";
+					
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionDiag);
+					wsMS.setAccionDiagnostico.send(infoDiag.codigo, infoDiag.nombre1, infoDiag.nombre2, infoDiag.primape, infoDiag.segape 
+												, infoDiag.sexo, infoDiag.nacimiento, infoDiag.fdiagnostico, infoDiag.edad
+												, infoDiag.diagnostico, infoDiag.cdgTipoDiag, infoDiag.docorig, infoDiag.pagado
+												, infoDiag.observaciones, infoDiag.cdgcl, infoDiag.cdgpms, infoDiag.iniciopms
+												, infoDiag.cdgco, infoDiag.cdgclns, infoDiag.ciclo, infoDiag.clns, infoDiag.fregistro
+												, infoDiag.cdgpe, infoDiag.factualiza, infoDiag.actualizape, 3);
+			    } 
+			}
+			
+			private function setAccionDiag(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDiag);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarListaDiag(1);
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+			
+			private function eliminarBenef():void{
+				if(dgBenef.selectedIndex >= 0){
+					if(dgBenef.selectedItem.CODIGO != "")
+						Alert.show("¿Desea eliminar el beneficiario seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarBenef,global.iQuest);
+					else
+						Alert.show("Seleccione el beneficiario a eliminar.", titulo, 4,null,null,global.iAlert);
+				}
+			}
+			
+			private function manejadorEliminarBenef(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					infoBenef = new DatosDiagnosticoBeneficiario();
+					infoBenef.codigo = dgBenef.selectedItem.CODIGO;
+					infoBenef.cdgdiag = "";
+					infoBenef.nombre1 = "";
+					infoBenef.nombre2 = "";
+					infoBenef.primape = "";
+					infoBenef.segape = "";
+					infoBenef.sexo = "";
+					infoBenef.monto = 0;
+					infoBenef.estatus = "";
+					infoBenef.cdgcb = "";
+					infoBenef.fexp = "";
+					infoBenef.nocheque = "";
+					infoBenef.fpago = "";
+					infoBenef.fregistro = "";
+					infoBenef.cdgpe = "";
+					infoBenef.factualiza = "";
+					infoBenef.actualizape = "";
+					infoBenef.forent = "";
+					
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionBenef);				
+					wsMS.setAccionDiagnosticoBeneficiario.send( infoBenef.codigo, infoBenef.cdgdiag, infoBenef.nombre1
+						, infoBenef.nombre2, infoBenef.primape, infoBenef.segape, infoBenef.sexo, infoBenef.monto
+						, infoBenef.estatus, infoBenef.cdgcb, infoBenef.fexp, infoBenef.nocheque, infoBenef.fpago
+						, infoBenef.fregistro, infoBenef.cdgpe, infoBenef.factualiza, infoBenef.actualizape, infoBenef.forent, 3);
+			    } 
+			}
+			
+			private function setAccionBenef(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionBenef);
+				var res:String = new String(event.result.toString());
+				
+				if (res.substr(0,1) == "1")
+					buscarListaBenef(1);
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="827" height="595">
+		<mx:Label x="18.25" y="239" text="DIAGNOSTICO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblDiagnostico"/>
+		<mx:Label x="18.25" y="429" text="BENEFICIARIOS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblBeneficiarios"/>
+		<mx:Canvas x="18" y="34" width="790.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodAcre" x="34.25" y="7" text="Acreditado:" width="72"/>
+			<mx:TextInput id="txtCodAcre" x="101.35" y="5" width="50" enter="buscarListaMicro(1)" maxChars="6" restrict="0-9"/>
+			<mx:Label id="lblNombreAcre" x="171.35" y="7" text="Nombre:" width="59" height="18"/>
+			<mx:TextInput id="txtNombreAcre" x="223.35" y="5" width="170"  maxChars="50" enter="buscarListaMicro(1)"/>
+			<mx:TextInput id="txtPaternoAcre" x="512.3" y="5" width="170"  maxChars="50" enter="buscarListaMicro(1)"/>
+			<mx:Label id="lblPaternoAcre" x="417.35" y="7" text="Apellido Paterno:" width="116" height="18"/>
+			<mx:Button id="btnBuscar" x="716.75" y="6" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarListaMicro(1)" toolTip="Buscar Acreditado" width="40" />
+		</mx:Canvas>
+		<mx:Canvas x="603.75" y="217" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnEditarDiag" x="57" y="3" icon="@Embed(source='assets/images/edit.png')" click="mostrarFormDiag(2)" enabled="false" toolTip="Editar diagnóstico" width="40"/>
+			<mx:Button id="btnAgregarDiag" x="105" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormDiag(1)" enabled="false" toolTip="Registrar diagnóstico" width="40" />
+			<mx:Button id="btnEliminarDiag" x="152" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarDiag()" enabled="false" toolTip="Eliminar diagnóstico" width="40"/>
+			<mx:Button id="btnDatosDiag" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaDiag(1)" enabled="false" toolTip="Listado de diagnósticos" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18.25" y="260" width="790.5" height="140" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgDiag" x="10" y="8" width="768" height="120" 
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+				itemClick="seleccionaDiag()" horizontalScrollPolicy="on" doubleClickEnabled="true" itemDoubleClick="mostrarFormDiag(2)" >				
+				<mx:columns>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="ACREDITADO" width="95" />
+					<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="250" />
+					<mx:DataGridColumn headerText="NOMBRE DIAGNOSTICO" dataField="NOMBRE_DIAG" width="250" />
+					<mx:DataGridColumn headerText="FECHA DIAGNOSTICO" dataField="FDIAGNOSTICO" width="160" />
+					<mx:DataGridColumn headerText="TIPO DIAGNOSTICO" dataField="TIPODIAG" width="150" />
+					<mx:DataGridColumn headerText="CDGTDIAG" dataField="CDGTDIAG" visible="false"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="603.75" y="407" width="205" height="35" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosBenef" x="12" y="2" icon="@Embed(source='assets/images/folder.png')" enabled="false" click="buscarListaBenef(1)" toolTip="Listado de beneficiarios" width="40"/>
+			<mx:Button id="btnEditarBenef" x="60" y="2" icon="@Embed(source='assets/images/edit.png')" click="mostrarFormDiagBenef(2)" enabled="false"  toolTip="Editar beneficiario" width="40"/>
+			<mx:Button id="btnAgregarBenef" x="105" y="2" icon="@Embed(source='assets/images/add.png')" click="mostrarFormDiagBenef(1)" enabled="false"  toolTip="Agregar beneficiario" width="40"/>
+			<mx:Button id="btnEliminarBenef" x="153" y="2" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarBenef()" enabled="false" toolTip="Eliminar beneficiario" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvTasa" x="18.25" y="450" width="790.5" height="135" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgBenef" x="10" y="10" width="768" height="115"
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" 
+				itemClick="seleccionaBenef()" doubleClickEnabled="true" itemDoubleClick="mostrarFormDiagBenef(2)"> 			
+				<mx:columns>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE_BENEF" width="250" visible="true"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="75" visible="true"/>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS_D" width="75" visible="true"/>
+					<mx:DataGridColumn headerText="FECHA PAGO" dataField="FPAGO" width="90" visible="true"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="18.25" y="99" width="790.5" height="112" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:DataGrid id="dgMicro" x="10" y="10" width="768" height="88" 
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on"
+				itemClick="selecciona()">									
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50" />
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE_CL" width="150" />
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="120" />
+					<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="75" />
+					<mx:DataGridColumn headerText="FIN" dataField="FIN" width="75" />
+					<mx:DataGridColumn headerText="MONTO DIAGNOSTICO" dataField="MONTO_DEFUNCION" width="100" />
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="79" text="MICROSEGURO" fontWeight="bold" fontSize="12" fontStyle="italic"/>
+		<mx:Label x="18" y="10" text="..." fontWeight="bold" id="lblTitulo" fontSize="12" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

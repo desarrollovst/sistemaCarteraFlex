@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="669" height="672" backgroundAlpha="1.0" creationPolicy="all"
+	creationComplete="initApp()" backgroundColor="#FFFFFF" xmlns:Data="Data.*" x="12.5" y="42">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		private var du:Utils;
+      	
+      	private var aParticipante:Array;
+      	private var aCalificacion:Array;
+      	
+        private var infoObj:ArrayCollection = new ArrayCollection();
+		private var _xmlRep:XML = new XML();
+		
+		private var _xmlPrograma:XML = new XML();
+		private var _xmlCursos:XML = new XML();
+		private var _xmlPart:XML = new XML();
+		
+		private var acPrograma:ArrayCollection = new ArrayCollection();
+		private var acCursos:ArrayCollection = new ArrayCollection();
+		
+		private var cont:int;
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        private function cargarInfo():void{
+        	if(valida()){
+        		if(formateaInfo()){
+	        		var programa:String = cbxPrograma.selectedItem.codigo;
+					var curso:String = cbxCurso.selectedItem.codigo;
+					var fmarcado:String = dtfFMarcado.text;
+					var fregistro:String = "";
+					var usuario:String = Application.application.U_ID;
+					
+		        	initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAsignaArchivo);
+					wsMS.setAccionCpCapacitacion.send(programa, curso, aParticipante, aCalificacion, fmarcado, fregistro, usuario, 2);
+        		}
+        	}
+        }
+        
+        private function cargaParticipantes():void{
+        	try{
+        		var mCurso:String = cbxCurso.selectedItem.codigo;
+	        	
+	        	if(mCurso != ""){
+		        	var wsCatCap:WebService = new WebService;
+					var params:Array = new Array;
+					
+					du.initWsCatCap(wsCatCap);
+					du.sCursor();
+					
+			    	du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+						_xmlPart = new XML(event.result);
+				
+						if (_xmlPart.elements().length() > 0){
+							txtPart.text = _xmlPart.Table[0].PARTICIPANTES;
+							dtfInicio.text = _xmlPart.Table[0].INICIO;
+							dtfFin.text = _xmlPart.Table[0].FIN;
+							txtTipoPart.text = _xmlPart.Table[0].NOMPARTIP;
+						}
+						else{
+							txtPart.text = "0";
+							dtfInicio.text = "";
+							dtfFin.text = "";
+							txtTipoPart.text = "";
+						}
+							
+						du.closeWs(wsCatCap);
+						du.rCursor();
+					});
+					params[0] = cbxCurso.selectedItem.codigo;
+					params[1] = "";
+					params[2] = "S";
+					params[3] = "";
+					params[4] = "";
+					wsCatCap.getInfoCapacitacion.send(8, params);
+	        	}
+	        	else{
+	        		txtPart.text = "";
+	        		dtfInicio.text = "";
+					dtfFin.text = "";
+					txtTipoPart.text = "";
+	        	}
+        	}
+        	catch(myError:Error) {
+        		txtPart.text = "0";
+        	}
+        }
+        
+		private function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        private function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	aParticipante = new Array;
+			aCalificacion = new Array;
+			
+			for (var i:int = 0; i < info.length; i++){
+				aParticipante[i] = info[i].CDGPART;
+				aCalificacion[i] = 0;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function onLoadError():void{
+        	/*body not implemented*/
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+            	du.sCursor();
+				Application.application.bloquear();
+				
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnExportar.visible = false;
+	            cont = 0;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 1; row<noOfRows;row++){
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0;col<noOfColumns;col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell!=null){
+	                            	cellValue =(cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	}  
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = noOfRows  - 1 + " Registro(s) Encontrado(s)";
+	                    cont = noOfRows  - 1;
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+	            
+	            du.rCursor();
+				Application.application.desbloquear();
+            }
+            catch (error:Error){
+            	du.rCursor();
+				Application.application.desbloquear();
+				Alert.show(error.message,titulo,4,null,null,global.iAlert);
+				return;
+         	} 
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.CDGPART = cellValue;
+        }
+      
+      	private function formateaCursos():void{
+			var cont:int = _xmlCursos.elements().length();
+			var programa:String = cbxPrograma.selectedItem.codigo;
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			acCursos.removeAll();
+			acCursos.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+				
+			if (programa != ""){						
+				for(var i:int = 0; i < cont; i++){
+					if (_xmlCursos.Table[i].CDGPROG == programa){
+						oItem = new Object();
+						oItem.codigo = _xmlCursos.Table[i].CODIGO;
+						oItem.descripcion = _xmlCursos.Table[i].NOMBRE;
+						item.push(oItem);
+					}
+				}
+			}
+			acCursos = new ArrayCollection(item);
+		}
+		
+      	private function formateaPrograma():void{
+			var cont:int = _xmlPrograma.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			var i:int;
+			
+			acPrograma.removeAll();
+			acPrograma.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+										
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlPrograma.Table[i].CODIGO;
+				oItem.descripcion = _xmlPrograma.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acPrograma = new ArrayCollection(item);
+		}
+		
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Baja Archivo Capacitación";
+	      	lblTitulo.text = titulo.toUpperCase();
+	      	
+	      	cont = 0;
+	      	
+	      	var fec:Date;
+			fec = Application.application._Current_Fecha;
+			dtfFMarcado.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					
+	      	var wsCatCap:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCatCap(wsCatCap);
+			du.sCursor();
+			
+	      	du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlPrograma = new XML(event.result);
+				
+				if (_xmlPrograma.elements().length() > 0){
+					formateaPrograma();
+					cbxPrograma.dataProvider = acPrograma;
+					formateaCursos();
+					cbxCurso.dataProvider = acCursos;
+					
+					du.closeWs(wsCatCap);
+					du.rCursor();
+				}
+				else{
+					du.closeWs(wsCatCap);
+					du.rCursor();
+					Alert.show("No se encontraron programas registrados.",titulo,4,null,null,global.iAlert);
+				}
+			});
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			wsCatCap.getInfoCapacitacion.send(1, params);
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServCap.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRepCap.toString();
+			wsMS.loadWSDL();
+		}	
+	    
+	    private function seleccionaCurso():void{
+	    	txtPart.text = "";
+	    	dtfInicio.text = "";
+	    	dtfFin.text = "";
+	    	txtTipoPart.text = "";
+	    	
+	    	var wsCatCap:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCatCap(wsCatCap);
+			du.sCursor();
+			
+	    	du.ejecutaWsMethod(wsCatCap,function(event:ResultEvent):void {		
+				_xmlCursos = new XML(event.result);
+		
+				if (_xmlPrograma.elements().length() > 0){
+					formateaCursos();
+					cbxCurso.dataProvider = acCursos;
+					
+					du.closeWs(wsCatCap);
+					du.rCursor();
+				}
+				else{
+					du.closeWs(wsCatCap);
+					du.rCursor();
+					Alert.show("No se encontraron cursos registrados.",titulo,4,null,null,global.iAlert);
+				}
+				du.closeWs(wsCatCap);
+				du.rCursor();
+			});
+			params[0] = "";
+			params[1] = "";
+			params[2] = "S";
+			params[3] = "";
+			params[4] = "";
+			wsCatCap.getInfoCapacitacion.send(8, params);
+	    }
+	    
+	    private function setAsignaArchivo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaArchivo);
+			wsMS = null;
+			
+			var res:String = event.result.toString();
+			
+			if (res.substr(0,1) == "1"){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				dgInfo.dataProvider = null;	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();
+					
+					if(_xmlRep.elements().length() > 0){
+						dgInfo.dataProvider = _xmlRep.Table;
+						lblResultado.text = cont + " Registro(s) Procesado(s)";
+						btnCargar.visible = false;
+						btnBuscar.enabled = false;
+						btnExportar.visible = true;	
+						btnLimpiar.visible = true;
+					}
+					else
+						Alert.show("No se encontraron resultados de la consulta.",titulo,4,null,null,global.iAlert);			
+				});
+				wsMS.getRepCpCapacitacionPaso.send(Application.application.U_ID);		
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function limpiar():void{
+			dgInfo.dataProvider = null;
+			cbxPrograma.selectedIndex = 0;
+			cbxCurso.selectedIndex = 0;
+			lblParticipantes.text = "";
+			
+			txtArchivo.text = "";
+			
+			btnCargar.visible = true;
+			btnCargar.enabled = false;
+			btnBuscar.enabled = true;
+			btnExportar.visible = false;	
+			btnLimpiar.visible = false;
+			
+			var fec:Date;
+			fec = Application.application._Current_Fecha;
+			dtfFMarcado.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			
+			lblResultado.text = "";
+			txtPart.text = "";
+			
+			dtfInicio.text = "";
+			dtfFin.text = "";
+			
+			txtTipoPart.text = "";
+			
+			cont = 0;
+		}
+		
+		private function valida():Boolean{
+			if(cbxPrograma.selectedIndex == 0){
+				Alert.show("Seleccione un programa.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxCurso.selectedIndex == 0){
+				Alert.show("Seleccione un curso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFMarcado.text == ""){
+				Alert.show("Indique la fecha de marcado.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			var fin:Date = DateField.stringToDate(dtfFin.text, "DD/MM/YYYY");
+			var marcado:Date = DateField.stringToDate(dtfFMarcado.text, "DD/MM/YYYY");
+			
+			if(fin >= marcado){
+				Alert.show("La fecha marcado debe ser mayor a la fecha fin del curso.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cont == 0){
+				Alert.show("Seleccione algún participante a registrar.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="216" width="650" height="446" styleName="canvasMod">
+  		<mx:Button label="Baja Archivo" id="btnCargar" enabled="false" x="268.65" y="407" click="cargarInfo()" tabIndex="5"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="422.5" y="375" tabIndex="4"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="161.5" y="375" width="253"/>
+		<mx:DataGrid id="dgInfo" x="10" y="10" width="628" height="332" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CDGPART" width="60"/>
+				<mx:DataGridColumn headerText="INVITADO" dataField="PARTICIPANTE" width="250"/>
+				<mx:DataGridColumn headerText="RESULTADO" dataField="RESULTADO" width="200"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="234.5" y="407" click="exportar()"/>
+		<mx:Label x="10" y="347" id="lblResultado" width="621"/>
+		<mx:Button label="Limpiar" id="btnLimpiar" visible="false" x="345.5" y="407" click="limpiar()"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="10" y="39" width="381" height="169" styleName="canvasMod">
+		<mx:Label x="46" y="13" text="Programa:" id="lblPrograma"/>
+		<mx:Label x="56" y="43" text="Curso:" id="lblCurso"/>
+		<mx:Label x="10" y="133" text="Fecha Marcado:" id="lblFMarcado"/>
+		<mx:Label x="228" y="133" text="Participantes:" id="lblParticipantes"/>
+		<mx:ComboBox x="101" y="10" width="266" id="cbxPrograma" labelField="descripcion" change="seleccionaCurso()" tabIndex="1"></mx:ComboBox>
+		<mx:ComboBox x="101" y="40" width="266" id="cbxCurso" labelField="descripcion" tabIndex="2" change="cargaParticipantes()"></mx:ComboBox>
+		<mx:DateField x="101" y="130" width="109" id="dtfFMarcado" tabIndex="5"/>
+		<mx:TextInput x="306" y="129" width="61" id="txtPart" editable="false" tabIndex="6"/>
+		<mx:Label x="61" y="103" text="Inicio:" id="lblInicio"/>
+		<mx:DateField x="101" y="100" width="109" id="dtfInicio" tabIndex="3" enabled="false" disabledColor="black" />
+		<mx:Label x="228" y="103" text="Fin:" id="lbFin"/>
+		<mx:DateField x="258" y="100" width="109" id="dtfFin" tabIndex="4" editable="false" enabled="false" disabledColor="black"/>
+		<mx:Label x="6" y="73" text="Tipo Participante:" id="lblTipoPart"/>
+		<mx:TextInput x="101" y="70" id="txtTipoPart" editable="false"/>
+	</mx:Canvas>
+</mx:Canvas>

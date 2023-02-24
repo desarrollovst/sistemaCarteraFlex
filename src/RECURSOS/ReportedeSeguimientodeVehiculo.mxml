@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="520" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:control="Controls.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var inicio:String;
+			public var fin:String;
+			public var region:String;
+			public var sucursal:String;
+			private var du:Utils;
+			private var global:Globales;
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}		
+			
+			public function fecha():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+			}
+			
+			private function genera():void{
+				if(valida() == true){
+					inicio = dtFechaIni.text;
+					fin = dtFechaFin.text;
+					region = comFiltroRS.obtieneRegion();
+					sucursal = comFiltroRS.obtieneSucursal();
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length();
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}	
+					});
+					wsMS.getRepSeguimientoVehiculo.send(inicio , fin , region , sucursal );	
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Seguimiento de Vehículo";
+				lblTitulo.text = titulo.toUpperCase();
+				comFiltroRS.init();
+				fecha();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpia():void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+				comFiltroRS.limpiar();
+				fecha();
+			}	
+			
+			public function valida():Boolean{
+				if(dtFechaIni.text == ""){
+					Alert.show("Seleccione la fecha de inicio del reporte.",lblTitulo.text,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtFechaFin.text == ""){
+					Alert.show("Seleccione la fecha de fin del reporte.",lblTitulo.text,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+						
+		]]>
+	</mx:Script>
+	
+		<mx:Canvas x="19" y="54" height="110" width="272" styleName="canvasMod">
+			<control:CtrlFiltroInfoRS id="comFiltroRS" x="11" y="0" />
+		</mx:Canvas>
+		<mx:Canvas x="19" y="172" height="59" width="272" styleName="canvasMod">
+		<mx:DateField id="dtFechaIni" x="18.5" y="27" width="111"/>
+		<mx:Label x="18.5" y="10" text="Fecha Inicial" id="label1"/>
+		<mx:DateField id="dtFechaFin" x="142.5" y="27" width="111"/>
+		<mx:Label x="143" y="10" text="Fecha Final" id="label4"/>
+		</mx:Canvas>
+	
+	<mx:Label x="19" y="37" text="Criterios de Selección" width="124.25"/>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="19" y="274" width="760.05" visible="true" height="206" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="80"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="110"/>
+			<mx:DataGridColumn headerText="MARCA" dataField="MARCA" width="90"/>
+			<mx:DataGridColumn headerText="MODELO" dataField="MODELO" width="80"/>
+			<mx:DataGridColumn headerText="SERIE" dataField="SERIE" width="150"/>
+			<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="380"/>
+			<mx:DataGridColumn headerText="NOMINA" dataField="NOMINA" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE DEL USUARIO" dataField="NOM_USUARIO" width="230"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="80"/>
+			<mx:DataGridColumn headerText="KILOMETRAJE" dataField="KILOMETRAJE" width="100"/>
+			<mx:DataGridColumn headerText="FECHA ASIGNACION" dataField="FASIGNACION" width="80"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="generar" x="82.55" y="239" label="Generar" click="genera()" enabled="true"/>
+	<mx:Button id="limpiar" x="162.55" y="239" label="Limpiar" click="limpia()" enabled="true"/>
+	<mx:Button id="btnExportar" x="670.05" y="239" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="19" y="488" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<mx:Label id="lblTitulo" x="19" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

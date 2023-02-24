@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="330" height="200">
+	
+	<mx:Validator id="antMesV" source="{txtAntMes}" property="text" 
+	invalid="{txtAntMes.setFocus()}" triggerEvent="" requiredFieldError="Antigüedad Requerida"/>
+	
+	<mx:Validator id="numCteV" source="{txtNumCte}" property="text" 
+	invalid="{txtNumCte.setFocus()}" triggerEvent="" requiredFieldError="Número de Clientes Requerido"/>
+	
+	<mx:Validator id="numGpoV" source="{txtNumGpo}" property="text" 
+	invalid="{txtNumGpo.setFocus()}" triggerEvent="" requiredFieldError="Número de Grupos Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosCteAnt;
+		import Data.EventCteAnt;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var info:DatosCteAnt;
+		private var _xmlCte:XML =  new XML();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoCteAnt(antMes:int, numCtes:int, numGpos:int):void{
+			init();
+			tipoAccion = 2; 
+			
+			info = new DatosCteAnt();
+			//Datos del tipo de Clientes por Antiguedad de Asesor
+			info.antMes = antMes;
+			info.numCtes = numCtes;
+			info.numGpos = numGpos;
+			
+			llenaRegistros();
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosCteAnt();
+				
+			var invalidArray:Array = Validator.validateAll([antMesV, numCteV, numGpoV]);
+				
+			if(invalidArray.length == 0){	
+				info.antMes = Number(txtAntMes.text);
+				info.numCtes = Number(txtNumCte.text);
+				info.numGpos = Number(txtNumGpo.text);
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function guardaCteAnt():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionCteAnt);
+			wsMS.setAccionCteAnt.send(tipoAccion, info.antMes, info.numCtes, info.numGpos);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			this.title = "Clientes por Antigüedad";
+			titulo = "Mantenimiento de Clientes Por Antigüedad";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 500;
+			openEffect.play([this]);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			txtAntMes.editable = false;
+			
+			txtAntMes.text = info.antMes.toString();
+			txtNumCte.text = info.numCtes.toString();
+			txtNumGpo.text = info.numGpos.toString();
+		}
+			
+		public function registraInfoCteAnt():void{
+			init();
+			tipoAccion = 1;
+			
+			info = null;
+			
+			txtAntMes.setFocus();
+			txtAntMes.editable = true;
+		}
+		
+		private function setAccionCteAnt(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCteAnt);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaDatosCteAnt(event:EventCteAnt):void{
+			info = event.customProp;
+		}
+		
+		private function validaFinal():void{
+			if (info.guarda == true)
+				guardaCteAnt();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="311" height="110" styleName="canvasMod">
+		<mx:Label id="lblAntMes" x="54" y="12" text="Meses Antigüedad:"/>
+		<mx:Label id="lblNumCte" x="66" y="44" text="Número Clientes:"/>
+		<mx:Label id="lblNumGpo" x="66" y="76" text="Número Grupos:"/>
+		<mx:TextInput id="txtAntMes" x="160" y="10" width="45" maxChars="3" restrict="0-9"/>
+		<mx:TextInput id="txtNumCte" x="160" y="42" width="59" maxChars="4" restrict="0-9"/>
+		<mx:TextInput id="txtNumGpo" x="160" y="74" width="59" maxChars="4" restrict="0-9"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="233" y="128" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="281" y="128" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="631" height="520" backgroundAlpha="1.0" 
+	creationPolicy="all" creationComplete="initApp()" backgroundColor="#FFFFFF" 
+	xmlns:Data="Data.*" x="12.5" y="42">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+         
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		private var du:Utils;
+      	
+      	private var nomina:Array;
+      	private var asesor:Array;
+      	private var sueldo:Array;
+      	private var fecha:Array;
+      	
+      	private var infoObj:ArrayCollection = new ArrayCollection();
+        private var _xmlRep:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	}
+        }
+        
+        public function cargarInfo():void{
+        	if(formateaInfo()){
+	        	initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				//Servicio invocado en la etapa de modificacion de registros mediante archivo
+				wsMS.addEventListener(ResultEvent.RESULT, setAsignaSueldoArchivo);
+				wsMS.setAsignaSueldoArchivo.send(nomina, sueldo, fecha, Application.application.U_ID);
+        	}
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        private function formateaInfo():Boolean{
+        	var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+        	nomina = new Array;
+			asesor = new Array;
+			sueldo = new Array;
+			fecha = new Array;
+			
+			for (var i:int = 0; i < info.length; i++){
+				nomina[i] = info[i].NOMINA;
+				asesor[i] = info[i].ASESOR;
+				sueldo[i] = info[i].SUELDO;
+				fecha[i] =  info[i].FECACT;
+			}
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+            //progressBar.visible = true;
+            //progressBar.includeInLayout = true;
+        }
+        
+        private function onLoadError():void{
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+            try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows - 1;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 1; row <= noOfRows; row++){
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0;col<noOfColumns;col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell!=null){
+	                            	cellValue =(cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	}  
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = noOfRows + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+            }
+            catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.NOMINA = cellValue;
+            else if(index == 1)
+                cellObject.NOMBRE = cellValue;
+            else if(index == 2)
+                cellObject.SUELDO = cellValue;
+            else if(index == 3)
+                cellObject.FECACT = global.formatoFechaExcel(Number(cellValue));
+        }
+      
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Sueldos";
+	      	lblTitulo.text = titulo.toUpperCase();  
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}	
+	    
+	    private function setAsignaSueldoArchivo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaSueldoArchivo);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				initConexionRep();
+				du.sCursor();
+				Application.application.bloquear();
+				dgInfo.dataProvider = null;	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+						
+					var cont:int = _xmlRep.elements().length();	
+					dgInfo.dataProvider = _xmlRep.Table;
+					lblResultado.text = cont + " Registro(s) Procesado(s)";
+					btnCargar.visible = false;
+					btnExportar.visible = true;	
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+					Application.application.desbloquear();				
+				});
+				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de sueldos
+				wsMS.getRepSueldoArchivo.send(Application.application.U_ID);		
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="39" width="611" height="471" styleName="canvasMod">
+  		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="250.5" y="435" click="cargarInfo()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="356.85" y="402"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="188.85" y="402" width="160"/>
+		<mx:DataGrid id="dgInfo" x="11.5" y="10" width="587.5" height="353" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NOMINA" dataField="NOMINA" width="70"/>
+				<mx:DataGridColumn headerText="ASESOR" dataField="NOMBRE" width="180"/>
+				<mx:DataGridColumn headerText="SUELDO" dataField="SUELDO" width="90"/>
+				<mx:DataGridColumn headerText="FECHA" dataField="FECACT" width="90"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="103.6" y="371" width="401.75" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="253" y="435" click="exportar()"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="410" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

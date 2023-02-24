@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="495" height="290"  fontWeight="normal">
+	
+	<mx:Validator id="bonoV" source="{txtBono}" property="text" 
+	invalid="{txtBono.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="montodefV" source="{txtMontoDef}" property="text" 
+	invalid="{txtMontoDef.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="edadminV" source="{txtEdadMin}" property="text" 
+	invalid="{txtEdadMin.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="edadmaxV" source="{txtEdadMax}" property="text" 
+	invalid="{txtEdadMax.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="costoV" source="{txtCosto}" property="text" 
+	invalid="{txtCosto.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="ivaV" source="{txtIVA}" property="text" 
+	invalid="{txtIVA.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="importeV" source="{txtImporte}" property="text" 
+	invalid="{txtImporte.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="validohastaV" source="{dtValidoHasta}" property="text" 
+	invalid="{dtValidoHasta.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	<mx:Validator id="descripcionV" source="{txtDescripcion}" property="text" 
+	invalid="{txtDescripcion.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<!-- LIBRERIAS -->
+	<mx:Script>
+		<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.DatosProdMicro;
+		import Data.EventProdMicro;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+        import mx.formatters.NumberBaseRoundType;
+		]]>
+	</mx:Script>
+	
+	<!-- VARIABLES -->
+	<mx:Script>
+		<![CDATA[
+		[Bindable]
+		private var info:DatosProdMicro;
+		
+		private var _xmlProdMicro:XML = new XML();
+		private var _xmlAseguradora:XML = new XML();
+				
+		private var vResult:ValidationResultEvent;
+		
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		
+		private var tipoAccion:int;
+		private var titulo:String;
+		private var vgCodigo:String;
+		
+		private var asegObj:ArrayCollection = new ArrayCollection();
+		]]>
+	</mx:Script>
+	
+	<!-- FUNCIONES GENERALES -->
+	<mx:Script>
+		<![CDATA[
+		private function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Producto de Microseguro";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+				
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function formateaAseguradora():void{
+			var cont:int = _xmlAseguradora.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			asegObj.removeAll();
+			asegObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "";
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+				
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlAseguradora.Table[i].CODIGO;
+				oItem.desc = _xmlAseguradora.Table[i].NOMBRE.toUpperCase();
+				item.push(oItem);
+			}
+			
+			asegObj = new ArrayCollection(item);
+			cbxAseguradora.dataProvider = asegObj;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		public function registraInfoProdMicro():void{
+			tipoAccion = 1; //INSERTAR
+			
+			this.title = "Nuevo Producto de Microseguro";
+			info = null;
+			
+			init();
+			
+			vgCodigo = "";
+			
+			var wsCat:WebService = new WebService();
+			var params:Array = new Array();
+			
+			du.initWsCat(wsCat);
+	 		du.sCursor();
+	 		
+	 		du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+				_xmlAseguradora = new XML(event.result);
+				
+				formateaAseguradora();
+				cbxAseguradora.selectedIndex = 0;
+				
+				du.closeWs(wsCat);
+				du.rCursor();
+				Application.application.desbloquear();
+			});
+			params[0] = "";
+			params[1] = "";
+			params[2] = "A";
+			wsCat.getListado.send(66, params);
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<!-- ENVIA INFORMACIÓN -->
+	<mx:Script>
+		<![CDATA[
+		private function enviar():void{	
+			//TIPO 1 - INSERTA (tipoAccion)
+			//TIPO 2 - ACTUALIZA (tipoAccion)
+			if(valida()){
+				info = new DatosProdMicro();
+				info.codigo = vgCodigo;
+				info.descripcion = txtDescripcion.text;
+				info.cdgcms = "1";
+				info.plazo = Number(txtPlazo.text);
+				info.periodicidad = "";
+				info.valido_hasta = dtValidoHasta.text;
+				info.importe = Number(txtImporte.text);
+				info.iva = Number(txtIVA.text);
+				info.costo = Number(txtCosto.text);
+				info.edad_max = Number(txtEdadMax.text);
+				info.edad_min = Number(txtEdadMin.text);
+				info.monto_defuncion = Number(txtMontoDef.text);
+				info.bono = Number(txtBono.text);
+				info.aseguradora = cbxAseguradora.selectedItem.codigo;
+
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+										
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+						
+					if(res.substr(0,1) == "1"){	
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+				}); 
+				
+				wsMS.setAccionProductoMicroseguro.send( info.codigo, info.descripcion, info.cdgcms
+						, info.plazo, info.periodicidad, info.valido_hasta, info.importe, info.iva
+						, info.costo, info.edad_max, info.edad_min, info.monto_defuncion, info.bono, info.aseguradora, tipoAccion);			
+			}
+		}
+		
+		private function valida():Boolean{
+			var v_BONO:Array = Validator.validateAll([bonoV]);
+			var v_MONTODEF:Array = Validator.validateAll([montodefV]);
+			var v_EDADMIN:Array = Validator.validateAll([edadminV]);
+			var v_EDADMAX:Array = Validator.validateAll([edadmaxV]);	
+			var v_COSTO:Array = Validator.validateAll([costoV]);
+			var v_IVA:Array = Validator.validateAll([ivaV]);
+			var v_IMPORTE:Array = Validator.validateAll([importeV]);
+			var v_VALIDOHASTA:Array = Validator.validateAll([validohastaV]);	
+			var v_PLAZO:Array = Validator.validateAll([plazoV]);
+			var v_DESCRIPCION:Array = Validator.validateAll([descripcionV]);	
+		
+			if(v_DESCRIPCION.length > 0){
+				Alert.show("Debe capturar la descripción.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_PLAZO.length > 0){
+				Alert.show("Debe capturar el plazo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_EDADMAX.length > 0){
+				Alert.show("Debe capturar la edad máxima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_EDADMIN.length > 0){
+				Alert.show("Debe capturar la edad mínima.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_VALIDOHASTA.length > 0){
+				Alert.show("Debe capturar el campo valido hasta.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_IMPORTE.length > 0){
+				Alert.show("Debe capturar el importe.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_COSTO.length > 0){
+				Alert.show("Debe capturar el costo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_IVA.length > 0){
+				Alert.show("Debe capturar el IVA.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_BONO.length > 0){
+				Alert.show("Debe capturar el bono.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(v_MONTODEF.length > 0){
+				Alert.show("Debe capturar el monto defunción.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cbxAseguradora.selectedIndex == 0){
+				Alert.show("Seleccione una aseguradora.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		]]>
+	</mx:Script>
+	
+	<!-- CARGA INFO PRODUCTO MICROSEGURO -->
+	<mx:Script>
+		<![CDATA[
+		public function cargarInfoProdMicro(pxmlProdMicro:XML):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array
+			
+			this.title = "Edición de Producto de Microseguro";
+			info = null;
+			
+			init();
+			
+			if(pxmlProdMicro != null){	
+				tipoAccion = 2; //ACTUALIZA			
+				vgCodigo = pxmlProdMicro.CODIGO;
+				txtCodigo.text = pxmlProdMicro.CODIGO;
+				txtDescripcion.text = pxmlProdMicro.DESCRIPCION;
+				txtPlazo.text = pxmlProdMicro.PLAZO;
+				dtValidoHasta.selectedDate = DateField.stringToDate(pxmlProdMicro.VALIDO_HASTA,"DD/MM/YYYY");
+				txtImporte.text = pxmlProdMicro.IMPORTE;
+				txtIVA.text = pxmlProdMicro.IVA;
+				txtCosto.text = pxmlProdMicro.COSTO;
+				txtEdadMax.text = pxmlProdMicro.EDAD_MAX;
+				txtEdadMin.text = pxmlProdMicro.EDAD_MIN;
+				txtMontoDef.text = pxmlProdMicro.MONTO_DEFUNCION;
+				txtBono.text = pxmlProdMicro.BONO;
+				
+				du.initWsCat(wsCat);
+		 		du.sCursor();
+		 		
+		 		du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+					_xmlAseguradora = new XML(event.result);
+					
+					formateaAseguradora();
+					for(var i:int = 0; i < asegObj.length; i ++){
+						if(asegObj[i].codigo.toString() == pxmlProdMicro.CDGASE){
+							cbxAseguradora.selectedIndex = i;
+							break;
+						}
+					}
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				});
+				params[0] = "";
+				params[1] = "";
+				params[2] = "A";
+				wsCat.getListado.send(66, params);
+			}
+		}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+    <mx:NumberFormatter id="numberFormatter" precision="2" rounding="up" />
+        
+	<mx:Button id="btnAceptar" x="349" y="216" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" tabIndex="16"/>
+	<mx:Button id="btnCancelar" x="421" y="216" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" tabIndex="17"/>
+		<mx:Canvas x="10" y="68" width="475" height="140" styleName="canvasMod">
+			<mx:Label id="lblPlazo" x="25" y="12" text="Plazo:"/>
+			<mx:TextInput id="txtPlazo" x="67" y="10" width="53" tabIndex="3" restrict="0-9" maxChars="2"/>
+			<mx:Label id="lblValidoHasta" x="134" y="12" text="Valido hasta:"/>
+			<mx:Label id="lblImporte" x="159" y="44" text="Importe:"/>
+			<mx:Label id="lbliva" x="354" y="14" text="IVA:"/>
+			<mx:Label id="lblCosto" x="166" y="76" text="Costo:"/>
+			<mx:Label id="lblEdadMax" x="4" y="44" text="Edad Máx:"/>
+			<mx:Label id="lblEdadMin" x="8" y="76" text="Edad Min:"/>
+			<mx:Label id="lblMontoDef" x="292" y="76" text="Monto defunción:"/>
+			<mx:TextInput id="txtImporte" x="210" y="42" width="75" tabIndex="7" restrict="0-9; ." change="validaMonto(event)"/>
+			<mx:TextInput id="txtIVA" x="388" y="12" width="35" tabIndex="9" restrict="0-9; ." change="validaMonto(event)" />
+			<mx:TextInput id="txtCosto" x="210" y="74" width="75" tabIndex="8" restrict="0-9; ." change="validaMonto(event)"/>
+			<mx:TextInput id="txtEdadMax" x="67" y="42" width="53" tabIndex="4" restrict="0-9" maxChars="2"/>
+			<mx:TextInput id="txtEdadMin" x="67" y="74" width="53" tabIndex="5" restrict="0-9" maxChars="2"/>
+			<mx:TextInput id="txtMontoDef" x="388" y="74" width="75" tabIndex="11" restrict="0-9; ." change="validaMonto(event)"/>
+			<mx:DateField x="210" y="10" width="92" id="dtValidoHasta" tabIndex="6"/>
+			<mx:Label id="lbl" x="425" y="14" text="%"/>
+			<mx:Label id="lblBono" x="347" y="44" text="Bono:"/>
+			<mx:TextInput id="txtBono" x="388" y="42" width="75" tabIndex="10" restrict="0-9; ." change="validaMonto(event)"/>
+			<mx:ComboBox x="85" y="106" width="378" id="cbxAseguradora" labelField="desc"></mx:ComboBox>
+			<mx:Label id="lblAseguradora" x="5" y="109" text="Aseguradora:"/>
+		</mx:Canvas>
+		<mx:Label id="lblDatosProdMicro" x="11" y="10" text="Datos" fontSize="11" fontWeight="normal"/>
+		<mx:Canvas x="10" y="29" width="475" height="35" styleName="canvasMod">
+			<mx:Label id="lblDescripcion" x="128" y="7" text="Descripción:"/>
+			<mx:TextInput id="txtDescripcion" x="198" y="5" width="265" tabIndex="2" maxChars="150"/>
+			<mx:Label id="lblCodigo" x="10" y="7" text="Código:"/>
+			<mx:TextInput id="txtCodigo" x="57" y="5" width="53" tabIndex="1" editable="false"/>
+		</mx:Canvas>
+</mx:TitleWindow>

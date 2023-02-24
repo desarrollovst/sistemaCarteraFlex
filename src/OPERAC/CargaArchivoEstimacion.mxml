@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="965" height="532" backgroundAlpha="1.0" 
+	creationPolicy="all" creationComplete="initApp()" backgroundColor="#FFFFFF" xmlns:Data="Data.*" 
+	x="12.5" y="42" xmlns:control="Controls.*">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.CargaArchivoEstimClass;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils;
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+		import flash.external.ExternalInterface;
+
+      	private var fileReference:FileReference;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	public var wsMS:WebService;
+      	public var titulo:String;
+		public var du:Utils;
+      	
+      	public var saldinsol:Array;
+        public var saldcap:Array;
+        public var rgoatrpnfm:Array;
+        public var eprcprnfm:Array;
+        public var nsciclocl:Array;
+        public var eprcmesant:Array;
+        public var eprcacum:Array;
+        public var eprcgenera:Array;
+        public var archEstim:CargaArchivoEstimClass;
+       
+      	[Bindable]
+        private var infoObj:ArrayCollection = new ArrayCollection();
+        [Bindable]
+		public var _xmlRep:XML = new XML();
+		private var totalElms: int = 0;
+      	 
+       	private function buscarArchivo():void{
+			var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,"Se atrapo mensaje",4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }
+        
+        public function cargarInfo():void{
+        	if(compMesAnio.valida()){	        	        
+	        	if(formateaInfo() == true){
+		        	initConexion();
+					du.sCursor();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionCargaArchivoEstimacion);
+				    wsMS.setAccionCargaArchivoEstimacion.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), Application.application.U_ID ,saldinsol, saldcap, rgoatrpnfm, eprcprnfm, nsciclocl, eprcmesant, eprcacum, eprcgenera);
+				}
+	        }
+        	
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        public function formateaInfo():Boolean{
+ 			var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+            var i:int;
+           	var max:int;
+             
+		    saldinsol = new Array; //decimal
+            saldcap = new Array; //decimal
+            rgoatrpnfm = new Array; //string
+            eprcprnfm = new Array; //decimal
+            nsciclocl = new Array; //string
+            eprcmesant = new Array;//decimal
+            eprcacum = new Array;//decimal
+            eprcgenera = new Array;//decimal
+			
+			if (info.length <= 0){
+				return false;
+			}
+			else {
+				 if(info.length <= 10000){
+				 	max = info.length;
+				 }
+				 else {
+				 	max = 10000;
+				 }
+			    
+			     for (i = 0; i < max ; i++){
+					saldinsol[i] = info[i].SALDINSOL;
+	                saldcap[i] = info[i].SALDCAP;
+	                rgoatrpnfm[i] = info[i].RGOATRPNFM;
+	                eprcprnfm[i] = info[i].EPRCPRNFM ;
+	                nsciclocl[i] = info[i].NSCICLOCL;
+	                eprcmesant[i] = info[i].EPRCMESANT; 
+	                eprcacum[i] = info[i].EPRCACUM; 
+	                eprcgenera[i] = info[i].EPRCGENERA;
+	             }	
+	            
+				 for (i = 0; i < max; i++){
+				 	(dgInfo.dataProvider as ArrayCollection).removeItemAt(0);
+			     }				 
+			}
+			
+			return true;
+        }
+        
+        
+        private function fileReference_Select(event:Event):void{
+        	dgInfo.dataProvider = null;	
+        	lblResultado.text = "Cargando registros, espere un momento..."
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+
+        }
+        
+        private function onLoadError():void{
+
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+        	try{
+	        	archEstim = new CargaArchivoEstimClass(fileReference.data,infoObj, dgInfo, lblResultado);
+	        	archEstim.addEventListener(Event.COMPLETE, complete);
+	       		archEstim.run();        	
+       		}catch(err:ScriptTimeoutError){
+				ExternalInterface.call("console.log", "Error timeout.mxml="+err.message );
+			}       		        		        
+        }  
+        
+        private function complete(event:Event):void {
+        	if( infoObj.length == 1){
+        		 lblResultado.text = infoObj.length + " Registro Encontrado";
+        	} else {
+        		 lblResultado.text = infoObj.length + " Registros Encontrados";
+        	}
+        	btnCargar.enabled = true;
+		 	ExternalInterface.call("console.log", "proceso Completado" );
+		}
+              
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Estimación";
+	      	lblTitulo.text = titulo.toUpperCase();  
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}	
+	    
+	    private function setAccionCargaArchivoEstimacion(event:ResultEvent):void{
+			wsMS.disconnect();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCargaArchivoEstimacion);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+			  if((dgInfo.dataProvider as ArrayCollection).length > 0){
+			  	lblResultado.text = (dgInfo.dataProvider as ArrayCollection).length + " Registro(s) Faltan por cargar, espere un momento ...";
+			  	cargarInfo();
+			  }
+			  else {
+			  	du.rCursor();
+				Application.application.desbloquear();
+				dgInfo.dataProvider = null;	
+				txtArchivo.text = "";				
+				lblResultado.text = totalElms + " Registro(s) han sido cargados";
+				Alert.show("Datos Cargados!",titulo,4,null,null,global.iInfo);
+				compMesAnio.limpiar();
+			  }	
+			}	
+			else{
+				if(res.indexOf("(Llave primaria) violada") >= 0){
+					Alert.show("Ya existe una Estimación cargada para esa fecha.",titulo,4,null,null,global.iAlert);
+					lblResultado.text = "";
+				}else {
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
+				}				
+				du.rCursor();
+				Application.application.desbloquear();
+				dgInfo.dataProvider = null;	
+				txtArchivo.text = "";	
+				compMesAnio.limpiar();
+			}	
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="39" width="945" height="486.05" styleName="canvasMod">
+		<mx:DataGrid id="dgInfo" x="10" y="64.5" width="923" height="380.55" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="SALDO INSOLUTO" dataField="SALDINSOL" width="120"/>
+				<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SALDCAP" width="110"/>
+				<mx:DataGridColumn headerText="RANGO DE ATRASO PRONAFIM" dataField="RGOATRPNFM" width="190"/>
+				<mx:DataGridColumn headerText="% EPRC PRONAFIM" dataField="EPRCPRNFM" width="150"/>
+				<mx:DataGridColumn headerText="GRUPO, CICLO y ACREDITADO" dataField="NSCICLOCL" width="180"/>
+				<mx:DataGridColumn headerText="EPRC MES ANTERIOR" dataField="EPRCMESANT" width="150"/>
+				<mx:DataGridColumn headerText="EPRC ACUMULADA PRONAFIM" dataField="EPRCACUM" width="180"/>
+				<mx:DataGridColumn headerText="GENERACION EPRC PRONAFIM" dataField="EPRCGENERA" width="150"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="10.85" y="453.05" width="564.75" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="left"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="292" y="435" click="exportar()"/>
+		<control:FiltroMesAnio id="compMesAnio" y="6.5" x="7.5" width="236.1"/>
+		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="501.85" y="25.95" click="cargarInfo()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="429.85" y="25.95"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="251.6" y="25.95" width="160"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="602" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

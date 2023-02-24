@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="110" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+		[Event(name="validarCredRel", type="validarCredRel")]
+	</mx:Metadata>
+ 
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	triggerEvent="" requiredFieldError="Código de Crédito Relacionado Requerido"/>
+	
+	<mx:Validator id="cicloV" source="{txtCiclo}" property="text" 
+	triggerEvent="" requiredFieldError="Ciclo de Crédito Relacionado Requerido"/>
+ 
+ 	<mx:NumberValidator id="tipoProdV" source="{cboTipoProd}" property="selectedIndex"
+	minValue="1" triggerEvent="" lowerThanMinError="Tipo de Producto Requerido"/>
+ 	 
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;			
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			
+			private var _xmlTipoProd:XML = new XML();
+			private var _xmlRel:XML = new XML();
+			
+			public var tipoProdObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			private var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			private var du:Utils;
+			private var codigo:String;
+			private var ciclo:String;
+			private var clns:String;
+			private var global:Globales;
+		
+			private function desactivaControles():void{
+				cnvRelacionado.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([codigoV, cicloV, tipoProdV]);
+				
+				if(invalidArray.length == 0){		
+					formData.tipoProdRel = cboTipoProd.selectedItem.id;
+					formData.clnsRel = clns;
+					formData.cdgclnsRel = txtCodigo.text;
+					formData.cicloRel = txtCiclo.text;
+					formData.guardaRelac = true;
+				}
+				else
+					formData.guardaRelac = false;
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			private function formateaTipoProd():void{
+				var cont:int = _xmlTipoProd.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlTipoProd.Table[i].CODIGO;	
+					oItem.nombre = _xmlTipoProd.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				tipoProdObj = new ArrayCollection(item);
+			}
+			
+			public function init(cdgclns:String, info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var item:Array = new Array;
+				var oItem:Object;
+				var  j:int;
+				global = new Globales();
+				du = new Utils();
+				this.clns = "G";
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTipoProd = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlTipoProd.elements().length() > 0){
+						formateaTipoProd();
+						cboTipoProd.dataProvider = tipoProdObj;	
+						cboTipoProd.selectedIndex = 0;
+					}	
+					
+					if (info != null){		
+						datos.tipoProdRel = info.tipoProdRel;
+						datos.cicloRel = info.cicloRel;
+						datos.cdgclnsRel = info.cdgclnsRel;
+						
+						if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+							desactivaControles();
+				
+						txtCodigo.text = datos.cdgclnsRel;
+						txtCiclo.text = datos.cicloRel;
+					
+						for each(var item:Object in tipoProdObj){
+							if (item.id == datos.tipoProdRel){
+								cboTipoProd.selectedIndex = j;
+								break;
+							}
+							j++;
+						}
+					}
+					else{
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlRel = new XML(evt.result.toString());
+							
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							if (_xmlRel.elements().length() > 0){
+								txtCodigo.text = _xmlRel.Table[0].CDGNS;
+								txtCiclo.text = _xmlRel.Table[0].CICLO;
+								
+								for each(var item:Object in tipoProdObj){
+									if (item.id == _xmlRel.Table[0].CDGTPC.toString()){
+										cboTipoProd.selectedIndex = j;
+										break;
+									}
+									j++;
+								}
+								dispatchEvent(new Event("validarCredRel"));
+							}	
+						});
+						params[0] = cdgclns;
+						wsCat.getInfoGrupo.send(6, params);
+					}	
+				});
+				params[0] = clns;
+				params[1] = Application.application.U_ID;
+				params[2] = "";
+				wsCat.getCatalogoGral.send(11, params);
+			}	
+			
+			public function limpia():void{
+				txtCodigo.text = "";
+				txtCiclo.text = "";
+			}
+			
+			public function obtieneCiclo():String{
+				return txtCiclo.text;
+			}
+			
+			public function obtieneCodigo():String{
+				return txtCodigo.text;
+			}
+			
+			public function obtieneTipoProd():String{
+				return cboTipoProd.selectedItem.id;
+			}
+			
+			private function validaCredRel():void{
+				if(txtCodigo.text != "" && txtCiclo.text != "" && cboTipoProd.selectedIndex > 0){
+					dispatchEvent(new Event("validarCredRel"));
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvRelacionado" x="10" y="10" width="520" height="90" styleName="canvasMod" enabled="false">
+		<mx:Label id="lblCodigo" text="Código:" x="161.25" y="56"/>
+		<mx:Label id="lblCiclo" text="Ciclo:" x="291.75" y="56"/>
+		<mx:Label id="lblTipoProd" text="Tipo de Producto:" x="113.25" y="16"/>
+		<mx:ComboBox id="cboTipoProd" width="190.5" labelField="nombre" x="210.25" y="13" change="validaCredRel()"/>
+		<mx:TextInput id="txtCodigo" x="210.25" y="54" width="60" restrict="{0-9}" maxChars="6" focusOut="validaCredRel()"/>
+		<mx:TextInput id="txtCiclo" x="330.75" y="54" width="30" restrict="{0-9}" maxChars="2" focusOut="validaCredRel()"/>
+	</mx:Canvas>
+</mx:Canvas>

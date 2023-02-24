@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" 
+	close="cerrar()" layout="absolute" width="450" height="260" creationPolicy="all" 
+	creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlInfo:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var global:Globales;
+			private var du:Utils;
+						
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function init(tipo:String, fecha:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				dgInfo.dataProvider = null;
+				du.initWsCat(wsCat);
+			 	du.sCursor();
+			 	Application.application.bloquear();
+			 	
+			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
+			 		_xmlInfo = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				});
+				params[0] = tipo;
+				params[1] = fecha;
+				wsCat.getListado.send(85, params);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Detalle de Pagos Duplicados";
+				this.title = titulo;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Button id="btnCerrar" x="396" y="178" icon="@Embed(source='assets/images/iconCancel.png')" width="40" click="cerrar()"/>
+	<mx:DataGrid id="dgInfo" x="16" y="10" width="418" height="160" dataProvider="{_xmlInfo.Table}" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="90"/>
+			<mx:DataGridColumn headerText="REPETICION" dataField="REPETICION" width="90"/>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:TitleWindow>

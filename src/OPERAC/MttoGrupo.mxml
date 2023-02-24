@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" 
+	width="512" height="450" title="Edición" showCloseButton="true" close="cerrar()" 
+	xmlns:Forms="OPERAC.Forms.*" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosGrupo;
+			import Data.EventGrupo;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var info:DatosGrupo;
+			private var _xmlGrupo:XML = new XML();
+		
+			public var tipoAccion:int;
+			public var wsMS:WebService;	
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function cargaInfoGrupo(grupo:String):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				tipoAccion = 2;
+				formDGGrupo.cboSucursal.addEventListener(ListEvent.CHANGE, selecSucursal);
+		
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlGrupo = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					wsCat = null;
+					
+					if (_xmlGrupo.elements().length() > 0){
+						llenaRegistros();
+					}
+					else{
+						Alert.show("Error en la carga de datos.",titulo,4,null,null,global.iAlert);
+					}
+				});
+				params[0] = "1";
+				params[1] = grupo;
+				wsCat.getInfoGrupo.send(2, params);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				info = new DatosGrupo();
+				
+				formDGGrupo.enviarDatosGrupo(info);
+				formOficialGrupo.enviarOficialGrupo(info);
+				validaFinal();
+			}
+			
+			public function guardaGrupo():void{
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionGrupo);
+				wsMS.setAccionGrupo.send(tipoAccion, info.codigo, info.nombre, info.fecha, info.cdgCoord,
+											 info.codPostal, info.cdgEnt, info.cdgMun, info.cdgLoc, info.cdgCol,
+											 info.calle, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, 
+											 info.cdgPr, info.cdgRec);
+			}
+			
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Grupo";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function llenaRegistros():void{
+				info = new DatosGrupo();
+				//Datos generales del grupo
+				info.codigo = _xmlGrupo.Table[0].CODIGO;
+				info.nombre = _xmlGrupo.Table[0].NOMBRE;
+				info.fecha = _xmlGrupo.Table[0].FORMACION;
+				info.cdgCoord= _xmlGrupo.Table[0].CDGCO;
+				info.codPostal = _xmlGrupo.Table[0].CDGPOSTAL;
+				info.cdgEnt = _xmlGrupo.Table[0].CDGEF;
+				info.entidad = _xmlGrupo.Table[0].ENTFED;
+				info.cdgMun = _xmlGrupo.Table[0].CDGMU;
+				info.municipio = _xmlGrupo.Table[0].MUNIC;
+				info.cdgLoc = _xmlGrupo.Table[0].CDGLO;
+				info.localidad = _xmlGrupo.Table[0].LOC;
+				info.cdgCol = _xmlGrupo.Table[0].CDGCOL;
+				info.colonia = _xmlGrupo.Table[0].COL;
+			
+				//Datos de cobranza 
+				info.cdgPr = _xmlGrupo.Table[0].CDGPRPE;
+				info.promotor = _xmlGrupo.Table[0].PROMOTOR;
+				info.cdgRec = _xmlGrupo.Table[0].CDGACPE;
+				info.recuperador = _xmlGrupo.Table[0].RECUPERADOR;
+				
+				formDGGrupo.init(info, tipoAccion);
+				formOficialGrupo.init(info, tipoAccion);
+			}
+			
+			public function registraInfoGrupo():void{
+				info = new DatosGrupo();
+				titulo = "";
+				tipoAccion = 1;
+				var fecha:Date = Application.application._Current_Fecha;
+				formDGGrupo.cboSucursal.addEventListener(ListEvent.CHANGE, selecSucursal);
+		
+				info.fecha = global.formatoFecha(fecha);
+					
+				formDGGrupo.init(info, tipoAccion);	
+				formOficialGrupo.init(info, tipoAccion);
+			} 
+			
+			private function selecSucursal(event:ListEvent):void{
+				formOficialGrupo.cargaPersonal();
+			}
+			
+			private function setAccionGrupo(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionGrupo);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					cerrar();
+				}	
+				else
+					Alert.show(res.substring(2,res.length),titulo,4,null,null,global.iAlert);		
+			}
+			
+			public function validaDatosGrupo(event:EventGrupo):void{
+				info = event.customProp;
+			}
+			
+			public function validaOficialGrupo(event:EventGrupo):void{
+				info = event.customProp;
+			}
+			
+			private function validaFinal():void{
+				if (info.guardaDatos == true && info.guardaOficial == true)
+					guardaGrupo();
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="496" height="360" x="8" y="10" creationPolicy="all">
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">
+			<Forms:FormDatosGralGrupo id="formDGGrupo" enviarDatosGrupo="validaDatosGrupo(event)" x="46" height="295"/>
+			<mx:Image x="22" y="10" width="58" height="58" source="assets/images/users2.png"/>
+		</mx:Canvas>
+		<mx:Canvas label="Oficial de Crédito" width="100%" height="100%">	
+			<Forms:FormOficialGrupo id="formOficialGrupo" enviarOficialGrupo="validaOficialGrupo(event)" x="46"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button x="462" y="378" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button x="414" y="378" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+</mx:TitleWindow>

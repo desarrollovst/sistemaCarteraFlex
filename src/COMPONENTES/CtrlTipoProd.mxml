@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="140">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ListEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			private var _xmlProd:XML =  new XML();
+			
+			public var prodObj:ArrayCollection = new ArrayCollection();
+		
+			public var tipoAccion:int;
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			public function formateaProd():void{
+				var i:int;
+				var cont:int = _xmlProd.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlProd.Table[i].CODIGO;	
+					oItem.nombre = _xmlProd.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				prodObj = new ArrayCollection(item);
+			}
+			
+			public function init():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Tipo de Producto";
+				this.title = titulo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProd = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlProd.elements().length() > 0){
+						formateaProd();
+						cboProd.dataProvider = prodObj;
+					}
+					else
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+				});
+				params[0] = "";
+				params[1] = "";
+				params[2] = "";
+				wsCat.getCatalogoGral.send(11, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+						
+			public function valida():Boolean{
+				if(cboProd.selectedIndex == 0){
+					Alert.show("Debe seleccionar el Tipo de Producto.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:Button id="btnCerrar" x="350" y="68" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="302" y="68" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Canvas id="cnvProd" x="11" y="10" width="378" height="50" styleName="canvasMod">
+		<mx:Label id="lblProd" textAlign="left" x="32" y="15" text="Tipo Producto:"/>
+		<mx:ComboBox id="cboProd" labelField="nombre" x="114" y="12" width="230"></mx:ComboBox>
+	</mx:Canvas>
+</mx:TitleWindow>

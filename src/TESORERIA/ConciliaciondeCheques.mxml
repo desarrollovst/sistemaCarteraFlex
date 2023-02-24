@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="138" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlCc:XML = new XML();
+						
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function generar():void{
+				if(valida() == true){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+						
+					var fecha:String = dtfFecha.text;
+					var usuario:String = Application.application.U_ID;
+					var tipo:Number = 1; // INSERTA
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+				
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
+						_xmlCc = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						
+						if(_xmlCc.elements().length() == 0){
+							initConexion();
+							
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
+								var res:String = evt.result.toString();
+								
+								du.closeWs(wsMS);			
+								du.rCursor();
+								Application.application.desbloquear();
+								
+								if(res.substr(0,1) == "1"){
+									Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+									limpiar();
+								}
+								else	
+									Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					
+							});
+							
+							wsMS.setConciliaCheques.send(fecha, usuario, tipo);
+						}
+						else{
+							Alert.show("Ya se realizó la conciliación de cheques para la fecha " + fecha + ".",titulo,4,null,null,global.iAlert);
+							du.rCursor();
+						    Application.application.desbloquear();
+						}
+					});
+					params[0] = fecha
+					wsCat.getListado.send(61, params);
+				}
+			}
+				
+			private function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Conciliación de cheques";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+
+			private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+		
+			private function limpiar():void{
+				dtfFecha.text = "";
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha del proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53" width="264.05" height="40.5" styleName="canvasMod">
+		<mx:Label x="49.5" y="10" text="Fecha:" width="44" height="20" textAlign="right"/>
+		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="75" y="105.5" label="Generar" click="generar()"/>
+	<mx:Button x="154" y="106" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+</mx:Canvas>

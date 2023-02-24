@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" 
+	height="380" creationPolicy="all">
+	
+	<mx:Validator id="vGrupo" source="{txtGrupo}" property="text" 
+	invalid="{txtGrupo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vCiclo" source="{txtCiclo}" property="text" 
+	invalid="{txtCiclo.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Validator id="vMonto" source="{txtMonto}" property="text" 
+	invalid="{txtMonto.setFocus()}" triggerEvent="" requiredFieldError="Campo requerido"/>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.charts.DateTimeAxis;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.graphics.Stroke;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		import mx.events.FlexEvent;
+		
+		private var _xmlInfo:XML = new XML();
+		
+		private var vResult:ValidationResultEvent;
+		
+		private var wsMS:WebService = new WebService();
+		private var titulo:String;	
+		private var du:Utils;
+		private var global:Globales;
+		
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		
+		private var tipoAccion:int;
+				
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		public function edicion(pXmlInfo:XML):void{
+			tipoAccion = 2;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Edición Grupos Excluidos";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtGrupo.text = pXmlInfo.CDGCLNS;
+			txtCiclo.text = pXmlInfo.CICLO;
+			txtMonto.text = pXmlInfo.MONTO;
+			rdgEstatus.selectedValue = pXmlInfo.ESTATUS;
+			txtObservaciones.text = pXmlInfo.OBSERVACION;
+			
+			var acMes:ArrayCollection = global.formateaMes();
+			cbxMes.dataProvider = acMes;
+			for(var i:int = 0; i < acMes.length; i++){   
+				if (acMes[i].id.toString() == pXmlInfo.MES){
+					cbxMes.selectedIndex = i;
+					break;
+				}
+			}
+			
+			var acAnio:ArrayCollection = global.formateaAnio();
+			cbxAnio.dataProvider = acAnio;
+			for(var j:int = 0; j < acAnio.length; j++){   
+				if (acAnio[j].id.toString() == pXmlInfo.ANIO){
+					cbxAnio.selectedIndex = j;
+					break;
+				}
+			}
+			
+			txtGrupo.editable = false;
+			txtCiclo.editable = false;
+			cbxMes.enabled = false;
+			cbxAnio.enabled = false;
+		}
+		
+		private function enviar():void{
+			if(valida()){
+				var occursMonto:int = txtMonto.text.split(",").length - 1;
+				var montoStr:String;
+				var i:int;
+				
+				montoStr = txtMonto.text;
+				
+				for(i = 0; i<= occursMonto; i++){
+					montoStr = montoStr.replace(',','');
+				}
+				
+				var mGrupo:String = txtGrupo.text;
+				var mCiclo:String = txtCiclo.text;
+				var mMes:String = cbxMes.selectedItem.id;
+				var mAnio:String = cbxAnio.selectedItem.id;
+				var mMonto:Number = Number(montoStr);
+				var mEstatus:String = rdgEstatus.selectedValue.toString();
+				var mObservacion:String = txtObservaciones.text;
+				var mUsuario:String = Application.application.U_ID;
+				
+		    	initConexion();
+		    	du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionDescuentoMora);
+				
+				wsMS.setAccionDescuentoMora.send(mGrupo, mCiclo, mMes, mAnio, mMonto, mEstatus, mObservacion, mUsuario, tipoAccion);
+			}
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncR.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlIncC.toString();
+			wsMS.loadWSDL();
+		}
+		
+		public function nuevo():void{
+			tipoAccion = 1;
+			du = new Utils(); 
+			global = new Globales();
+			this.title = "Nuevo Grupo Excepción";
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			cbxAnio.dataProvider = global.formateaAnio();
+			cbxMes.dataProvider = global.formateaMes();
+		}
+		
+		private function QuitaMontoFormato():void{
+			var occurs:int = txtMonto.text.split(",").length - 1;
+			
+			for(var i:int = 0; i<= occurs; i++){
+				txtMonto.text = txtMonto.text.replace(',','');
+			}
+		}
+		
+		private function setAccionDescuentoMora(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDescuentoMora);
+			wsMS = null;
+			
+			var res:String = event.result.toString();
+
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function valida():Boolean{
+			var iaGrupo:Array = Validator.validateAll([vGrupo]);
+			var iaCiclo:Array = Validator.validateAll([vCiclo]);
+			var iaMonto:Array = Validator.validateAll([vMonto]);
+			
+			if (iaGrupo.length != 0){
+				Alert.show("Debe capturar el grupo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(iaCiclo.length != 0){
+				Alert.show("Debe capturar el ciclo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxMes.selectedIndex == 0){
+				Alert.show("Mes invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(cbxAnio.selectedIndex == 0){
+				Alert.show("Año invalido.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if (iaMonto.length != 0){
+				Alert.show("Debe capturar el monto del descuento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(!rdgEstatus.selection){
+				Alert.show("Debe seleccionar el estatus del descuento.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			
+			if(tipoAccion == 2){
+				if(txtObservaciones.text == ""){
+					Alert.show("Debe escribir la observación de la actualización.",titulo,4,null,null,global.iAlert);
+					return false;
+				}	
+			}
+				
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			var mValor:String = TextInput(event.currentTarget).text;
+			
+			if(mValor == "-" && mValor.length == 1) 
+				return;
+				
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		private function validaMontoFormato():void{
+			txtMonto.text = global.formatoDecimal(Number(txtMonto.text).toString());
+		}
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="337" height="79" x="10" y="10" styleName="canvasMod">
+		<mx:Label x="20" y="12" text="Grupo:" id="lblGrupo"/>
+		<mx:TextInput x="69" y="10" width="79" id="txtGrupo" maxChars="6" restrict="0-9"/>
+		<mx:Label x="200" y="12" text="Ciclo:" id="lblCiclo"/>
+		<mx:TextInput x="243" y="10" width="79" id="txtCiclo" maxChars="2" restrict="0-9"/>
+		<mx:Label x="29.95" y="44" text="Mes:" width="35" height="20" id="lblMes"/>
+		<mx:ComboBox id="cbxMes" labelField="nombre" x="68.95" y="41" width="118.05"/>
+		<mx:Label x="205" y="44" text="Año:" width="31" height="20" id="lblAnio"/>
+		<mx:ComboBox x="243" y="41" width="80" id="cbxAnio" labelField="id"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="97" width="338" height="200" styleName="canvasMod">
+		<mx:Label x="10" y="73" text="Observaciones:" id="lblObservacion"/>
+		<mx:RadioButtonGroup id="rdgTipo"/>
+		<mx:RadioButtonGroup id="rdgEstatus"/>
+		<mx:TextInput id="txtObservaciones" x="10" y="92" width="316" editable="true" height="95"/>
+		<mx:Label x="21.5" y="13" text="Monto a descontar:" id="lblMonto"/>
+		<mx:TextInput id="txtMonto" x="127.5" y="11" width="93" editable="true" focusOut="validaMontoFormato()" focusIn="QuitaMontoFormato()" change="validaMonto(event)"/>
+		<mx:Label x="75.5" y="44" text="Estatus:" id="lblEstatus"/>
+		<mx:RadioButton x="127.5" y="42" label="Activo" id="rdActivo" groupName="rdgEstatus" value="A"/>
+		<mx:RadioButton x="199.5" y="42" label="Inactivo" id="rdInactivo" groupName="rdgEstatus" value="I"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="305" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="305" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>
