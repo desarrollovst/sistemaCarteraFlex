@@ -376,6 +376,7 @@ package Data
 		public var frm_343:PolizadePagosPaycashFecha;
 		public var frm_344:ReasignaciondeCartera;
 		public var frm_345:ConciliaciondeMicroseguros;
+		public var frm_346:TransferenciasRegistradas;
 
 		public function Modulos()
 		{

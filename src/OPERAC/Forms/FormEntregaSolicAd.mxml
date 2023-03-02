@@ -349,8 +349,8 @@
 		<mx:RadioButton id="rdbEfectivo" x="15" y="10" label="Efectivo" groupName="entrega" value="E"/>
 		<mx:RadioButton id="rdbChequeClien" x="15" y="36" label="Un cheque por cliente" groupName="entrega" value="I"/>
 		<mx:RadioButton id="rdbChequeGrupo" x="15" y="62" label="Un cheque para todo el grupo" groupName="entrega" value="G"/>
-		<mx:RadioButton id="rdbTransElect" x="15" y="88" label="Transferencia electrónica" groupName="entrega" value="T"/>
-		<mx:RadioButton id="rdbDispersion" x="15" y="114" label="Dispersión de fondos" groupName="entrega" value="D"/>
+		<mx:RadioButton id="rdbTransElect" x="15" y="88" label="Transferencia por cliente" groupName="entrega" value="T"/>
+		<mx:RadioButton id="rdbDispersion" x="15" y="114" label="Transferencia a la Tesorera" groupName="entrega" value="D"/>
 	</mx:Canvas>
 	<mx:Label x="38.5" y="10" text="Forma de entrega"/>
 	<mx:Canvas id="cnvNombreCheq" x="246.5" y="115" width="330" height="65" visible="false">

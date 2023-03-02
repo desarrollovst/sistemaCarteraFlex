@@ -79,7 +79,12 @@ package Data
 		public var noExtNeg:String;
 		public var noIntNeg:String;
 		public var tipoDomNeg:String;
-		public var guardaDirNeg:Boolean;	
+		public var guardaDirNeg:Boolean;
+		
+		public var banco:String;
+		public var clabe:String;
+		public var cuenta:String;
+		public var guardaBanco:Boolean;	
 		
 		public function DatosAcred()
 		{

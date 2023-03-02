@@ -117,6 +117,7 @@
 					//formDirNegAcred.enviarDatosAcred(info);
 					formOtroAcred.enviarDatosAcred(info);
 					formPLDAcred.enviarDatosAcred(info);
+					formBanco.enviarDatosAcred(info);
 					validaFinal();
 				}
 				else
@@ -137,10 +138,11 @@
 											 info.pais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
 										     info.edoCivil, info.nivelEsc, info.depend, info.marca, 
 										     info.causa, info.enano, info.cantEnano, "", "",info.tipoPers,
-										     info.origen, info.destino/*, info.cdgDirEntFedNeg, info.cdgMunNeg,
+										     info.origen, info.destino,/*, info.cdgDirEntFedNeg, info.cdgMunNeg,
 										     info.cdgLocNeg, info.coloniaNeg, info.calleNeg, info.codPostalNeg,
 										     info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
-										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/);
+										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/ info.banco,
+										     info.clabe, info.cuenta);
 			}
 			
 			public function initApp():void{
@@ -234,12 +236,17 @@
 				info.localidadNeg = _xmlAcred.Table[0].NOMLO_NEG;
 				info.coloniaNeg = _xmlAcred.Table[0].COLONIA_NEG;
 				info.poblacionNeg = _xmlAcred.Table[0].POBLACION_NEG;
+				
+				info.banco = _xmlAcred.Table[0].CDGBANCO;
+				info.clabe = _xmlAcred.Table[0].CLABE;
+				info.cuenta = _xmlAcred.Table[0].NOCTABANCO;
 			
 				formDPAcred.init(info);
 				formDirAcred.init(info);
 				//formDirNegAcred.init(info);
 				formOtroAcred.init(info);
 				formPLDAcred.init(info);
+				formBanco.init(info);
 			}
 			
 			public function permisos():void{
@@ -262,6 +269,7 @@
 				//formDirNegAcred.init(info);
 				formOtroAcred.init(info);
 				formPLDAcred.init(info);
+				formBanco.init(info);
 			} 
 			
 			private function setAccionAcred(event:ResultEvent):void{
@@ -399,6 +407,9 @@
 		</mx:Canvas>
 		<mx:Canvas label="PLD" width="100%" height="100%">
 			<Forms:FormPLDAcred id="formPLDAcred" x="19.5" width="455" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="Banco" width="100%" height="100%">
+			<Forms:FormBanco id="formBanco" x="19.5" width="455" y="10"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="462" y="478" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>

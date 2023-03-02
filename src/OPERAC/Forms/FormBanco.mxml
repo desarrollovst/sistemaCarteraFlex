@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="370" creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+	</mx:Metadata>
+	
+	<mx:Validator id="clabeV" source="{txtClabe}" property="text" 
+	invalid="{txtClabe.setFocus()}" triggerEvent="" requiredFieldError="Clabe Requerida"/>
+	
+	<mx:Validator id="cuentaV" source="{txtCuenta}" property="text" 
+	invalid="{txtCuenta.setFocus()}" triggerEvent="" requiredFieldError="Cuenta Requerida"/>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			
+			private var _xmlBanco:XML =  new XML();
+			
+			public var bancoObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosAcred = new DatosAcred();
+			
+			private var global:Globales;
+			private var wsMS:WebService;
+			private var du:Utils;
+			
+			public function enviarDatosAcred(formData:DatosAcred):void{
+				//var invalidArray:Array = Validator.validateAll([clabeV, cuentaV]);
+				//if(invalidArray.length == 0){	
+				if(valida()){
+					formData.banco = cboBanco.selectedItem.id;
+					formData.clabe = StringUtil.trim(txtClabe.text);
+					formData.cuenta = StringUtil.trim(txtCuenta.text);
+					formData.guardaBanco = true;
+				}
+				else
+					formData.guardaBanco = false;
+					
+				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				dispatchEvent(event);
+			}
+			
+			private function formateaBanco():void{
+				var cont:int = _xmlBanco.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlBanco.Table[i].CODIGO;	
+					oItem.nombre = _xmlBanco.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				
+				bancoObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosAcred):void{
+				var wsCat:WebService = new WebService();
+				
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlBanco = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlBanco = new XML(evt.result.toString());
+					
+					if(_xmlBanco.elements().length() > 0){
+						formateaBanco();
+						cboBanco.dataProvider = bancoObj;
+					}
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+					
+					if (info != null){
+						for(var i:int = 0; i < bancoObj.length; i++){
+							if (bancoObj[i].id == info.banco)
+								cboBanco.selectedIndex = i;
+						}
+						txtClabe.text = info.clabe;
+						txtCuenta.text = info.cuenta;
+					}	
+				});
+				//Obtiene informacion de los bancos de dispersion
+				wsCat.getCatalogoGral.send(70);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function valida():Boolean{
+				if(cboBanco.selectedIndex > 0 && (txtClabe.text == "" || txtCuenta.text == "")){
+					return false;
+				}
+				return true;
+			}
+			
+			private function validaClabe():void{
+				if(cboBanco.selectedIndex > 0 && txtClabe.text.length >= 3){
+					var valor:String = txtClabe.text.substr(0,3); 
+					if(cboBanco.selectedItem.id != valor){
+						Alert.show("La CLABE no corresponde al banco seleccionado. Favor de verificar.","Información bancaria", 4,null,null,global.iAlert);
+						txtClabe.text = "";
+					}
+				}
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:FormItem label="Banco:" id="banco" x="81.5" y="22" width="280">
+		<Data:CustomComboBox id="cboBanco" labelField="nombre" width="225"/>
+	</mx:FormItem>
+	<mx:FormItem label="Clabe:" id="clabe" x="84.5" y="52" width="215">
+		<mx:TextInput id="txtClabe" maxChars="18" restrict="0-9" width="160" change="validaClabe()"/>	
+	</mx:FormItem>
+	<mx:FormItem label="Cuenta:" id="cuenta" x="77.5" y="82" width="180">
+		<mx:TextInput id="txtCuenta" restrict="0-9" maxChars="15" width="120"/>
+	</mx:FormItem>
+</mx:Canvas>
