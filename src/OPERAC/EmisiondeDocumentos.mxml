@@ -287,10 +287,10 @@
 	</mx:Canvas>
 	<mx:Label x="16.95" y="34" text="Criterios de Selección"/>
 	<mx:Canvas x="16.95" y="146.5" width="247.55" height="139.5" styleName="canvasMod" id="canvas0">
-		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato"/>
+		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato" enabled="false"/>
 		<mx:CheckBox id="chkPagos" x="126.75" y="10" label="Carta Inst. Pagos"/>
-		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contratos"/>
-		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía"/>
+		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contratos" enabled="false"/>
+		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía" enabled="false"/>
 		<mx:CheckBox id="chkConsentimiento" x="126.75" y="74" label="Consentimiento"/>
 		<mx:CheckBox id="chkPagare" x="11.75" y="74" label="Pagaré"/>
 		<mx:CheckBox id="chkCertificado" x="11.75" y="106" label="Certificados"/>

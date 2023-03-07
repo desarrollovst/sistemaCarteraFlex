@@ -62,7 +62,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepTransferencia.send(dtfFecha.text, dtfFechaFinal.text, Application.application.U_ID);
+					wsMS.getRepDispersion.send(dtfFecha.text, dtfFechaFinal.text, Application.application.U_ID);
 				}	
 			}			
 						
@@ -122,7 +122,6 @@
 		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
 		<mx:DataGrid id="dgReporte" x="18.45" y="169" width="763.05" visible="true" height="165" horizontalScrollPolicy="auto">
 			<mx:columns>
-				<mx:DataGridColumn headerText="FECHA IMPRESION" dataField="FECMOV" width="130"/>
 				<mx:DataGridColumn headerText="GRUPO" dataField="CODGRUPO" width="110"/>
 				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="70"/>
@@ -132,10 +131,10 @@
 				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100"/>
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="CLIENTE" width="200"/>
-				<mx:DataGridColumn headerText="CHEQUE" dataField="NOCHEQUE" width="70"/>
-				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="90"/>
-				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="80"/>
 				<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="90"/>
+				<mx:DataGridColumn headerText="CLABE" dataField="CLABE" width="130"/>
+				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>
+				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="90"/>
 				<mx:DataGridColumn headerText="ASESOR" dataField="CDGOCPE" width="70"/>
 				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMOCPE" width="180"/>
 			</mx:columns>

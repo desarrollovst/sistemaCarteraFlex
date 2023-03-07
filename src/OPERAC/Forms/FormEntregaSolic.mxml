@@ -280,12 +280,12 @@
 				wsMS.loadWSDL();
 			}	
 			
-			public function muestraCampoNombre():void{
-				txtNombreCheq.text = "";
+			private function muestraCampoNombre():void{
+				/*txtNombreCheq.text = "";
 				if(rdbChequeGrupo.selected == true)
 					cnvNombreCheq.visible = true;
 				else
-					cnvNombreCheq.visible = false;
+					cnvNombreCheq.visible = false;*/
 			}
 			
 			public function muestraFormCta():void{
@@ -325,7 +325,7 @@
 			public function valida():Boolean{
 				var invalidArray:Array = Validator.validateAll([cuentaV, tipoDesV]);
 				
-				if(invalidArray.length > 0 && tipoAccion == 1)
+				if(invalidArray.length > 0 && (entrega.selectedValue == "I" || entrega.selectedValue == "G"))
 					return false;
 					
 				return true;
