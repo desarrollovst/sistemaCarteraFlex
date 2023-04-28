@@ -38,7 +38,7 @@
 			private function generar():void{
 				if(valida()){
 					inicio = dtFechaIni.text;
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
@@ -48,7 +48,7 @@
 						du.rCursor();
 						du.closeWs(wsMS);
 						dgReporte.dataProvider = null;
-						Application.application.desbloquear();
+						global.desbloquear();
 						btnExportar.enabled = false;
 						lblTotal.text = "";
 						
@@ -87,7 +87,7 @@
 				dgReporte.dataProvider = null;
 				lblTotal.text = "";
 				btnExportar.enabled = false;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}	
 			

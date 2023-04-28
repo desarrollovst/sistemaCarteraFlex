@@ -188,7 +188,7 @@
 					});
 					params[0] = grupo;
 					params[1] = ciclo;
-					params[2] = Application.application.U_ID;
+					params[2] = global.obtenerUsuario();
 					//Obtiene el listado de controles de pago de un credito especifico
 					wsCat.getListado.send(40, params);
 				}
@@ -237,11 +237,11 @@
 					tipoAccion = 0;//proceso de accion unica
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();					
+					global.bloquear();					
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCtrlEliminacion);
 					
 					wsMS.setAccionEliminaCtrlPagos.send(tipoAccion, grupo, ciclo, frealpago,
-														secuencia, Application.application.U_ID);
+														secuencia, global.obtenerUsuario());
                 } 
             }
 			
@@ -286,7 +286,7 @@
 			private function setAccionCtrlEliminacion(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCtrlEliminacion);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

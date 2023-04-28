@@ -132,12 +132,12 @@
 					var periodo:Number;
 					var fecha:String
 					var id:String = "&id=" + rep;
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var region:String = "&region=" + cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
 					var asesor:String = "&asesor=000000";  
-					var fec:Date = Application.application._Current_Fecha;
+					var fec:Date = global.obtenerFechaSistema();
 					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
 					
 					consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;

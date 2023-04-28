@@ -69,7 +69,7 @@
 				
 				du.closeWs(wsCatCap);
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				
 				if (_xmlConsultorias.elements().length() > 0){
 					formateaConsultoria();
@@ -130,14 +130,14 @@
 					
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 										
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
 					var res:String = evt.result.toString();
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1"){	
 						cerrar();
@@ -200,7 +200,7 @@
 				
 				du.closeWs(wsCatCap);
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				
 				if (_xmlConsultorias.elements().length() > 0){
 					formateaConsultoria();

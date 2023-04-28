@@ -95,6 +95,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -109,8 +110,9 @@
 			
 			public var wsMS:WebService;
 			public var titulo:String;
-			private var global:Globales;
 			private var du:Utils;
+			private var global:Globales;
+			private var permiso:Permisos;
 			private var codCuenta:String;
 			
 			private var tipoMovObj:ArrayCollection = new ArrayCollection();
@@ -160,7 +162,7 @@
 				if(valida()){
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					var tipo:int = int(cboTipoMov.selectedItem.tipo);
 					var grupo:String = txtGrupo.text;
@@ -185,7 +187,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							limpiar();
@@ -194,7 +196,7 @@
 						else
 							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
-					wsMS.setAccionModPrn.send(tipo, grupo, ciclo, fecha, Application.application.U_ID, codCuenta, perio);
+					wsMS.setAccionModPrn.send(tipo, grupo, ciclo, fecha, global.obtenerUsuario(), codCuenta, perio);
 				}
 			}
 			
@@ -209,35 +211,35 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				if(global.permisosDesautoriza(Application.application.PERFIL_ID)){
+				if(permiso.permisosDesautoriza(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 1;
 					oItem.id = "desautoriza";	
 					oItem.nombre = "Desautorización";
 					item.push(oItem);
 				}
-				if(global.permisosModFecDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModFecDes(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 2;
 					oItem.id = "desembolso";	
 					oItem.nombre = "Modificación Fecha";
 					item.push(oItem);
 				}
-				if(global.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 3;
 					oItem.id = "cuenta";	
 					oItem.nombre = "Modificación de Cuenta";
 					item.push(oItem);
 				}
-				if(global.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 4;
 					oItem.id = "plazo";	
 					oItem.nombre = "Modificación de Plazo";
 					item.push(oItem);
 				}
-				if(global.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 5;
 					oItem.id = "desentrega";	
@@ -248,8 +250,9 @@
 			}			
 						
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Módulo de Correcciones";
 				lblTitulo.text = titulo.toUpperCase();
 				formateaTipoMov();

@@ -54,7 +54,7 @@
 					
 					du.initWsCat(wsCat);
 					du.rCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlAcred = XML(evt.result.toString());
@@ -96,7 +96,7 @@
 				params[0] = "0";
 				params[1] = "";
 				params[2] = "";
-				params[3] = Application.application.U_ID;
+				params[3] = global.obtenerUsuario();
 				params[4] = "";
 				wsCat.getInfoRegistro.send(3, params);
 			}
@@ -161,7 +161,7 @@
 					else	
 						Alert.show("No es posible generar el documento de " + mov + " de Órdenes de Pago.\n\nVerifique los criterios de selección.",titulo,4,null,null,global.iAlert);	
 				});
-				wsMS.setAccionModOrdenPago.send(tipo, grupo, ciclo, acred, cheque, fecha, Application.application.U_ID, cuenta);
+				wsMS.setAccionModOrdenPago.send(tipo, grupo, ciclo, acred, cheque, fecha, global.obtenerUsuario(), cuenta);
 			}
 			
 			public function formateaCuenta(cadInfo:String):void{
@@ -232,7 +232,7 @@
 				du = new Utils();
 				titulo = "Administración de Órdenes de Pago";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				cargaBanco();
 			}
@@ -245,7 +245,7 @@
 			
 			public function limpiar():void{
 				var fec:Date;
-				dtfFecha.selectedDate = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.obtenerFechaSistema();
 				dgAcred.dataProvider = null;
 				cboBanco.selectedIndex = 0;
 				cargaTipoMov();

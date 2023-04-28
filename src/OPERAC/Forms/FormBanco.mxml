@@ -59,7 +59,7 @@
 				var item:Array = new Array();
 				
 				oItem = new Object();
-				oItem.id = "0";	
+				oItem.id = "";	
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
@@ -116,7 +116,7 @@
 			}	
 			
 			private function valida():Boolean{
-				if(cboBanco.selectedIndex > 0 && (txtClabe.text == "" || txtCuenta.text == "")){
+				if(cboBanco.selectedIndex > 0 && (txtClabe.text == "")){
 					return false;
 				}
 				return true;

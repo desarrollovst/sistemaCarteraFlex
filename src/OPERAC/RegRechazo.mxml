@@ -55,12 +55,12 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlCausa = new XML(evt.result);
 					
-					Application.application.desbloquear();
+					global.desbloquear();
 					du.rCursor();
 					du.closeWs(wsCat);
 					

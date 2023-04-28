@@ -111,14 +111,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlDisp = new XML(evt.result);
 				
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlDisp.elements().length() > 0){
 						dgDisp.dataProvider = _xmlDisp.Table;
@@ -146,14 +146,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLC = new XML(evt.result);
 				
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlLC.elements().length() > 0){
 						dgLC.dataProvider = _xmlLC.Table;
@@ -182,14 +182,14 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlOF = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlOF.elements().length() > 0){
 							dgOF.dataProvider = _xmlOF.Table;
@@ -259,10 +259,10 @@
 					arrMun[0] = "";
 			    	initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
 					wsMS.setAccionDisposicion.send(3, codOF, codLC, codDisp, "", "", "", 0, 0, "", "", 0, 0, arrEnt, arrMun,
-												   Application.application.U_ID, 0, "", "", "");
+												   global.obtenerUsuario(), 0, "", "", "");
 			    } 
 			}
 			
@@ -272,10 +272,10 @@
 					var codLC:String = dgLC.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionLineaCred);
 					wsMS.setAccionLineaCred.send(3, codOF, codLC, "", "", "", 0, 0, 0, 0, "", "", 0, 0, "", "", "",
-								 	     		 Application.application.U_ID);
+								 	     		 global.obtenerUsuario());
 			    } 
 			}
 			
@@ -284,10 +284,10 @@
 					var codOF:String = dgOF.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
 					wsMS.setAccionOrgFond.send(3, codOF, "", "", "", "", "", "", "", "", 
-								 	   		   "", "", Application.application.U_ID);
+								 	   		   "", "", global.obtenerUsuario());
 			    } 
 			}
 			
@@ -474,7 +474,7 @@
 			private function setAccionDisposicion(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -486,7 +486,7 @@
 			private function setAccionLineaCred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -498,7 +498,7 @@
 			private function setAccionOrgFond(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

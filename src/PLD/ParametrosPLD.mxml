@@ -44,10 +44,10 @@
 				du.sCursor();
 				var moneda:String = cboMoneda.selectedItem.id;
 				var moneda_ext:String = cboMonedaExt.selectedItem.id;
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionParametrosPLD);
 				//setAccionParametrosPLD(string usuario, int tipo,  numParcial, montoRef,  numTrans,  moneda, correo_of,  moneda_ext )
-			    wsMS.setAccionParametrosPLD.send(Application.application.U_ID, tipoTransac, txtNumParcial.text, txtMontoDivi.text, txtNumTransac.text,
+			    wsMS.setAccionParametrosPLD.send(global.obtenerUsuario(), tipoTransac, txtNumParcial.text, txtMontoDivi.text, txtNumTransac.text,
 			    								 moneda, txtEmailCump.text, moneda_ext);			    								
 			}		    									
 		}
@@ -55,7 +55,7 @@
 		 private function setAccionParametrosPLD(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionParametrosPLD);
 			wsMS = null;
 			var res:String = event.result.toString();

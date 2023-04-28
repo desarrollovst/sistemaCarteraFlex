@@ -50,6 +50,7 @@
 			private var wsMS:WebService;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			private var objMtto:Sprite = new Sprite();
 			
@@ -78,6 +79,7 @@
 	<!-- FUNCIONES GENERALES -->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			private function iniVar():void{
 				this.indMicro = -1;
 				this.vScrollMicro = -1;
@@ -90,8 +92,9 @@
 			}
 			
 			private function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Manteniemiendo de defunciones";
 				permisos();
 			}
@@ -157,7 +160,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+								if (permiso.permisosRegionales(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -237,7 +240,7 @@
 					activarContModBenef(false);
 					
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -258,7 +261,7 @@
 							
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 					});
 					params[0] = txtCodAcre.text;
@@ -283,7 +286,7 @@
 						activarContModDef(false);
 							
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -304,7 +307,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 					});
 					params[0] = dgMicro.selectedItem.CDGCL;
 					params[1] = dgMicro.selectedItem.CDGPMS;
@@ -322,7 +325,7 @@
 					dgBenef.dataProvider = null;
 
 					if (tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -343,7 +346,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();	
+						global.desbloquear();	
 					});
 					
 					params[0] = "";
@@ -471,7 +474,7 @@
 					
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionDefun);
 					wsMS.setAccionDefuncion.send(infoDef.codigo, infoDef.nombre1, infoDef.nombre2, infoDef.primape, infoDef.segape 
 												, infoDef.sexo, infoDef.nacimiento, infoDef.defuncion, infoDef.edad
@@ -486,7 +489,7 @@
 			private function setAccionDefun(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDefun);
 				var res:String = new String(event.result.toString());
 				
@@ -532,7 +535,7 @@
 					
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionBenef);				
 					wsMS.setAccionDefuncionBeneficiario.send( infoBenef.codigo, infoBenef.cdgdefun, infoBenef.nombre1
 						, infoBenef.nombre2, infoBenef.primape, infoBenef.segape, infoBenef.sexo, infoBenef.porcentaje
@@ -545,7 +548,7 @@
 			private function setAccionBenef(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionBenef);
 				var res:String = new String(event.result.toString());
 				

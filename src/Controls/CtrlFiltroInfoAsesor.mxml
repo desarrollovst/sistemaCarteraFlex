@@ -75,7 +75,7 @@
 					else{
 						if(Application.application.PUESTO == 'A'){
 							var i:int;
-							i = _xmlAsesor.Table.(CODIGO.toString() == Application.application.U_ID.toString()).childIndex();
+							i = _xmlAsesor.Table.(CODIGO.toString() == global.obtenerUsuario().toString()).childIndex();
 							cboAsesor.selectedIndex = i + 1;
 							cboAsesor.enabled = false;
 						}
@@ -84,7 +84,7 @@
 				dispatchEvent(new Event("cargaAsesor"));
 			});
 			if(Application.application.PUESTO == 'C'){
-				params[0] = Application.application.U_ID;
+				params[0] = global.obtenerUsuario();
 				wsCat.getCatalogoGral.send(23, params);	
 			}
 			else{

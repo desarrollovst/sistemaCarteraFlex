@@ -71,7 +71,7 @@
 						lblTotal.text = "";
 					}
 				});
-				wsMS.getRepOperacionesFrac.send(mes, anio, Application.application.U_ID);
+				wsMS.getRepOperacionesFrac.send(mes, anio, global.obtenerUsuario());
 			}			
 			
 			public function initApp():void{

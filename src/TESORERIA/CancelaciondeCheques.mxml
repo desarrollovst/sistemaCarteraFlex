@@ -107,14 +107,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlAcred = XML(evt.result.toString());
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();	
+						global.desbloquear();	
 						
 						if(_xmlAcred.elements().length() > 0){
 							formateaListaAcred();
@@ -148,14 +148,14 @@
 						
 						du.initWsCat(wsCat);
 						du.sCursor();
-						Application.application.bloquear();
+						global.bloquear();
 						
 						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 							_xmlCta = new XML(evt.result);
 								
 							du.rCursor();
 							du.closeWs(wsCat);
-							Application.application.desbloquear();	
+							global.desbloquear();	
 							
 							if (_xmlCta.elements().length() > 0){
 								txtCuenta.text = _xmlCta.Table[0].BANCO;	
@@ -168,7 +168,7 @@
 						params[0] = "5";
 						params[1] = txtCodCuenta.text;
 						params[2] = "";
-						params[3] = Application.application.U_ID;
+						params[3] = global.obtenerUsuario();
 						params[4] = coord;
 						wsCat.getInfoRegistro.send(3, params);
 					}
@@ -233,7 +233,7 @@
 						else	
 							Alert.show("No es posible realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);	
 					});
-					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, grupo, ciclo, tipoCred, acred, cheque, chequera,tipoCanc, Application.application.U_ID);
+					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, grupo, ciclo, tipoCred, acred, cheque, chequera,tipoCanc, global.obtenerUsuario());
 				}
 			}
 			
@@ -388,7 +388,7 @@
 			}
 			
 			public function limpiar():void{
-				dtfFecha.selectedDate = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.obtenerFechaSistema();
 				dgAcred.dataProvider = null;
 				cboCoordinacion.selectedIndex = 0;
 				cboTipoCanc.selectedIndex = 0;

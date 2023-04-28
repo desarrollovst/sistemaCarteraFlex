@@ -51,7 +51,7 @@
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					AjustesObj.removeAll();
 					AjustesObj.refresh();
@@ -62,7 +62,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlAjustes.elements().length() > 0){
 							formateaLista();
@@ -108,14 +108,14 @@
 								
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
 					var res:String = evt.result.toString();
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1"){	
 						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,function():void{

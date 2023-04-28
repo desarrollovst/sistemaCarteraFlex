@@ -156,7 +156,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgCS.dataProvider = null;
 				
@@ -168,7 +168,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlCart.elements().length() > 0)
 						dgCS.dataProvider = _xmlCart.Table;
@@ -181,7 +181,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgCR.dataProvider = null;
 				
@@ -193,7 +193,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlCart.elements().length() > 0)
 						dgCR.dataProvider = _xmlCart.Table;
@@ -247,7 +247,7 @@
 				
 		    	initConexionIncR();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 					wsIncR.setAccionParametrosIncCartera.send(mCodigo, pPuesto, mCartIni, mCartFin, mPorcentaje, 3);
 			}
@@ -256,7 +256,7 @@
 		private function setAccionElimina(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionElimina);
 			var res:String = new String(event.result.toString());
 			

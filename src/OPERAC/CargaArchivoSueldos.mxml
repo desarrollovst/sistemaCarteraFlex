@@ -53,10 +53,10 @@
         	if(formateaInfo()){
 	        	initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				//Servicio invocado en la etapa de modificacion de registros mediante archivo
 				wsMS.addEventListener(ResultEvent.RESULT, setAsignaSueldoArchivo);
-				wsMS.setAsignaSueldoArchivo.send(nomina, sueldo, fecha, Application.application.U_ID);
+				wsMS.setAsignaSueldoArchivo.send(nomina, sueldo, fecha, global.obtenerUsuario());
         	}
         }
         
@@ -181,14 +181,14 @@
 	    private function setAsignaSueldoArchivo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaSueldoArchivo);
 			wsMS = null;
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){
 				initConexionRep();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				dgInfo.dataProvider = null;	
 					
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -202,10 +202,10 @@
 						
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();				
+					global.desbloquear();				
 				});
 				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de sueldos
-				wsMS.getRepSueldoArchivo.send(Application.application.U_ID);		
+				wsMS.getRepSueldoArchivo.send(global.obtenerUsuario());		
 			}	
 			else
 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		

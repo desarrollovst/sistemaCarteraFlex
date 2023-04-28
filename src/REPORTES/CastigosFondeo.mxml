@@ -32,7 +32,7 @@
 			private function generar():void{
 				if(valida()){								
 					fecha = dtfFecha.text; 
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 								
@@ -42,7 +42,7 @@
 						du.closeWs(wsMS);
 							
 						dgReporte.dataProvider = null;
-						 Application.application.desbloquear();									
+						 global.desbloquear();									
 						if(_xmlRep.elements().length() > 0){
 							var cont:int = _xmlRep.elements().length();   
 							dgReporte.dataProvider = _xmlRep.Table;							
@@ -77,7 +77,7 @@
 		
 			private function limpiar():void{				 
 				var fec:Date;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				btnExportar.enabled = false;
 				dgReporte.dataProvider = null;

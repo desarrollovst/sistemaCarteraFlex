@@ -49,19 +49,19 @@
 					var fecha:String = dtfFecha.text;
 					var cdgib:String = cbxBanco.selectedItem.codigo;
 					var cdgcb:String = cbxCuenta.selectedItem.codigo;
-					var cdgpe:String = Application.application.U_ID;
+					var cdgpe:String = global.obtenerUsuario();
 					var tipo:Number = 3;
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
 						var res:String = evt.result.toString();
 						
 						du.closeWs(wsMS);			
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (res.substr(0,1) == "1"){
 							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -137,7 +137,7 @@
 				var params:Array = new Array
 							
 				du.initWsCat(wsCat);
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 					_xmlBancos = new XML(event.result);
@@ -147,7 +147,7 @@
 					
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlBancos.elements().length() > 0){
 							formateaBancos();

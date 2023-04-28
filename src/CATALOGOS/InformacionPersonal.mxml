@@ -61,7 +61,7 @@
 					
 					du.initWsCat(wsCat);
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 					du.sCursor();
 					
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -69,7 +69,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 					
 						if (_xmlEnt.elements().length() > 0){
 							dgEntidad.dataProvider = _xmlEnt.Table;
@@ -99,7 +99,7 @@
 				
 					du.initWsCat(wsCat);
 				 	if (tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 					du.sCursor();
 					
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -107,7 +107,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 					
 						if (_xmlTipo.elements().length() > 0){
 							dgTipoPers.dataProvider = _xmlTipo.Table;
@@ -154,7 +154,7 @@
 					var codTipo:String = dgTipoPers.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoPers);
 					wsMS.setAccionTipoPers.send(3, codTipo);
 			    } 
@@ -216,7 +216,7 @@
 			private function setAccionEntidad(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEntidad);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -228,7 +228,7 @@
 			private function setAccionTipoPers(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoPers);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

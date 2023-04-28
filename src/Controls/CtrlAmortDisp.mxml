@@ -37,14 +37,14 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 						
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlRes = new XML(evt.result.toString());
 	
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if(_xmlRes.elements().length() > 0){
 						dgReporte.dataProvider = _xmlRes.Table;

@@ -158,7 +158,7 @@
 					}	
 				});
 				params[0] = clns;
-				params[1] = Application.application.U_ID;
+				params[1] = global.obtenerUsuario();
 				params[2] = "";
 				wsCat.getCatalogoGral.send(11, params);
 			}	

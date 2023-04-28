@@ -65,7 +65,7 @@
 				du = new Utils();
 				titulo = "Registro de Pagos PayCash";
 				lblTitulo.text = titulo.toUpperCase();
-				usuario = Application.application.U_ID;
+				usuario = global.obtenerUsuario();
 				limpiar();
 			}		
 			
@@ -85,7 +85,7 @@
 				var fec:Date;
 				if (currentState == "resultado")
 					currentState = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
@@ -97,7 +97,7 @@
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
 						var res:String = evt.result.toString();
@@ -114,7 +114,7 @@
 								
 								du.rCursor();
 								du.closeWs(wsMS);
-								Application.application.desbloquear();
+								global.desbloquear();
 								
 								if(_xmlRep.elements().length() > 0){
 									currentState = "resultado";
@@ -133,7 +133,7 @@
 						}
 						else{
 							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);	
-							Application.application.desbloquear();
+							global.desbloquear();
 						}
 					});
 					wsMS.setRegistroPagosPayCash.send(fecha, usuario); 

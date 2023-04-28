@@ -41,14 +41,14 @@
 					var asesor:String = comFiltroRep.obtieneAsesor();
 					var fecha:String = comFiltroRep.obtieneFecha();
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(wsMS);
 						

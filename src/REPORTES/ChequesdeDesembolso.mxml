@@ -58,7 +58,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepChequesDesembolso.send(txtGrupo.text, txtCiclo.text, Application.application.U_ID);
+					wsMS.getRepChequesDesembolso.send(txtGrupo.text, txtCiclo.text, global.obtenerUsuario());
 				}	
 			}			
 						

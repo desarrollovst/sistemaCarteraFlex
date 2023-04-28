@@ -40,14 +40,14 @@
 					btnBusqCta.setFocus();
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlCta = new XML(evt.result);
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlCta.elements().length() > 0){
 							formateaCuenta();
@@ -57,7 +57,7 @@
 					params[0] = this.tipo.toString();
 					params[1] = txtCodCuenta.text;
 					params[2] = txtCuenta.text;
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					params[4] = "";
 					wsCat.getInfoRegistro(3, params);
 				}

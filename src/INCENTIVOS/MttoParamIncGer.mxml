@@ -97,7 +97,7 @@
 								
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncGerente);
 				wsIncR.setAccionParametrosIncGerente.send(mCodigo, mPar30Ini, mPar30Fin, mPorcPar30, mDiasMoraMax, mPorcInc
@@ -129,7 +129,7 @@
 		private function setAccionParametrosIncGerente(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncGerente);
 			wsIncR = null;

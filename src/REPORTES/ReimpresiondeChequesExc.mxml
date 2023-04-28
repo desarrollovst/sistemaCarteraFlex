@@ -162,7 +162,7 @@
 					params[0] = tipo;
 					params[1] = codigo;
 					params[2] = clns;
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					//Obtiene la lista de Acreditados para realizar la reimpresion de cheques
 					wsCat.getInfoGeneral.send(7, params);
 				}	

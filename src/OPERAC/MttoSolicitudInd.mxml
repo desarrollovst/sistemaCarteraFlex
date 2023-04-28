@@ -120,14 +120,17 @@
 			public function activaControles(prodCred:String, tipo:int):void{
 				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
 				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlControl = new XML(evt.result.toString());
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 					if (_xmlControl.elements().length() > 0){
 						//montoMin = Number(_xmlControl.Table[0].MONTOMIN);
@@ -148,7 +151,9 @@
 						}
 					}
 				});
-				wsMS.getActivaContSolic.send("02", prodCred);
+				params[0] = "02";
+				params[1] = prodCred;
+				wsCat.getInfoGeneral.send(19, params);
 			}
 						
 			public function calculaMonto():void{
@@ -327,7 +332,7 @@
 			public function guardaHorario():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setModHorario);
 				wsMS.setModHorario.send(cdgAcred, "I", txtCiclo.text, info.reunion, info.horario);
 			}
@@ -336,7 +341,7 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolic);
@@ -345,7 +350,7 @@
 													 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													 info.formaDist, "I", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													 Application.application.U_ID, info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
+													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
 													 info.multPerio, coord, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
 													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 													 info.horario, info.reunion, "", "", info.clnsRel, info.tipoProdRel, info.cdgclnsRel, info.clnsRel, aval);
@@ -359,7 +364,7 @@
 													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													   		info.formaDist, "I", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													   		info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													   		Application.application.U_ID, info.formaEntre, info.nombreCheq, info.multPerio, coord, promotor, info.tasaFija,
+													   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, coord, promotor, info.tasaFija,
 													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
 													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion, "", "", "", "",
                                        						"", "", "", "");
@@ -478,7 +483,7 @@
 				var estatus:String;
 				if (currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
 				this.coord = coord;
 				//ASIGNACION DE CODIGO DE ACREDITADO
 				this.cdgAcred = cdgAcred;
@@ -523,7 +528,7 @@
 			private function setAccionEvSolic(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolic);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
@@ -575,7 +580,7 @@
 			private function setAccionSolic(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSolic);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
@@ -588,7 +593,7 @@
 			private function setModHorario(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();				
+				global.desbloquear();				
 				wsMS.removeEventListener(ResultEvent.RESULT, setModHorario);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

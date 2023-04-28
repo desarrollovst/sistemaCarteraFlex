@@ -73,7 +73,7 @@
 						
 					if(_xmlAsesor.elements().length() > 0){
 						formateaAsesor();
-					 	if((_xmlAsesor.elements().length() == 1) && (asesorObj[0].codigo == Application.application.U_ID.toString())){
+					 	if((_xmlAsesor.elements().length() == 1) && (asesorObj[0].codigo == global.obtenerUsuario().toString())){
 							cboAsesor.selectedIndex = 1;
 							cboAsesor.enabled = false;
 						}
@@ -81,7 +81,7 @@
 							if(Application.application.PUESTO == 'A'){
 								var i:int;
 								for(i = 0; i < asesorObj.length; i++){
-									if(asesorObj[i].codigo == Application.application.U_ID.toString()){
+									if(asesorObj[i].codigo == global.obtenerUsuario().toString()){
 										cboAsesor.selectedIndex = i;
 										break;
 									}
@@ -151,7 +151,7 @@
 							} 
 							else if(Application.application.PUESTO == 'C'){
 								var i:int;
-								i = _xmlCoord.Table.(CDGPE.toString() == Application.application.U_ID.toString()).childIndex();
+								i = _xmlCoord.Table.(CDGPE.toString() == global.obtenerUsuario().toString()).childIndex();
 								cboCoord.selectedIndex = i + 1;
 								cboCoord.enabled = false;
 							}

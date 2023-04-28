@@ -202,7 +202,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgMA.dataProvider = null;
 				
@@ -214,7 +214,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlMora.elements().length() > 0)
 						dgMA.dataProvider = _xmlMora.Table;	
@@ -227,7 +227,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgMS.dataProvider = null;
 				
@@ -239,7 +239,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlMora.elements().length() > 0)
 						dgMS.dataProvider = _xmlMora.Table;
@@ -252,7 +252,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgMR.dataProvider = null;
 				
@@ -264,7 +264,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlMora.elements().length() > 0)
 						dgMR.dataProvider = _xmlMora.Table;
@@ -332,7 +332,7 @@
 				
 		    	initConexionIncR();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 				wsIncR.setAccionParametrosIncMora.send(mCodigo, pPuesto, mMoraIni, mMoraFin, mPorcentaje, 3);
 			}
@@ -341,7 +341,7 @@
 		private function setAccionElimina(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionElimina);
 			var res:String = new String(event.result.toString());
 			

@@ -68,7 +68,7 @@
 						else{
 							if(Application.application.PUESTO == 'A'){
 								var i:int;
-								i = _xmlAsesor.Table.(CODIGO.toString() == Application.application.U_ID.toString()).childIndex();
+								i = _xmlAsesor.Table.(CODIGO.toString() == global.obtenerUsuario().toString()).childIndex();
 								cboAsesor.selectedIndex = i + 1;
 								cboAsesor.enabled = false;
 							}
@@ -166,14 +166,14 @@
 					var coord:String = cboCoord.selectedItem.codigo;
 					var asesor:String = cboAsesor.selectedItem.codigo;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexionRep();
 					du.sCursor();
 								
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(wsMS);
 							
@@ -193,7 +193,7 @@
 						}
 						wsMS = null;
 					});
-					wsMS.getRepControlPagosFechaReg.send(region, coord, asesor, dtfFecha.text, Application.application.U_ID, Application.application.PUESTO);
+					wsMS.getRepControlPagosFechaReg.send(region, coord, asesor, dtfFecha.text, global.obtenerUsuario(), Application.application.PUESTO);
 				}	
 			}			
 						
@@ -233,7 +233,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				

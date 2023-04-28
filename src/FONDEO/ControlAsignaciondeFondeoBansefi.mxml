@@ -115,25 +115,25 @@
 			if(cadena[0].toString() != ""){
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
 					var res:String = evt.result.toString();
 					
 					if (res.substr(0,1) == "1"){
 						wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeo);
-						wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, 2, registro, Application.application.U_ID);
+						wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, 2, registro, global.obtenerUsuario());
 					}
 					else{
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
 						buscarInfoDisp();
 					}
 				});
 				// ENVIA LOS REGISTROS A FONDEAR A LA TABLA FONDEO_CADENA
-				wsMS.setAccionFondeoCadena.send(cadena, Application.application.U_ID, "Bansefi", orgFond, lineaCred, disp, 1);
+				wsMS.setAccionFondeoCadena.send(cadena, global.obtenerUsuario(), "Bansefi", orgFond, lineaCred, disp, 1);
 			}
 		}
 
@@ -224,7 +224,7 @@
 				var importe:Number = Number(importeStr);
 				var fecSaldo:String = dtfFecSaldo.text;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				initConexion();
 				du.sCursor();
 						
@@ -241,7 +241,7 @@
 							
 							du.rCursor();
 							du.closeWs(wsCat);
-							Application.application.desbloquear();
+							global.desbloquear();
 							
 							if(_xmlRes.elements().length() - 1 > 0){
 								var cont:Number = 0;
@@ -278,17 +278,17 @@
 								"\n\nVerifique la información selecionada.",titulo,4,null,null,global.iAlert);
 							}
 						});
-						params[0] = Application.application.U_ID;
+						params[0] = global.obtenerUsuario();
 						wsCat.getListado.send(34, params);
 					}
 					else{
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
 					}					
 				});
-				wsMS.getInfoFondeoBansefi.send(orgFond, lineaCred, disp, fecSaldo, importe, tipoAccion, Application.application.U_ID);
+				wsMS.getInfoFondeoBansefi.send(orgFond, lineaCred, disp, fecSaldo, importe, tipoAccion, global.obtenerUsuario());
 			}
 		}
 		
@@ -606,7 +606,7 @@
 		private function setAsignaFondeo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaFondeo);
 			

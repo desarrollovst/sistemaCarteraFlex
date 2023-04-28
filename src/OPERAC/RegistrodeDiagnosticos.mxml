@@ -50,6 +50,7 @@
 			private var wsMS:WebService;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			private var objMtto:Sprite = new Sprite();
 			
@@ -78,6 +79,7 @@
 	<!-- FUNCIONES GENERALES -->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			private function iniVar():void{
 				this.indMicro = -1;
 				this.vScrollMicro = -1;
@@ -90,8 +92,9 @@
 			}
 			
 			private function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Registro de diagnósticos";
 				lblTitulo.text = titulo.toUpperCase();
 				permisos();
@@ -158,7 +161,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+								if (permiso.permisosRegionales(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -237,7 +240,7 @@
 					activarContModBenef(false);
 					
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -258,7 +261,7 @@
 							
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 					});
 					params[0] = txtCodAcre.text;
@@ -283,7 +286,7 @@
 						activarContModDia(false);
 							
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -304,7 +307,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 					});
 					params[0] = dgMicro.selectedItem.CDGCL;
 					params[1] = dgMicro.selectedItem.CDGPMS;
@@ -322,7 +325,7 @@
 					dgBenef.dataProvider = null;
 
 					if (tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -343,7 +346,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();	
+						global.desbloquear();	
 					});
 					
 					params[0] = "";
@@ -468,7 +471,7 @@
 					
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionDiag);
 					wsMS.setAccionDiagnostico.send(infoDiag.codigo, infoDiag.nombre1, infoDiag.nombre2, infoDiag.primape, infoDiag.segape 
 												, infoDiag.sexo, infoDiag.nacimiento, infoDiag.fdiagnostico, infoDiag.edad
@@ -482,7 +485,7 @@
 			private function setAccionDiag(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDiag);
 				var res:String = new String(event.result.toString());
 				
@@ -525,7 +528,7 @@
 					
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionBenef);				
 					wsMS.setAccionDiagnosticoBeneficiario.send( infoBenef.codigo, infoBenef.cdgdiag, infoBenef.nombre1
 						, infoBenef.nombre2, infoBenef.primape, infoBenef.segape, infoBenef.sexo, infoBenef.monto
@@ -537,7 +540,7 @@
 			private function setAccionBenef(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionBenef);
 				var res:String = new String(event.result.toString());
 				

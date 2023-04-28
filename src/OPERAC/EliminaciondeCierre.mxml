@@ -312,7 +312,7 @@
 						params[2] = ciclo;
 						params[3] = fecha;
 						params[4] = sec;
-						params[5] = Application.application.U_ID;
+						params[5] = global.obtenerUsuario();
 						//Obtiene detalle del control de pagos
 						wsCat.getInfoRegistro.send(23, params);	
 					}
@@ -324,7 +324,7 @@
 				params[2] = ciclo;
 				params[3] = fecha;
 				params[4] = sec;
-				params[5] = Application.application.U_ID;
+				params[5] = global.obtenerUsuario();
 				//Obtiene encabezado del control de pagos
 				wsCat.getInfoRegistro.send(22, params);
 			}
@@ -581,13 +581,13 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes cuenten con su asistencia registrada
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro del control de pagos
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionControlPagos);
 					wsMS.setAccionControlPagos.send(tipoAccion, txtCodGrupo.text, txtCiclo.text, 0, Number(txtPagoTeo.text), Number(txtPagoReal.text),
 													Number(txtAport.text), Number(txtDev.text), Number(txtAhorro.text), Number(txtMulta.text), Number(txtMora.text), 
 													txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, multa, asist, dtfFecha.text, sec, 
-													cboTipo.selectedItem.id, fecha, "", Application.application.U_ID);
+													cboTipo.selectedItem.id, fecha, "", global.obtenerUsuario());
 				}
 			}
 			
@@ -686,7 +686,7 @@
 			private function setAccionControlPagos(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionControlPagos);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

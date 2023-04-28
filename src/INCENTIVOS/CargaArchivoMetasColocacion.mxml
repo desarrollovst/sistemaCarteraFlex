@@ -58,7 +58,7 @@
 
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					//Servicio de registro del estado de cuenta
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -66,7 +66,7 @@
 								
 						wsMS.disconnect();
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							
@@ -77,14 +77,14 @@
 							
 							initConexionRep();
 							du.sCursor();
-							Application.application.bloquear();
+							global.bloquear();
 							
 							du.ejecutaWsMethod(wsRep,function(event:ResultEvent):void{		
 								_xmlInfo = new XML(event.result);
 				
 								du.closeWs(wsRep);
 								du.rCursor();
-								Application.application.desbloquear();
+								global.desbloquear();
 				
 								if(_xmlInfo.elements().length() > 0){
 									dgInfo.dataProvider = null;
@@ -96,14 +96,14 @@
 									Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);	
 								}
 							});
-							wsRep.getIncentivoMetasColocacion.send('S', Application.application.U_ID);	
+							wsRep.getIncentivoMetasColocacion.send('S', global.obtenerUsuario());	
 						}
 						else{
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
-							Application.application.desbloquear();
+							global.desbloquear();
 						}				
 					});
-					wsMS.setAccionIncentivoMetasColocacion.send('S', mMes, mAnio, aCDGCO, aMeta, Application.application.U_ID);
+					wsMS.setAccionIncentivoMetasColocacion.send('S', mMes, mAnio, aCDGCO, aMeta, global.obtenerUsuario());
 	        	}
         	}
         }

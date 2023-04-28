@@ -30,9 +30,9 @@
 				if(valida()){
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setSeguimientoVehiculo);
-					wsMS.setSeguimientoVehiculo.send(info.region, info.sucursal, info.codigo, info.usuAsig, dtfFecha.text, txtKm.text, info.fecAsig, Application.application.U_ID);
+					wsMS.setSeguimientoVehiculo.send(info.region, info.sucursal, info.codigo, info.usuAsig, dtfFecha.text, txtKm.text, info.fecAsig, global.obtenerUsuario());
 				}
 			}
 			
@@ -43,7 +43,7 @@
 				this.title = titulo;
 				this.info = item;
 				
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				fec = global.seleccionaDiaHabil(new Date(fec.fullYear, fec.month, fec.date - 1));
 				dtfFecha.selectedDate = fec;
 			}
@@ -57,7 +57,7 @@
 			private function setSeguimientoVehiculo(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setSeguimientoVehiculo);
 				wsMS = null;
 				var res:String = event.result.toString();

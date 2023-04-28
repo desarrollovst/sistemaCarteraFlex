@@ -65,20 +65,20 @@
 					var wsCat:WebService = new WebService;
 					var params:Array = new Array;
 					
-					var usuario:String = Application.application.U_ID;	
+					var usuario:String = global.obtenerUsuario();	
 					var mes:String = cbxMes.selectedItem.id;
 					var anio:String = cbxAnio.selectedItem.id;
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
 						var res:String = evt.result.toString();
 						
 						du.closeWs(wsMS);			
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);

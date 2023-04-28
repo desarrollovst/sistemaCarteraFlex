@@ -139,7 +139,7 @@
 
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					//Servicio de registro del estado de cuenta
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -147,7 +147,7 @@
 								
 						wsMS.disconnect();
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							if(currentState == "Region"){
@@ -165,14 +165,14 @@
 								
 							initConexionRep();
 							du.sCursor();
-							Application.application.bloquear();
+							global.bloquear();
 							
 							du.ejecutaWsMethod(wsRep,function(event:ResultEvent):void{		
 								_xmlInfo = new XML(event.result);
 				
 								du.closeWs(wsRep);
 								du.rCursor();
-								Application.application.desbloquear();
+								global.desbloquear();
 				
 								if(_xmlInfo.elements().length() > 0){
 									dgInfo.dataProvider = null;
@@ -188,21 +188,21 @@
 								}
 							});
 							if(currentState == "Region")
-								wsRep.getIncentivoCrecimientoRegion.send(Application.application.U_ID);	
+								wsRep.getIncentivoCrecimientoRegion.send(global.obtenerUsuario());	
 							else if(currentState == "Sucursal")
-								wsRep.getIncentivoCrecimientoSucursal.send(Application.application.U_ID);
+								wsRep.getIncentivoCrecimientoSucursal.send(global.obtenerUsuario());
 							
 						}
 						else{
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
-							Application.application.desbloquear();
+							global.desbloquear();
 						}				
 					});
 					
 					if(currentState == "Region")
-						wsMS.setAccionIncentivoCrecimientoRegion.send(aCDGRG, mMes, mAnio, aCrecimiento, Application.application.U_ID, 1);	
+						wsMS.setAccionIncentivoCrecimientoRegion.send(aCDGRG, mMes, mAnio, aCrecimiento, global.obtenerUsuario(), 1);	
 					else if(currentState == "Sucursal")
-						wsMS.setAccionIncentivoCrecimientoSucursal.send(aCDGCO, mMes, mAnio, aCrecimiento, Application.application.U_ID, 1);	
+						wsMS.setAccionIncentivoCrecimientoSucursal.send(aCDGCO, mMes, mAnio, aCrecimiento, global.obtenerUsuario(), 1);	
 	        	}
         	}
         }

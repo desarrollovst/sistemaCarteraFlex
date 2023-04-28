@@ -60,7 +60,7 @@
 				
 				du.initWsCat(wsCat);
 				if(tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.sCursor();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -68,7 +68,7 @@
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlTipo.elements().length() > 0){
 						dgTipo.dataProvider = _xmlTipo.Table;
@@ -94,7 +94,7 @@
 			
 				du.initWsCat(wsCat);
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.sCursor();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -102,7 +102,7 @@
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlAnt.elements().length() > 0){
 						dgAnt.dataProvider = _xmlAnt.Table;
@@ -150,7 +150,7 @@
 					var antMes:String = dgAnt.selectedItem.ANTIGUEDADMESES;
 					initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCteAnt);
 					wsMS.setAccionCteAnt.send(3, antMes, "", "");
 			    } 
@@ -162,7 +162,7 @@
 					var codCart:String = dgTipo.selectedItem.CODIGOCARTERA;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
 					wsMS.setAccionTipoAsesor.send(3, codAnt, codCart, "", "",
 									      		  "", "", "");	
@@ -238,7 +238,7 @@
 			private function setAccionCteAnt(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCteAnt);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
@@ -250,7 +250,7 @@
 			private function setAccionTipoAsesor(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")

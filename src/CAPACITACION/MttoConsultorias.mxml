@@ -66,14 +66,14 @@
 			
 			du.initWsCat(wsCat);
 		 	du.sCursor();
-		 	Application.application.bloquear();
+		 	global.bloquear();
 		 		
 			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 				_xmlBancos = new XML(event.result);
 				
 				du.closeWs(wsCat);
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 					
 				if (_xmlBancos.elements().length() > 0){
 					formateaBancos();
@@ -136,14 +136,14 @@
 					
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 										
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
 					var res:String = evt.result.toString();
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1"){	
 						cerrar();

@@ -113,7 +113,7 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
 					_xmlAcred = new XML(event.result);
@@ -129,7 +129,7 @@
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();						
+						global.desbloquear();						
 						
 						txtCdgcl.text = _xmlMicro.CDGCL;
 						txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
@@ -139,7 +139,7 @@
 						txtPrimape.text = _xmlAcred.Table[0].PRIMAPE;
 						txtSegape.text = _xmlAcred.Table[0].SEGAPE;
 						dtFechaNac.selectedDate = DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY");
-						txtEdad.text = (global.calculaEdad(DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY"), Application.application._Current_Fecha)).toString();
+						txtEdad.text = (global.calculaEdad(DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY"), global.obtenerFechaSistema())).toString();
 						var a:String = _xmlAcred.Table[0].SEXO;
 					});
 					wsCat.getCatalogoGral.send(50, params);				
@@ -231,20 +231,20 @@
 				info.ciclo = _xmlMicro.CICLO;
 				info.clns = _xmlMicro.CLNS;
 				info.fregistro = "";
-				info.cdgpe = Application.application.U_ID;
+				info.cdgpe = global.obtenerUsuario();
 				info.factualiza = "";
-				info.actualizape = Application.application.U_ID;
+				info.actualizape = global.obtenerUsuario();
 				
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 										
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
 					var res:String = evt.result.toString();
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1")
 						cerrar();
@@ -347,7 +347,7 @@
 			
 			du.initWsCat(wsCat);
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			
 			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {	
 				_xmlTDiag = new XML(event.result);
@@ -360,7 +360,7 @@
 				
 				du.closeWs(wsCat);
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 			
 				txtNombre1.text = _xmlDiag.NOMBRE1;
 				txtNombre2.text = _xmlDiag.NOMBRE2;

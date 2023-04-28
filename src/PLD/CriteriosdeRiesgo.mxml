@@ -172,7 +172,7 @@
 				var criterio:String = cboCriterio.selectedItem.id;
 				var nivel:String = cboNivel.selectedItem.id;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionCriterioRiesgo);
 			    wsMS.setAccionCriterioRiesgo.send(tipoCrit, criterio, nivel);			    								
 			}		    									
@@ -181,7 +181,7 @@
 		 private function setAccionCriterioRiesgo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCriterioRiesgo);
 			wsMS = null;
 			var res:String = event.result.toString();

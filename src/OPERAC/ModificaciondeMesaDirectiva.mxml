@@ -232,7 +232,7 @@
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);							
 					});
 					//metodo que envia los datos de la modificacion
-					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, Application.application.U_ID);
+					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, global.obtenerUsuario());
 				}
 				else
 					Alert.show("No es posible realizar el proceso de modificación.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);

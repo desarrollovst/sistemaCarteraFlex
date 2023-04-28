@@ -30,7 +30,7 @@
 						sucursal = "&sucursal=";
 					 else 
 						sucursal = "&sucursal=" + sucursal;						 					
-					var usuario:String = "&usuario=" + Application.application.U_ID;									
+					var usuario:String = "&usuario=" + global.obtenerUsuario();									
 					var mes:String = "&mes=" + compMesAnio.obtieneMes();
 					var anio:String = "&anio=" + compMesAnio.obtieneAnio();
 					var consulta:String = global.urlPdf + id + sucursal + usuario + mes + anio;

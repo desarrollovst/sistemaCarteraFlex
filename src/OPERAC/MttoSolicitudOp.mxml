@@ -698,7 +698,7 @@
 			public function guardaHorario():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setModHorario);
 				wsMS.setModHorario.send(grupo, "G", txtCiclo.text, info.reunion, info.horario);
 			}
@@ -707,7 +707,7 @@
 				if(formateaRegAcred()){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolic);
@@ -716,7 +716,7 @@
 													 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													 Application.application.U_ID, info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
+													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
 													 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
 													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 													 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
@@ -731,7 +731,7 @@
 													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													   		info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													   		info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													   		Application.application.U_ID, info.formaEntre, info.nombreCheq, info.multPerio, suc, promotor, info.tasaFija,
+													   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, suc, promotor, info.tasaFija,
 													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
 													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
 													  	 	info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
@@ -739,7 +739,7 @@
 						}
 						else{
 							wsMS.disconnect();
-							Application.application.desbloquear();
+							global.desbloquear();
 							du.rCursor();
 						}
 					}
@@ -933,7 +933,7 @@
 				init();
 				if (currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
 				this.suc = suc;
 				//ASIGNACION DE CODIGO DE GRUPO
 				this.grupo = cdgGrupo;
@@ -1076,7 +1076,7 @@
 			private function setAccionEvSolic(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolic);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
@@ -1085,7 +1085,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						var _xmlEv:XML = new XML(evt.result);
@@ -1150,7 +1150,7 @@
 										
 										du.rCursor();
 										du.closeWs(wsReg);*/
-										Application.application.desbloquear();
+										global.desbloquear();
 										cerrar();
 									/*});
 									wsReg.setEnviaEmail.send(emailOri,destino,"Evaluación de Crédito",resultado);
@@ -1159,7 +1159,7 @@
 								params[0] = grupo;
 								params[1] = ciclo;
 								params[2] = clns;
-								params[3] = Application.application.U_ID;
+								params[3] = global.obtenerUsuario();
 								wsCat.getInfoGeneral.send(10, params);
 							});
 							params[0] = this.grupo;
@@ -1169,7 +1169,7 @@
 							wsCat.getInfoGeneral.send(9, params);
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							Alert.show("No se ha encontrado la Evaluación del Área de Crédito",titulo,4,null,null,global.iAlert);
 						}
 					});
@@ -1199,21 +1199,21 @@
 						
 						du.rCursor();
 						du.closeWs(wsPayCash);
-						Application.application.desbloquear();
+						global.desbloquear();
 						cerrar();
 					});
-					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, Application.application.U_ID);
+					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, global.obtenerUsuario());
 				}
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
-					Application.application.desbloquear();
+					global.desbloquear();
 				}		
 			}
 			
 			private function setModHorario(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setModHorario);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1")

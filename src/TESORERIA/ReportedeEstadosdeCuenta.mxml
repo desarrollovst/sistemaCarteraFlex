@@ -85,7 +85,7 @@
 					fechai = dtFechaI.text;
 					fechaf = dtFechaF.text;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 					
@@ -94,7 +94,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgBanorte.dataProvider = null;
 						dgBanamex.dataProvider = null;
@@ -126,7 +126,7 @@
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array
 							
-				Application.application.bloquear();
+				global.bloquear();
 				du.initWsCat(wsCat);
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
@@ -137,7 +137,7 @@
 					
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlBancos.elements().length() > 0){
 							formateaBancos();

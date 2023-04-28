@@ -78,7 +78,7 @@
 						lblTotal.text = "";
 					}
 				});
-				wsMS.getRepOperacIndMonto.send(mes, anio, monto, Application.application.U_ID);
+				wsMS.getRepOperacIndMonto.send(mes, anio, monto, global.obtenerUsuario());
 			}			
 			
 			public function initApp():void{

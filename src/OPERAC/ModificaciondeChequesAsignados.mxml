@@ -50,14 +50,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlAcred = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlAcred.elements().length() > 0){
 							sucursal = _xmlAcred.Table[0].CDGCO;
@@ -67,7 +67,7 @@
 					});
 					params[0] = txtCodigo.text;
 					params[1] = txtCiclo.text;
-					params[2] = Application.application.U_ID;
+					params[2] = global.obtenerUsuario();
 					wsCat.getListado.send(51, params);
 				}	
 			}

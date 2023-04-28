@@ -41,7 +41,7 @@
 					
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlChq = new XML(evt.result);
@@ -55,7 +55,7 @@
 					else{
 						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 					}
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = txtCodCuenta.text;
 				params[1] = coord;
@@ -103,7 +103,7 @@
 				if(chkEstatus.selected == true){
 					estatus = "A";
 					if(factiva == ""){
-						factiva = global.formatoFecha(Application.application._Current_Fecha);
+						factiva = global.formatoFecha(global.obtenerFechaSistema());
 					}
 				}
 				else{
@@ -113,9 +113,9 @@
 				
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionChequera);
-				wsMS.setAccionChequera.send(tipoAccion, coord, codCuenta, codigo, fecha, chqIni, chqFin, estatus, factiva, Application.application.U_ID);
+				wsMS.setAccionChequera.send(tipoAccion, coord, codCuenta, codigo, fecha, chqIni, chqFin, estatus, factiva, global.obtenerUsuario());
 			}
 			
 			public function init(codCuenta:String, cuenta:String):void{
@@ -169,7 +169,7 @@
 			public function registraInfoChq():void{
 				tipoAccion = 1;
 				this.title = "Nuevo";
-				txtFecha.text = global.formatoFechaSep(Application.application._Current_Fecha,"/");
+				txtFecha.text = global.formatoFechaSep(global.obtenerFechaSistema(),"/");
 				chkEstatus.selected = false;
 				chkEstatus.enabled = true;
 				factiva = "";
@@ -178,7 +178,7 @@
 			private function setAccionChequera(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionChequera);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

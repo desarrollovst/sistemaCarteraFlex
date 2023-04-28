@@ -64,7 +64,7 @@
 				
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncCoord);
 				wsIncR.setAccionParametrosIncCoord.send(mCodigo, mPorcInc, tipoAccion);
@@ -95,7 +95,7 @@
 		private function setAccionParametrosIncCoord(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncCoord);
 			wsIncR = null;

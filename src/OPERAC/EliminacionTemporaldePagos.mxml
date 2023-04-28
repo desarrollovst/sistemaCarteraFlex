@@ -79,9 +79,9 @@
 					tipo = 1;
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
-					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, Application.application.U_ID);
+					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, global.obtenerUsuario());
 				}
 			}
 			
@@ -117,16 +117,16 @@
 					tipo = 2;
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
-					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, Application.application.U_ID);
+					wsMS.setDevolucionDespuesPago.send(grupo, ciclo, tipo, global.obtenerUsuario());
 				}
 			}
 			
 			private function setDevolucionDespuesPago(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setDevolucionDespuesPago);
 				wsMS = null;
 				var res:String = event.result.toString();

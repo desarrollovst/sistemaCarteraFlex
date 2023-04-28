@@ -151,7 +151,7 @@
 					var banco:String = cboBanco.selectedItem.CODIGO;
 					var cta:String = cboCuenta.selectedItem.id;
 					var fecha:String = dtfFecha.text;
-					var usuario:String = Application.application.U_ID;
+					var usuario:String = global.obtenerUsuario();
 				 				
 					initConexion();
 					du.sCursor();
@@ -218,7 +218,7 @@
 				du = new Utils();
 				titulo = "Eliminación de pagos por cuenta";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				cargaBanco();
 			}
@@ -231,7 +231,7 @@
 			
 			public function limpiar():void{
 				var fec:Date;
-				dtfFecha.selectedDate = Application.application._Current_Fecha;				
+				dtfFecha.selectedDate = global.obtenerFechaSistema();				
 				cboBanco.selectedIndex = 0;
 				cboCuenta.dataProvider = null;
 				lblSumaTotal.text = "";

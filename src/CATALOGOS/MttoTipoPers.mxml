@@ -110,7 +110,7 @@
 		public function guardaTipoPers():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoPers);
 			wsMS.setAccionTipoPers.send(tipoAccion, info.codigo, info.descripcion, info.cdgCrit);	
 		}
@@ -180,7 +180,7 @@
 		private function setAccionTipoPers(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoPers);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

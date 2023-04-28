@@ -11,6 +11,7 @@
 	<!--Componente de mantenimiento de solicitudes-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -42,6 +43,7 @@
 			public var wsMS:WebService;	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -93,21 +95,21 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlGrupos = new XML(evt.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 								
 						if (_xmlGrupos.elements().length() > 0){
 							dgGrupos.dataProvider = _xmlGrupos.Table;
 						}
 						seleccionaGrupo();
 					});
-					params[0] = Application.application.U_ID;
+					params[0] = global.obtenerUsuario();
 					params[1] = txtCodGrupo.text;
 					params[2] = txtGrupo.text;
 					params[3] = "CO";
@@ -126,14 +128,14 @@
 				du.sCursor();
 				
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlAcred.elements().length() > 0){
 						dgAcred.dataProvider = _xmlAcred.Table;
@@ -155,14 +157,14 @@
 				du.sCursor();
 				
 			 	if(tipo == 1)
-			 		Application.application.bloquear();
+			 		global.bloquear();
 			 	
 			 	du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlSolic = new XML(evt.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlSolic.elements().length() > 0){
 						dgSolic.dataProvider = _xmlSolic.Table;
@@ -196,8 +198,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Solicitud";
 				alta = false;
 				borrado = false;
@@ -219,9 +222,9 @@
 					var ciclo:String = dgSolic.selectedItem.CICLO; 
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaSolic);
-					wsMS.setEliminaSolic.send(grupo, ciclo, "G", Application.application.U_ID);
+					wsMS.setEliminaSolic.send(grupo, ciclo, "G", global.obtenerUsuario());
 			    } 
 			}
 			
@@ -308,7 +311,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -370,7 +373,7 @@
 			private function setEliminaSolic(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaSolic);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")

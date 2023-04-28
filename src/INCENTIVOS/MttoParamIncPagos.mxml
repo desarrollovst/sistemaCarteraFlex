@@ -84,7 +84,7 @@
 				
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncPagos);
 				wsIncR.setAccionParametrosIncPagos.send(mCodigo, mTipo, mPagoIni, mPagoFin, mPorcInc, tipoAccion);
@@ -129,7 +129,7 @@
 		private function setAccionParametrosIncPagos(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncPagos);
 			wsIncR = null;

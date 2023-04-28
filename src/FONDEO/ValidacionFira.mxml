@@ -66,7 +66,7 @@
         		if(formateaInfo() == true){
 		        	initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setValidacionFira);
 					wsMS.setValidacionFira.send(vId_persona, vCurp, vRfc, vInicio, vOrgFond, vLineaCred, vDisp, vNo_cred_bco, vFoperacion, 1); // Alta
         		}
@@ -350,7 +350,7 @@
 	    private function setValidacionFira(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setValidacionFira);
 			wsMS = null;

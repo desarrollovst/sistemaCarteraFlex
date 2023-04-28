@@ -36,10 +36,10 @@
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					wsMS.addEventListener(ResultEvent.RESULT, setCalculoIncentivosAsesor);
-					wsMS.setCalculoIncentivosAsesor.send(pFecha, region, sucursal, coord, asesor, Application.application.U_ID);
+					wsMS.setCalculoIncentivosAsesor.send(pFecha, region, sucursal, coord, asesor, global.obtenerUsuario());
 				}
 			}
 			
@@ -53,7 +53,7 @@
 				ctrlFiltro.limpiar();
 				
 				var fec:Date;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
@@ -70,7 +70,7 @@
 			private function setCalculoIncentivosAsesor(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 								
 				wsMS.removeEventListener(ResultEvent.RESULT, setCalculoIncentivosAsesor);
 				wsMS = null;
@@ -85,7 +85,7 @@
 						var sucursal:String = "&su=" + ctrlFiltro.obtieneSucursal();
 						var coord:String = "&co=" + ctrlFiltro.obtieneCoord();
 						var asesor:String = "&as=" + ctrlFiltro.obtieneAsesor();
-						var usuario:String = "&us=" + Application.application.U_ID;
+						var usuario:String = "&us=" + global.obtenerUsuario();
 						consulta = consulta + id + fecha + region + sucursal + coord + asesor + usuario;
 						
 						var request:URLRequest = new URLRequest(consulta); 

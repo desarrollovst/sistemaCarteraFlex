@@ -98,14 +98,14 @@
 						
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 							
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(_xmlRep.elements().length() > 0){
 							tituloRep = "Reporte de Préstamos " + textoInicio + textoFin + textoPago;
@@ -119,7 +119,7 @@
 											  dtfFinHasta.text, dtfPagos.text, Number(chkSitCart.selected), 
 											  Number(chkSitTes.selected), Number(chkSitSaldo.selected), 
 											  Number(chkSitLiq.selected), Number(chkSitDev.selected),   
-										      cartVig, cartVenc, cartRest, cartCast, Application.application.U_ID,
+										      cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(),
 										      Application.application.lblUser.text, ctrlFiltro.cboRegion.selectedItem.codigo,
 										      ctrlFiltro.cboSucursal.selectedItem.codigo, ctrlFiltro.cboCoord.selectedItem.codigo, 
 										      ctrlFiltro.cboAsesor.selectedItem.codigo, cboTipoProd.selectedItem.id);	
@@ -154,7 +154,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfIniDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfIniHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFinDesde.selectedDate = null;
@@ -295,6 +295,7 @@
 				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
 				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
 				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE"/>
+				<mx:DataGridColumn headerText="ENTREGADO REAL" dataField="ENTRREAL"/>
 				<mx:DataGridColumn headerText="CANT A PAGAR" dataField="CANT_TOTAL"/>
 				<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP"/>
 				<mx:DataGridColumn headerText="CARGOS" dataField="CARGOS"/>

@@ -50,7 +50,7 @@
 						var id:String = "&id=" + rep;
 						var fecha:String = "&fe=" + dtFecha.text;
 						var tipo:String = "&ti=" + rdgTipo.selectedValue.toString();
-						var us:String = "&us=" + Application.application.U_ID;
+						var us:String = "&us=" + global.obtenerUsuario();
 						var region:String = "&re=" + ctrlFiltro.obtieneRegion();
 						var sucursal:String = "&su=" + ctrlFiltro.obtieneSucursal();
 						var coord:String = "&co=" + ctrlFiltro.obtieneCoord();
@@ -89,7 +89,7 @@
 			
 			private function limpiar():void{
 				var fec:Date;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				ctrlFiltro.limpiar();
 				cboNivelMora.selectedIndex = 0;

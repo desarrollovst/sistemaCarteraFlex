@@ -36,7 +36,7 @@
 			
 			private function enviar():void{
 				if(valida(2)){
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 					
@@ -45,7 +45,7 @@
 							
 						du.closeWs(wsMS);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(res.substr(0,1) == "1"){
 							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -55,7 +55,7 @@
 						else
 							Alert.show(res.substring(2,res.length - 1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.setLiquidacionGL.send(txtGrupo.text, txtCiclo.text, "G", dtfFecha.text, Application.application.U_ID);
+					wsMS.setLiquidacionGL.send(txtGrupo.text, txtCiclo.text, "G", dtfFecha.text, global.obtenerUsuario());
 				}
 			}
 			
@@ -71,7 +71,7 @@
 					codGrupo = "&grupo=" + txtGrupo.text;
 					infoCiclo = "&ciclo=" + txtCiclo.text;
 					infoClns = "&clns=" + "G";
-					usuario = "&usuario=" + Application.application.U_ID;
+					usuario = "&usuario=" + global.obtenerUsuario();
 					tipoDoc = "&tipoDoc=PDF";	
 					url = global.urlPdf + "&id=27" + codGrupo + infoCiclo + usuario + tipoDoc;
 					navigateToURL(new URLRequest(url), "_blank");

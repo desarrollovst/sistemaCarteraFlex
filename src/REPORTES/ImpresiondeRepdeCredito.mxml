@@ -29,7 +29,7 @@
 				if(validar()){
 					var id:String = "&id=" + rep;
 					var acred:String = "&acred=" + txtAcred.text;
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var tipo:String = "&tipo=" + cboTipoRep.selectedItem.id;
 					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario + tipo;

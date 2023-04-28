@@ -44,6 +44,7 @@
 			private var titulo:String;	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			private var objMtto:Sprite = new Sprite();
 			
@@ -61,14 +62,16 @@
 	<!-- FUNCIONES GENERALES -->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			private function iniVar():void{
 				this.indProdMicro = -1;
 				this.vScroll = -1;
 			}
 			
 			private function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Productos de Microseguros";
 				lblTitulo.text = titulo.toUpperCase();
 				alta = false;
@@ -104,7 +107,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				wsMS = du.initWs(wsMS);
@@ -115,11 +117,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++){
+					for(var i:int = 0; i < cont; i++){
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+								if (permiso.permisosModGrupos(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -172,14 +174,14 @@
 			 		du.sCursor();
 			 	
 					if (tipo == 1)
-						Application.application.bloquear();	
+						global.bloquear();	
 						
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 						_xmlProdMicro = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlProdMicro.elements().length() > 0){
 							dgProdMicro.dataProvider = _xmlProdMicro.Table;
@@ -234,7 +236,7 @@
 					
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionProdMicro);
 					wsMS.setAccionProductoMicroseguro.send(info.codigo, info.descripcion, info.cdgcms, info.plazo, info.periodicidad 
 												, info.valido_hasta, info.importe, info.iva, info.costo, info.edad_max, info.edad_min
@@ -245,7 +247,7 @@
 			private function setAccionProdMicro(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProdMicro);
 				var res:String = new String(event.result.toString());
 				

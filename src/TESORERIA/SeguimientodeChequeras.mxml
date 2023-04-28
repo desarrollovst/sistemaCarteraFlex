@@ -77,7 +77,7 @@
 						
 			private function generar():void{
 				if(valida()){
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
@@ -86,7 +86,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -104,7 +104,7 @@
 							lblTotal.text = "";
 						}	
 					});
-					wsMS.getRepSegChequera.send(txtCodCuenta.text, Application.application.U_ID);	
+					wsMS.getRepSegChequera.send(txtCodCuenta.text, global.obtenerUsuario());	
 				}
 			}			
 						

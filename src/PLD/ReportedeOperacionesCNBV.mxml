@@ -124,9 +124,9 @@
 					var cadInfo:String = "";
 					var tituloRep:String = "";
 					var tipo:String = cboOperac.selectedItem.tipo;
-					var fecOp:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
-			    	var fecNac:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
-			    	var fecRep:Date = Application.application._Current_Fecha;
+					var fecOp:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
+			    	var fecNac:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
+			    	var fecRep:Date = global.obtenerFechaSistema();
 					var rfc:String = "";
 					var diaRep:String = (fecRep.date).toString();
 					var mesRep:String = (fecRep.month).toString();
@@ -190,7 +190,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				cboOperac.selectedIndex = 0;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				currentState = "";
 				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 

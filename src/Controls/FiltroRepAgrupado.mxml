@@ -36,7 +36,7 @@
 					var id:String = "&id=" + rep;
 					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
 					var niv:String = "&nivel=" + nivel.selectedValue.toString();
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 					var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();
@@ -78,7 +78,7 @@
 				var fec:Date;
 				//habilitaControles(false);
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				if(currentState == null)
 					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				nivel.selectedValue = 3;

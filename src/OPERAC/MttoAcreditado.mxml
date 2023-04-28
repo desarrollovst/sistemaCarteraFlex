@@ -5,6 +5,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.EventAcred;
 			import Data.DatosAcred;
 			import Data.Globales;
@@ -35,6 +36,7 @@
 			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var consBuro:Boolean = new Boolean();
@@ -49,20 +51,20 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);
 							
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 							
 					if (_xmlAcred.elements().length() > 0){
 						llenaRegistros();
 					}
 					else{
-						Application.application.desbloquear();
+						global.desbloquear();
 						Alert.show("Error en la carga de datos.",titulo,4,null,null,global.iAlert);
 					}								
 				});
@@ -78,7 +80,7 @@
 				initConexion();
 				du.sCursor();
 				
-				Application.application.bloquear();
+				global.bloquear();
 											
 				var titulo:String = "Consulta Reporte Crédito";
 				var acred:String = formDPAcred.txtCodigo.text;
@@ -88,13 +90,13 @@
 						
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 													
 					if(res.substr(0,1) == "1"){
 						var consulta:String;
 						var id:String = "&id=19";
 						var codAcred:String = "&acred=" + acred;
-						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
 						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 						var tipo:String = "&tipo=CC";
 						
@@ -106,7 +108,7 @@
 						Alert.show(res,titulo,4,null,null,global.iAlert);
 					}
 				});
-				wsMS.setAccionCDC.send(acred, Application.application.U_ID);	
+				wsMS.setAccionCDC.send(acred, global.obtenerUsuario());	
 			}
 			
 			public function enviar():void{
@@ -128,9 +130,9 @@
 				acred = info.codigo;
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionAcred);
-				wsMS.setAccionAcred.send(tipoAccion, Application.application.U_ID, this.grupo, 
+				wsMS.setAccionAcred.send(tipoAccion, global.obtenerUsuario(), this.grupo, 
 											 info.codigo, "", info.nombre, info.segNombre, info.aPaterno, 
 											 info.aMaterno, info.sexo, info.fecha, info.cdgPaisNac, 
 											 info.cdgEntFedNac, info.cdgNac, info.rfc, info.curp, info.ife, 
@@ -146,8 +148,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Acreditado";
 				
 				//formDirAcred.addEventListener("seleccionarDir", seleccionarDir);
@@ -252,7 +255,7 @@
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
 				
-				if (global.permisosConsBuro(Application.application.PERFIL_ID)){
+				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
 					consBuro = true;	
 				}
 				btnConsBuro.visible = consBuro;	
@@ -299,7 +302,7 @@
 								du.closeWs(wsReg);
 							
 								Alert.show(resQEQ.substr(2,resQEQ.length -1),titulo,4,null,null,global.iAlert);*/
-								Application.application.desbloquear();
+								global.desbloquear();
 								cerrar();
 							/*});
 							wsReg.setEnviaEmail.send("","tupatrimoniofin@gmail.com",
@@ -311,14 +314,14 @@
 							Alert.show(resQEQ,titulo,4,null,null,global.iAlert);
 					});
 					//Metodo que Obtiene el estatus de la busqueda de coincidencias como PEP o Listas Negras
-					wsMS.setAccionQEQ.send(acred, Application.application.U_ID);*/
+					wsMS.setAccionQEQ.send(acred, global.obtenerUsuario());*/
 				}
 				else if(res.substr(0,1) == "2"){
-					Application.application.desbloquear();
+					global.desbloquear();
 					cerrar();
 				}
 				else{
-					Application.application.desbloquear();
+					global.desbloquear();
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 				}		
 			}
@@ -359,7 +362,7 @@
 			
 			public function validaFinal():void{
 				if (info.guardaDatos == true && info.guardaDir == true && info.guardaOtros == true &&
-					info.guardaPLD == true/* && info.guardaDirNeg == true*/){
+					info.guardaPLD == true/* && info.guardaDirNeg == true*/ && info.guardaBanco == true){
 					validaSituacionAcred();
 				}
 				else
@@ -385,7 +388,7 @@
 						else
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getValidaSituacionAcred.send(acred, "G", Application.application.U_ID);
+					wsMS.getValidaSituacionAcred.send(acred, "G", global.obtenerUsuario());
 				}
 				else
 					guardaAcred();

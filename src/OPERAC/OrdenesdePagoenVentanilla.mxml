@@ -66,14 +66,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlCta = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlCta.elements().length() > 0){
 							txtCuenta.text = _xmlCta.Table[0].BANCO;
@@ -86,7 +86,7 @@
 					params[0] = "1";
 					params[1] = txtCodCuenta.text;
 					params[2] = "";
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					params[4] = "";
 					wsCat.getInfoRegistro.send(3, params);
 				}	
@@ -101,21 +101,21 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlGrupos = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlGrupos.elements().length() > 0){
 							dgGrupos.dataProvider = _xmlGrupos.Table;
 						}
 						seleccionaGrupo();
 					});
-					params[0] = Application.application.U_ID;
+					params[0] = global.obtenerUsuario();
 					params[1] = txtCodGrupo.text;
 					params[2] = txtGrupo.text;
 					params[3] = dtfFecha.text;
@@ -138,7 +138,7 @@
 							
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					formateaListaAcred(resp);
 					dgAcred.dataProvider = acredObj;
@@ -153,7 +153,7 @@
 					var grupo:String = dgGrupos.selectedItem.CDGNS;
 					var ciclo:String = dgGrupos.selectedItem.CICLO;
 					var cuenta:String = txtCodCuenta.text;
-					var fecha:String = global.formatoFecha(Application.application._Current_Fecha);
+					var fecha:String = global.formatoFecha(global.obtenerFechaSistema());
 					formateaRegAcred();
 					
 					initConexion();
@@ -180,7 +180,7 @@
 						else
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 					});
-					wsMS.setAccionOrdenPago.send(grupo, ciclo, acred, chqAcred, fecha, Application.application.U_ID,  cuenta);	
+					wsMS.setAccionOrdenPago.send(grupo, ciclo, acred, chqAcred, fecha, global.obtenerUsuario(),  cuenta);	
 				}
 			}
 			
@@ -213,7 +213,7 @@
 				rep = "18";
 				titulo = "Ordenes de Pago en Ventanilla";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}
 			

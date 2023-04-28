@@ -284,7 +284,7 @@
 			public function guardaPrn():void{
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
-					Application.application.bloquear();
+					global.bloquear();
 					du.sCursor();
 					//Servicio invocado en la etapa de registro del prestamo
 					if(info.situacion == 'T')
@@ -294,7 +294,7 @@
 					else if(info.situacion == 'D')
 						tipoAccion = 3
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
-					wsMS.setAccionPrn.send(tipoAccion, Application.application.U_ID, grupo, txtCiclo.text, "G", info.entregado, 
+					wsMS.setAccionPrn.send(tipoAccion, global.obtenerUsuario(), grupo, txtCiclo.text, "G", info.entregado, 
 											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred);
 				}
 			}
@@ -453,7 +453,7 @@
 			private function setAccionPrn(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionPrn);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

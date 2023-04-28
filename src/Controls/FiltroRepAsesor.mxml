@@ -81,12 +81,12 @@
 					var periodo:Number;
 					var fecha:String
 					var id:String = "&id=" + rep;
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 					var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
 					var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();
-					var fec:Date = Application.application._Current_Fecha;
+					var fec:Date = global.obtenerFechaSistema();
 					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
 					
 					if(currentState == null)
@@ -135,7 +135,7 @@
 				ctrlFiltro.limpiar();
 				dispatchEvent(new Event("limpiar"));	
 				if(currentState == "fecha"){
-					fec = Application.application._Current_Fecha;
+					fec = global.obtenerFechaSistema();
 					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				}
 			}

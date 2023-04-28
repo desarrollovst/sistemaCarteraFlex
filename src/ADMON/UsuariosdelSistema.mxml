@@ -95,13 +95,13 @@
 				//du.rCursor();
 				//ws = du.closeWs(ws);
 					ws = du.initWs(ws);
-					Application.application.bloquear();
+					global.bloquear();
 					//initConexion();
 					du.sCursor();
 					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
 						dpUsuarios = new XML(evt.result.toString());	
 						buscaUsuario();
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(ws);	
 					});

@@ -121,7 +121,7 @@
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
 			
-			Application.application.bloquear();
+			global.bloquear();
 			du.initWsCat(wsCat);
 			du.sCursor();
 			
@@ -136,7 +136,7 @@
 					
 				du.closeWs(wsCat);
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				
 			});
 			params[0] = "3";
@@ -172,7 +172,7 @@
 				}
 				
 				if(aCdgTPC.length > 0){
-					Application.application.bloquear();				
+					global.bloquear();				
 					initConexion();
 					du.sCursor();
 											
@@ -181,7 +181,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(res.substr(0,1) == "1")
 							cerrar();
@@ -229,7 +229,7 @@
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
 			
-			Application.application.bloquear();
+			global.bloquear();
 			du.initWsCat(wsCat);
 			du.sCursor();
 			
@@ -264,7 +264,7 @@
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 				});
 				params[0] = "2";

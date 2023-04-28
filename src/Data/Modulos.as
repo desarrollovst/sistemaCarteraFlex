@@ -49,7 +49,6 @@ package Data
 		public var frm_25:ControldeAhorros;
 		public var frm_26:ControldeAsistencia;
 		public var frm_27:SolicituddeCredito;
-		public var frm_31:SolicituddeCreditoComunitario;
 		public var frm_36:ControlSemanalImpreso;
 		public var frm_38:CierredeDia;
 		public var frm_40:SeguimientoMensual;

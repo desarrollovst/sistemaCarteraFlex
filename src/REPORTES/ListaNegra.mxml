@@ -120,14 +120,14 @@
 						filtros += ", ASESOR: TODOS";
 					}
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 								
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());									
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.closeWs(wsMS);
 							
 						dgInfo.dataProvider = null;

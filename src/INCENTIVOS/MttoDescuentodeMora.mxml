@@ -107,11 +107,11 @@
 				var mMonto:Number = Number(montoStr);
 				var mEstatus:String = rdgEstatus.selectedValue.toString();
 				var mObservacion:String = txtObservaciones.text;
-				var mUsuario:String = Application.application.U_ID;
+				var mUsuario:String = global.obtenerUsuario();
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionDescuentoMora);
 				
 				wsMS.setAccionDescuentoMora.send(mGrupo, mCiclo, mMes, mAnio, mMonto, mEstatus, mObservacion, mUsuario, tipoAccion);
@@ -153,7 +153,7 @@
 		private function setAccionDescuentoMora(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDescuentoMora);
 			wsMS = null;

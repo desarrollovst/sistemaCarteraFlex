@@ -45,7 +45,7 @@
 					var tipoFecha:int;
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					tipo = int(tipoPago.selectedValue);
 					tipoFecha = int(cboFecha.selectedItem.value);
@@ -55,7 +55,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -104,7 +104,7 @@
 			public function initApp():void{
 				global = new Globales();
 				du = new Utils();
-				var f:Date = Application.application._Current_Fecha;
+				var f:Date = global.obtenerFechaSistema();
 				var fecMin:Date = new Date(f.getFullYear(),f.getMonth()-1,1);
 				var fecMax:Date = new Date(f.getFullYear(),f.getMonth(),f.getDate());
 				titulo = "Reporte de Pagos Identificados"
@@ -123,7 +123,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				cboFecha.selectedIndex = 0;

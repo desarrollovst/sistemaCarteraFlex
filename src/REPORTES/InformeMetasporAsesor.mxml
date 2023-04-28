@@ -117,20 +117,20 @@
     	}
     	
     	private function limpiarG():void{
-    		var fec:Date = Application.application._Current_Fecha;
+    		var fec:Date = global.obtenerFechaSistema();
     		dtInicioG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			dtFinG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
     	}
     	
     	private function limpiarS():void{
     		ctrlFiltro.init(true);
-    		var fec:Date = Application.application._Current_Fecha;
+    		var fec:Date = global.obtenerFechaSistema();
     		dtInicioS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			dtFinS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
     	}
     	
     	private function modificarEstado():void{
-    		var fec:Date = Application.application._Current_Fecha;
+    		var fec:Date = global.obtenerFechaSistema();
     		
 			if (gnSeleccionar.selectedValue == "G"){
 				currentState = "General";

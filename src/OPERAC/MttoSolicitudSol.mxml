@@ -73,6 +73,7 @@
 	</mx:states>
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.EventSolic;
 			import Data.DatosSolic;
 			import Data.Globales;
@@ -137,6 +138,7 @@
 			
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var tipoProd:String;
 			private var wsMS:WebService;
 			private var wsReg:WebService;
@@ -277,7 +279,7 @@
 					dgAcredEv.rowColorFunction = seleccionaColor;
  					validaReporteCred();
 				});
-				wsMS.setAccionAnalizaReporte.send(codAcreds,Application.application.U_ID);
+				wsMS.setAccionAnalizaReporte.send(codAcreds,global.obtenerUsuario());
 			}
 			
 			
@@ -760,7 +762,7 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
@@ -770,7 +772,7 @@
 																 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 																 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 																 info.cdgProdCred, info.moneda, info.presidente, info.presidente, info.secretario, 
-																 Application.application.U_ID, info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
+																 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
 																 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
 																 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 																 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
@@ -785,7 +787,7 @@
 													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													   		info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													   		info.cdgProdCred, info.moneda, info.presidente, info.presidente, info.secretario, 
-													   		Application.application.U_ID, info.formaEntre, info.nombreCheq, info.multPerio, suc, promotor, info.tasaFija,
+													   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, suc, promotor, info.tasaFija,
 													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
 													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
 													  	 	info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
@@ -794,7 +796,7 @@
 						else{
 							wsMS.disconnect();
 							du.rCursor();
-							Application.application.desbloquear();
+							global.desbloquear();
 						}
 					}
 				}
@@ -809,6 +811,7 @@
 				openEffect.play([this]);
 				du = new Utils();
 				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Solicitud";
 				tipoProd = "SO";
 				formateaSituacion();
@@ -952,7 +955,7 @@
 			//Oculta los botones de Guardado y Envio de acuerdo a los permisos asignados al perfil AAMC
 			private function ocultarBotones():void{
 				if(currentState == 'evaluacion'){
-					if(global.permisosEvSolic(Application.application.PERFIL_ID) == false){
+					if(permiso.permisosEvSolic(Application.application.PERFIL_ID) == false){
 						btnAceptar.visible = false;
 						btnGuardar.visible = false;
 					}
@@ -979,7 +982,7 @@
 				init();
 				if(currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
 				this.suc = suc;
 				//ASIGNACION DE CODIGO DE GRUPO
 				this.grupo = cdgGrupo;
@@ -1122,13 +1125,13 @@
 				var params:Array = new Array;
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolic);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						var _xmlEv:XML = new XML(evt.result);
@@ -1207,7 +1210,7 @@
 											du.rCursor();
 											du.closeWs(wsReg);
 											
-											Application.application.desbloquear();
+											global.desbloquear();
 											cerrar();
 											
 											initConexion();
@@ -1253,7 +1256,7 @@
 																	du.rCursor();
 																	du.closeWs(wsReg);
 																
-																	Application.application.desbloquear();
+																	global.desbloquear();
 																	cerrar();
 																});
 																//Servicio de envio de Correo Electronico
@@ -1264,7 +1267,7 @@
 															wsCat.getCatalogoGral.send(41);
 														}	
 														else{
-															Application.application.desbloquear();
+															global.desbloquear();
 															cerrar();
 														}				
 													});
@@ -1279,7 +1282,7 @@
 												}
 											});
 											//Se ejecuta el procedimiento de Calculo de la Matriz de Riesgo
-											wsMS.setCalcNivelRiesgo.send(grupo, ciclo, clns, Application.application.U_ID);
+											wsMS.setCalcNivelRiesgo.send(grupo, ciclo, clns, global.obtenerUsuario());
 										});
 										//Envio de correo electronico correspondiente al resultado de la evaluacion de credito
 										wsReg.setEnviaEmail.send(emailOri,destino,asunto,resultado);
@@ -1293,7 +1296,7 @@
 								params[0] = grupo;
 								params[1] = ciclo;
 								params[2] = clns;
-								params[3] = Application.application.U_ID;
+								params[3] = global.obtenerUsuario();
 								wsCat.getInfoGeneral.send(10, params);
 							});
 							//Metodo que obtiene el resultado por acreditado de la evaluacion de credito
@@ -1304,7 +1307,7 @@
 							wsCat.getInfoGeneral.send(9, params);
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							Alert.show("No se ha encontrado la Evaluación del Área de Crédito",titulo,4,null,null,global.iAlert);
 						}
 					});
@@ -1335,14 +1338,14 @@
 						
 						du.rCursor();
 						du.closeWs(wsPayCash);
-						Application.application.desbloquear();
+						global.desbloquear();
 						cerrar();
 					});
-					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, Application.application.U_ID);
+					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, global.obtenerUsuario());
 				}	
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
-					Application.application.desbloquear();
+					global.desbloquear();
 				}		
 			}
 

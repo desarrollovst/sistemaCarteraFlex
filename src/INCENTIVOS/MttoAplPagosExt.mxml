@@ -62,7 +62,7 @@
 			if(validaBuscar()){
 				initConexionRep();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				_xmlBusqueda = null
 				acBusqueda = null;
@@ -80,7 +80,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(_xmlBusqueda.elements().length() > 0){
 						formateaListaBusqueda();
@@ -136,7 +136,7 @@
 			
 			initConexionRep();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			
 			acBusqueda = null;
 			acPagos = null;
@@ -154,7 +154,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);	
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(_xmlBusqueda.elements().length() > 0){
 							formateaListaBusqueda();
@@ -193,7 +193,7 @@
 				var mMes:String = cbxMes.selectedItem.id;
 				var mAnio:String = cbxAnio.selectedItem.id;
 				var mObservacion:String = txtObservaciones.text;
-				var mUsuario:String = Application.application.U_ID;
+				var mUsuario:String = global.obtenerUsuario();
 				var n:int = 0;
 				
 				aPeriodo = new Array;
@@ -215,7 +215,7 @@
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
 				
 				wsMS.setAccionAplPagosExtras.send(mGrupo, mCiclo, mClns, aPeriodo, aSecuencia, aCantidad, aFecha, aInteres, mMes, mAnio, mObservacion, mUsuario, tipoAccion);
@@ -315,7 +315,7 @@
 		private function setAccionAplPagosExtras(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
 			wsMS = null;

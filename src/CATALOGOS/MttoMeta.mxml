@@ -95,7 +95,7 @@
 		private function guardaMeta():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionMeta);
 			wsMS.setAccionMeta.send(tipoAccion, info.cdgAse, info.mes, info.anio, info.meta,
 									info.pondCol, info.pondCtes, info.pondDes, info.pondMora);	
@@ -147,7 +147,7 @@
 		private function setAccionMeta(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionMeta);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

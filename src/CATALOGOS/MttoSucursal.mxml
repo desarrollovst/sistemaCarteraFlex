@@ -104,7 +104,7 @@
 		public function guardaCoord():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear()
+			global.bloquear()
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCoord);
 			wsMS.setAccionCoord.send(tipoAccion, txtCodReg.text, txtCodigo.text, txtNombre.text, 
 									cboGerente.selectedItem.CODIGO, info.calle, info.cdgEntFed, info.cdgMun, 
@@ -200,7 +200,7 @@
 		private function setAccionCoord(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCoord);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1")

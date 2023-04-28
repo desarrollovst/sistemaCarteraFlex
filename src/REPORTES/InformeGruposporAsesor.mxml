@@ -200,7 +200,7 @@
 				cargaRegion();
 				
 				var fec:Date;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			

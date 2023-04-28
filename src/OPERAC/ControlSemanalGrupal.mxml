@@ -241,12 +241,12 @@
 								else
 									Alert.show("No se encontraron registros de acreditados que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							});
-							wsMS.getInfoControlAcred.send(tipoAccion, grupo, ciclo, semana, Application.application.U_ID);	
+							wsMS.getInfoControlAcred.send(tipoAccion, grupo, ciclo, semana, global.obtenerUsuario());	
 						}
 						else 
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getInfoControlSemanal.send(grupo, ciclo, semana, Application.application.U_ID);
+					wsMS.getInfoControlSemanal.send(grupo, ciclo, semana, global.obtenerUsuario());
 				}
 			}
 			
@@ -464,12 +464,12 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes cuenten con su asistencia registrada
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro del control semanal
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionControlSemanal);
 					wsMS.setAccionControlSemanal.send(tipoAccion, txtCodGrupo.text, txtCiclo.text, semana, Number(txtPagoTeo.text), Number(txtPagoReal.text),
 													  Number(txtAport.text), Number(txtDev.text), Number(txtAhorro.text), Number(txtMora.text), 
-													  txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, asist, Application.application.U_ID);
+													  txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, asist, global.obtenerUsuario());
 				}
 			}
 			
@@ -545,7 +545,7 @@
 			private function setAccionControlSemanal(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionControlSemanal);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

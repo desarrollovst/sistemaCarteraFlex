@@ -97,7 +97,7 @@
 				
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncAsesor);
 				wsIncR.setAccionParametrosIncAsesor.send(mCodigo, mPorcIncMora, mPorcIncPagos, mDiasMoraMax, mDiasMoraDesc
@@ -129,7 +129,7 @@
 		private function setAccionParametrosIncAsesor(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncAsesor);
 			wsIncR = null;

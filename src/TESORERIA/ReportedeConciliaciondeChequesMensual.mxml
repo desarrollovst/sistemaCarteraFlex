@@ -39,18 +39,18 @@
 			public function generar():void{
 				fechaInicio = dtFechaInicial.text;
 				fechaFinal = dtFechaFinal.text;
-				var usuario:String = Application.application.U_ID;
+				var usuario:String = global.obtenerUsuario();
 				
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 						
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 					_xmlRep = new XML(evt.result.toString());
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgReporte.dataProvider = null;
 					btnExportar.enabled = false;
@@ -85,7 +85,7 @@
 			
 			public function limpiar():void{
 				var fec:Date;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtFechaInicial.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dgReporte.dataProvider = null;

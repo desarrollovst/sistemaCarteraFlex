@@ -106,9 +106,9 @@
 		public function guardaListaNegra():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionListaNegra);
-			wsMS.setAccionListaNegra.send(tipoAccion, txtCURP.text, cboCausa.selectedItem.id, Application.application.U_ID);	
+			wsMS.setAccionListaNegra.send(tipoAccion, txtCURP.text, cboCausa.selectedItem.id, global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, curp:String = "", causa:String = ""):void{
@@ -174,7 +174,7 @@
 		private function setAccionListaNegra(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionListaNegra);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

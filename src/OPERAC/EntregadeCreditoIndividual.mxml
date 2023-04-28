@@ -12,6 +12,7 @@
 	<!--Componente de mantenimiento de entrega de prestamos Individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.controls.DataGrid;
 			import Data.Globales;
@@ -46,6 +47,7 @@
 			public var wsMS:WebService;	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -91,21 +93,21 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 						_xmlAcred = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 					
 						if (_xmlAcred.elements().length() > 0){
 							dgAcred.dataProvider = _xmlAcred.Table;
 						}
 						seleccionaAcred();
 					});
-					params[0] = Application.application.U_ID;
+					params[0] = global.obtenerUsuario();
 					params[1] = txtCodAcred.text;
 					params[2] = txtPaterno.text;
 					params[3] = txtMaterno.text;
@@ -121,14 +123,14 @@
 				du.initWsCat(wsCat);
 			 	du.sCursor();
 			 	if(tipo == 1)
-			 		Application.application.bloquear();
+			 		global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 					_xmlSolic = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					dgSolic.dataProvider = null;
 					if (_xmlSolic.elements().length() > 0){
@@ -152,8 +154,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -226,7 +229,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

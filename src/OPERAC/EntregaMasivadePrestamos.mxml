@@ -64,7 +64,7 @@
 						du.rCursor();
 						du.closeWs(wsCat);
 					
-						Application.application.desbloquear();
+						global.desbloquear();
 					
 						if(_xmlGrupo.elements().length() > 0){
 							formateaListaGrupos();
@@ -114,7 +114,7 @@
 						}
 					}
 					
-					Application.application.bloquear();
+					global.bloquear();
 					
 					initConexion();
 					du.sCursor();
@@ -126,7 +126,7 @@
 						du.closeWs(wsMS);
 						wsMS = null;	
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(res.substr(0,1) == "1"){
 							var infoEst:String;
@@ -152,7 +152,7 @@
 						else	
 							Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.setAccionEntPrnMas.send(grupo, ciclo, Application.application.U_ID);
+					wsMS.setAccionEntPrnMas.send(grupo, ciclo, global.obtenerUsuario());
 				}
 			}
 			
@@ -194,7 +194,7 @@
 			
 			public function limpiar():void{
 				band = false;
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				grupoObj.removeAll();
 				grupoObj.refresh();

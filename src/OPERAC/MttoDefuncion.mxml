@@ -138,7 +138,7 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
 					_xmlAcred = new XML(event.result);
@@ -163,7 +163,7 @@
 							
 							du.closeWs(wsCat);
 							du.rCursor();
-							Application.application.desbloquear();						
+							global.desbloquear();						
 							
 							txtCdgcl.text = _xmlMicro.CDGCL;
 							txtNombreAcre.text = _xmlAcred.Table[0].NOMBRE1 + " " + _xmlAcred.Table[0].NOMBRE2 + " " + 
@@ -330,22 +330,22 @@
 				info.ciclo = _xmlMicro.CICLO;
 				info.clns = _xmlMicro.CLNS;
 				info.fregistro = "";
-				info.cdgpe = Application.application.U_ID;
+				info.cdgpe = global.obtenerUsuario();
 				info.factualiza = "";
-				info.actualizape = Application.application.U_ID;
+				info.actualizape = global.obtenerUsuario();
 				if(chbAcreditado.selected) info.misdatcl = "S"; else info.misdatcl = "N"; 
 				if(cbCdgParen.selectedIndex != 0) info.cdgparen = cbCdgParen.selectedItem.id; else info.cdgparen = "";
 				
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 										
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
 					var res:String = evt.result.toString();
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1")
 						cerrar();
@@ -486,7 +486,7 @@
 			
 			du.initWsCat(wsCat);
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 				
 			du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
 				_xmlAcred = new XML(event.result);
@@ -505,7 +505,7 @@
 								
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlParentesco.elements().length() > 0){
 							formateaParentesco();

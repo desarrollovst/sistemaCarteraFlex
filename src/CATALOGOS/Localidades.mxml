@@ -6,6 +6,7 @@
 	<!--Componente de mantenimiento de Localidades-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -45,6 +46,7 @@
 			public var ws:WebService = new WebService();
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -122,7 +124,7 @@
 				du.sCursor();
 				
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlColonia = new XML(evt.result.toString());
 					
@@ -139,7 +141,7 @@
 					seleccionaCol();
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = entFed;
 				params[1] = munic;
@@ -159,7 +161,7 @@
 				du.sCursor();
 			 	
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 					
@@ -175,7 +177,7 @@
 					}
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = entFed;
 				params[1] = munic;
@@ -193,7 +195,7 @@
 				du.sCursor();
 				
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMunic = new XML(evt.result.toString());
@@ -205,7 +207,7 @@
 					}
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = entFed;
 				params[1] = "";
@@ -322,8 +324,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du =  new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				cargaEntFed();
 				alta = false;
 				borrado = false;
@@ -351,7 +354,7 @@
 					
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (res.substr(0,1) == "1")
 							buscarListaCol(1);
@@ -464,7 +467,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosLocalidades(Application.application.PERFIL_ID)){
+								if (permiso.permisosLocalidades(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

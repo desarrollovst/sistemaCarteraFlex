@@ -151,7 +151,7 @@
 							lblTotalD.text = "";
 						}
 					});
-					wsMS.getRepComisionesDistribuidasMensual.send(anio, mes, Application.application.U_ID);
+					wsMS.getRepComisionesDistribuidasMensual.send(anio, mes, global.obtenerUsuario());
 				}
 				else if(tipoReporte == "caratula"){
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -174,7 +174,7 @@
 							lblTotalC.text = "";
 						}
 					});
-					wsMS.getRepComisionesDistribuidasMensualDesglose.send(anio, mes, Application.application.U_ID);
+					wsMS.getRepComisionesDistribuidasMensualDesglose.send(anio, mes, global.obtenerUsuario());
 				}
 			}			
 			

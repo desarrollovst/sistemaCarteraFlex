@@ -76,14 +76,14 @@
 			var vFin:String = dtFin.text;
 			
 			if (tipo == 1)
-				Application.application.bloquear();		
+				global.bloquear();		
 				
 			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 				_xmlInfo = new XML(evt.result.toString());
 				
 				du.rCursor();
 				du.closeWs(wsMS);	
-				Application.application.desbloquear();
+				global.desbloquear();
 					
 				var cont:int = _xmlInfo.elements().length();
 				
@@ -146,7 +146,7 @@
 		}
 		
 		private function limpiar():void{
-			var fec:Date = Application.application._Current_Fecha;
+			var fec:Date = global.obtenerFechaSistema();
     		dtInicio.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			dtFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			
@@ -169,7 +169,7 @@
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionConvenios);
 				
 				wsMS.setAccionConvenios.send(mNomina, mInicio, mFin, mMonto, mTipo, mUsuario, mEstatus, mObservacion, 3);
@@ -226,7 +226,7 @@
 		private function setAccionConvenios(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionConvenios);
 			var res:String = new String(event.result.toString());

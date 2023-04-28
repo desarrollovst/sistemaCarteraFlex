@@ -362,12 +362,12 @@
 		public function guardaDisposicion():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
 			wsMS.setAccionDisposicion.send(tipoAccion, info.cdgOF, info.cdgLC, info.cdgDisp, info.contrato, 
 									       info.descripcion, info.fecDisp, info.cantidad, info.plazo, 
 									       info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
-									       arrEnt, arrMun, Application.application.U_ID, info.aforo, info.faforo, info.pagare, 
+									       arrEnt, arrMun, global.obtenerUsuario(), info.aforo, info.faforo, info.pagare, 
 									       info.fecTermino);	
 		}
 	
@@ -380,8 +380,8 @@
 			txtOF.text = orgFond;
 			txtCodLC.text = codLC;
 			txtLC.text = lineaCred;
-			txtDisp.selectedDate = Application.application._Current_Fecha;
-			dtFin.selectedDate = Application.application._Current_Fecha;
+			txtDisp.selectedDate = global.obtenerFechaSistema();
+			dtFin.selectedDate = global.obtenerFechaSistema();
 			//Codigo que permite ejecutar el efecto de apertura
 			openEffect.duration = 1000;
 			openEffect.play([this]);
@@ -520,7 +520,7 @@
 		private function setAccionDisposicion(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

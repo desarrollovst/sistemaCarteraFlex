@@ -289,7 +289,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgAsesor.dataProvider = null;
 				dgCA.dataProvider = null;
@@ -308,7 +308,7 @@
 					
 						du.rCursor();
 						du.closeWs(wsIncC);	
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if (_xmlDatos.elements().length() > 0)
 							dgAsesor.dataProvider = _xmlDatos.Table;
@@ -328,7 +328,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgCoordinador.dataProvider = null;
 				
@@ -341,7 +341,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlDatos.elements().length() > 0)
 						dgCoordinador.dataProvider = _xmlDatos.Table;					
@@ -354,7 +354,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgSucursal.dataProvider = null;
 				
@@ -367,7 +367,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlDatos.elements().length() > 0)
 						dgSucursal.dataProvider = _xmlDatos.Table;
@@ -380,7 +380,7 @@
 				
 				initConexionIncC();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgRegion.dataProvider = null;
 				
@@ -393,7 +393,7 @@
 				
 					du.rCursor();
 					du.closeWs(wsIncC);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if (_xmlDatos.elements().length() > 0)
 						dgRegion.dataProvider = _xmlDatos.Table;
@@ -474,7 +474,7 @@
 					
 			    	initConexionIncR();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 					wsIncR.setAccionParametrosIncAsesor.send(mCodigo, mPorcIncMora, mPorcIncPagos, mDiasMoraMax, mDiasMoraDesc, mPorcDescGpo
 						, mPagoClNvo, mMontoEvaClNvo, 3);
@@ -486,7 +486,7 @@
 					
 			    	initConexionIncR();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 					wsIncR.setAccionParametrosIncCoord.send(mCodigo, mPorcInc, mPorcClNvo, 3);
 				}
@@ -504,7 +504,7 @@
 					
 			    	initConexionIncR();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 					wsIncR.setAccionParametrosIncSucursal.send(mCodigo, mPar30Ini, mPar30Fin, mPorcPar30, mDiasMoraMax
 						, mPorcInc, mPorcIncMora, mPorcIncPagos, mPorcIncCart, mPorcClNvo, 3);
@@ -522,7 +522,7 @@
 					
 			    	initConexionIncR();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 					wsIncR.setAccionParametrosIncRegion.send(mCodigo, mPorcInc, mPorcIncMora, mPorcIncPagos, mPorcIncCart
 						, mDiasMoraMax, mPar30Ini, mPar30Fin, mPorcPar30, 3);
@@ -533,7 +533,7 @@
 		private function setAccionElimina(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionElimina);
 			var res:String = new String(event.result.toString());
 			
@@ -562,7 +562,7 @@
 			
 	    	initConexionIncR();
 	    	du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsIncR.addEventListener(ResultEvent.RESULT, setAccionElimina);
 			wsIncR.setAccionParametrosIncAsesorCla.send(mCodigo, mClasificacion, mCartPromIni, mCartPromFin, mPorcIncMax, 3);
 			}

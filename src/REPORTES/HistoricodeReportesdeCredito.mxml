@@ -68,7 +68,7 @@
 				if(dgAcred.selectedIndex >= 0){
 					var id:String = "&id=" + rep;
 					var acred:String = "&acred=" + dgAcred.selectedItem.CDGCL;
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var fecha:String = "&fecha=" + global.formatoFechaSep(global.convCadenaFecha(dgAcred.selectedItem.FECHACONS),"-");
 					var tipo:String = "&tipo=" + tipoRep;
@@ -122,7 +122,7 @@
 						else
 							Alert.show("No es posible consultar la información del acreditado.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 					});
-					params[0] = Application.application.U_ID;
+					params[0] = global.obtenerUsuario();
 					params[1] = acred;
 					params[2] = "G";
  					wsCat.getListado.send(52, params);

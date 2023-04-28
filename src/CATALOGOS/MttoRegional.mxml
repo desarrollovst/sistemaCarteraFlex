@@ -104,7 +104,7 @@
 		public function guardaReg():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
 			wsMS.setAccionReg.send(tipoAccion, txtCodigo.text, txtNombre.text, cboGerente.selectedItem.codigo,
 								   info.calle, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
@@ -188,7 +188,7 @@
 		private function setAccionReg(event:ResultEvent):void{
 			wsMS.disconnect();			
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

@@ -77,14 +77,14 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
 					_xmlDir = new XML(evt.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlDir.elements().length() > 0)
 						llenaDireccion();

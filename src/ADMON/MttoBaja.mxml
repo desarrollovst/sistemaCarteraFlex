@@ -27,12 +27,12 @@
 			if(dtFecha.text != ""){
 				du.initWs(wsMS);
 			    du.sCursor();
-			    Application.application.bloquear();
+			    global.bloquear();
 			    
 			    du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					cerrar();
 				});
 				Params[0] = codigo;

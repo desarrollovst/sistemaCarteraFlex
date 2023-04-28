@@ -44,14 +44,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlInc = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 				
 						if (_xmlInc.elements().length() > 0){
 							txtColMod.text = _xmlInc.Table[0].COLOCACION;
@@ -107,7 +107,7 @@
 						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
 				}); 
 				wsMS.setRegistroAclaraInc.send(mes, anio, asesor, colocacion, clientes, desercion, mora, grupos, 
-											   observaciones, Application.application.U_ID);
+											   observaciones, global.obtenerUsuario());
 			}
 			
 			private function formateaAsesor():void{

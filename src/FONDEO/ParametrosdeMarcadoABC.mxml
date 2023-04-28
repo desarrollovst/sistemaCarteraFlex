@@ -45,6 +45,7 @@
 			private var wsMS:WebService;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			private var objMtto:Sprite = new Sprite();
 			
@@ -64,6 +65,7 @@
 	<!-- FUNCIONES GENERALES -->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			private function activarContMod(band:Boolean):void{
 				btnEliminar.enabled = band;
 				btnEditar.enabled = band;
@@ -82,8 +84,9 @@
 				wsMS.loadWSDL();
 			}
 			private function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Parámetros de Marcado ABC";
 				lblTitulo.text = titulo.toUpperCase();
 				permisos();
@@ -107,7 +110,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+								if (permiso.permisosRegionales(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -150,7 +153,7 @@
 				dgProducto.dataProvider = null;
 				activarContMod(false);
 												
-				Application.application.bloquear();
+				global.bloquear();
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
@@ -171,7 +174,7 @@
 						
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 				});
 				params[0] = "";
@@ -184,7 +187,7 @@
 				if (dgDatos.selectedIndex >= 0){
 					dgProducto.dataProvider = null;
 													
-					Application.application.bloquear();
+					global.bloquear();
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
@@ -199,7 +202,7 @@
 							
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 					});
 					params[0] = dgDatos.selectedItem.CODIGO;
@@ -277,7 +280,7 @@
 										
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					wsMS.addEventListener(ResultEvent.RESULT, setAccion);
 					wsMS.setAccionParametrosABC.send(info.codigo, info.moramin, info.moramax, info.montomin, info.montomax
@@ -288,7 +291,7 @@
 			private function setAccion(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccion);
 				var res:String = new String(event.result.toString());
 				

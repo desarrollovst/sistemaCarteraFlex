@@ -87,7 +87,7 @@
 				
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncMora);
 				wsIncR.setAccionParametrosIncMora.send(mCodigo, mTipo, mMoraIni, mMoraFin, mPorcInc, tipoAccion);
@@ -132,7 +132,7 @@
 		private function setAccionParametrosIncMora(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncMora);
 			wsIncR = null;

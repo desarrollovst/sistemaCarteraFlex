@@ -94,13 +94,13 @@
 						var id:String = "&id=" + rep;
 						var anioI:String = "&anioI=" + cboDesde.selectedItem.id.toString();
 						var anioF:String = "&anioF=" + cboHasta.selectedItem.id.toString();
-						var mes:String = "&mes=" + formato.format(Application.application._Current_Fecha).substr(3,2);
+						var mes:String = "&mes=" + formato.format(global.obtenerFechaSistema()).substr(3,2);
 						var region:String = "&re=" + ctrlFiltro.obtieneRegion();
 						var sucursal:String = "&su=" + ctrlFiltro.obtieneSucursal();
 						var coord:String = "&co=" + ctrlFiltro.obtieneCoord();
 						var asesor:String = "&as=" + ctrlFiltro.obtieneAsesor();
 						var puesto:String = "&pu=" + Application.application.PUESTO;
-						var fecha:String = "&fe=" + formato.format(Application.application._Current_Fecha);
+						var fecha:String = "&fe=" + formato.format(global.obtenerFechaSistema());
 						consulta = consulta + id + anioI + anioF + mes + region + sucursal + coord + asesor + puesto + fecha;
 						
 						var request:URLRequest = new URLRequest(consulta); 

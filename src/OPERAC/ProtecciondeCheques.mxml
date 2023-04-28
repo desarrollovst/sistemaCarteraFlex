@@ -90,7 +90,7 @@
 						else
 							Alert.show("No es posible generar el documento de Protección de Cheques.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.setProtegeCheque.send(cboBanco.selectedItem.CODIGO, dtfFecha.text, Application.application.U_ID);
+					wsMS.setProtegeCheque.send(cboBanco.selectedItem.CODIGO, dtfFecha.text, global.obtenerUsuario());
 				}
 			}			
 						
@@ -112,7 +112,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				cboBanco.selectedIndex = 0;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 			}
 				

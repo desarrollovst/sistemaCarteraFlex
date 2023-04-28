@@ -72,7 +72,7 @@
 		public function guardaCol():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCol);
 			wsMS.setAccionCol.send(tipoAccion, txtCdgEntFed.text, txtCdgMunic.text, txtCdgLoc.text, 
 								   info.codigo, info.colonia, info.codPostal, info.pobreza); 			
@@ -136,7 +136,7 @@
 		private function setAccionCol(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCol);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

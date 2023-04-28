@@ -640,7 +640,7 @@
 								break;
 						}
 					});
-					wsMS.getRepMarcadoFN.send(fecha, fechaInicio, fechaFin, organizacion, linea, disposicion, opcion, Application.application.U_ID);
+					wsMS.getRepMarcadoFN.send(fecha, fechaInicio, fechaFin, organizacion, linea, disposicion, opcion, global.obtenerUsuario());
 				}
 			}
 			

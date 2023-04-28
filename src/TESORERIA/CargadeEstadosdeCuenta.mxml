@@ -194,7 +194,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					//Servicio que busca la existencia de los estados de cuenta
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
@@ -205,7 +205,7 @@
 						if(_xmlDatos.elements().length() >0){
 							Alert.show("Ya existen registros para el Estado de Cuenta.",titulo,4,null,null,global.iAlert);
 							du.rCursor();
-							Application.application.desbloquear();
+							global.desbloquear();
 						}
 						else{
 							initConexion();
@@ -251,7 +251,7 @@
 						
 										du.closeWs(wsRep);
 										du.rCursor();
-										Application.application.desbloquear();
+										global.desbloquear();
 						
 										if(_xmlInfo.elements().length() > 0){
 											dgInfo.dataProvider = null;
@@ -261,16 +261,16 @@
 											Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);	
 										}
 									});
-									wsRep.getRepCargaEdoCuenta.send(banco, cuenta, fecEdo, Application.application.U_ID);
+									wsRep.getRepCargaEdoCuenta.send(banco, cuenta, fecEdo, global.obtenerUsuario());
 								}
 								else{
 									Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
-									Application.application.desbloquear();
+									global.desbloquear();
 								}				
 							});
 							wsMS.setCargaEdoCuenta.send(banco, cuenta, fecEdo, fecOpe, fecha, referencia, desc, codTrans, sucursal, 
 														depositos, retiros, saldo, movto, descDet, ref2, importe, tipo,
-														Application.application.U_ID);	
+														global.obtenerUsuario());	
 						}
 					});
 					params[0] = fecEdo; 

@@ -75,11 +75,11 @@
 				oItem.descripcion = "--Seleccionar--";
 				item.push(oItem);
 				
-				oItem = new Object();
+				/*oItem = new Object();
 				oItem.codigo = "2";	
 				oItem.descripcion = "No Identificados";
 				oItem.descTitulo = "PagosNoIdentificados";
-				item.push(oItem);
+				item.push(oItem);*/
 				
 				oItem = new Object();
 				oItem.codigo = "3";	
@@ -87,11 +87,11 @@
 				oItem.descTitulo = "Pagos";
 				item.push(oItem);
 				
-				oItem = new Object();
+				/*oItem = new Object();
 				oItem.codigo = "6";	
 				oItem.descripcion = "Pagos Identificados";
 				oItem.descTitulo = "PagosIdentificados";
-				item.push(oItem);
+				item.push(oItem);*/
 				
 				oItem = new Object();
 				oItem.codigo = "4";	
@@ -99,11 +99,11 @@
 				oItem.descTitulo = "Garantias";
 				item.push(oItem);
 				
-				oItem = new Object();
+				/*oItem = new Object();
 				oItem.codigo = "13";	
 				oItem.descripcion = "Garantías Identificadas";
 				oItem.descTitulo = "GarantiasIdentificadas";
-				item.push(oItem);
+				item.push(oItem);*/
 				
 				oItem = new Object();
 				oItem.codigo = "5";	
@@ -140,14 +140,14 @@
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
 						_xmlRes = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlRes.elements().length() >0){
 							formatearInfo();
@@ -158,7 +158,7 @@
 							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
 						}
 					});
-					wsMS.getPolizaPagosMensual.send(fecha, tipo, Application.application.U_ID); 
+					wsMS.getPolizaPagosMensual.send(fecha, tipo, global.obtenerUsuario()); 
 				}
 			} 
 				

@@ -110,7 +110,7 @@
 		public function guardaEntidad():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionUbicacion);
 			wsMS.setAccionUbicacion.send(tipoAccion, info.codigo, info.nombre, info.cdgCrit);	
 		}
@@ -181,7 +181,7 @@
 		private function setAccionUbicacion(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionUbicacion);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

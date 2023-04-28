@@ -60,7 +60,7 @@
 				params[0] = "0";
 				params[1] = "";
 				params[2] = "";
-				params[3] = Application.application.U_ID;
+				params[3] = global.obtenerUsuario();
 				params[4] = "";
 				wsCat.getInfoRegistro.send(3, params);
 			}
@@ -106,7 +106,7 @@
 						else
 							Alert.show("No es posible generar el documento de Dispersión de Pagos.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getOrdenPago.send(cboBanco.selectedItem.CODIGO, dtfFecha.text, Application.application.U_ID);
+					wsMS.getOrdenPago.send(cboBanco.selectedItem.CODIGO, dtfFecha.text, global.obtenerUsuario());
 				}
 			}			
 						
@@ -128,7 +128,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				cboBanco.selectedIndex = 0;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 			}
 				

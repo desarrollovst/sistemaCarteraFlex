@@ -6,6 +6,7 @@
 	<!--Componente de Devolucion de Excedente-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;	
@@ -47,12 +48,13 @@
 			public var estatus:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var vResult:ValidationResultEvent;
 		
 			public var acredObj:ArrayCollection = new ArrayCollection();
 							
 			public function activarControles():void{
-				if(global.permisosBusqAcred(Application.application.PERFIL_ID) == true){
+				if(permiso.permisosBusqAcred(Application.application.PERFIL_ID) == true){
 					txtCodAcred.editable = true;
 					btnBusqAcred.visible = true;
 				}
@@ -124,14 +126,14 @@
 					txtCuenta.setFocus();
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlCta = new XML(evt.result);
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlCta.elements().length() > 0){
 							banco = _xmlCta.Table[0].CDGIB;
@@ -146,7 +148,7 @@
 					params[0] = "4";
 					params[1] = txtCodCuenta.text;
 					params[2] = "";
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					params[4] = coord;
 					wsCat.getInfoRegistro.send(3, params);
 				}	
@@ -166,14 +168,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlInfo = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlInfo.elements().length() > 0){
 							lblNombre.text = _xmlInfo.Table[0].NOMBRE;
@@ -234,7 +236,7 @@
 					params[0] = cdgclns;
 					params[1] = ciclo;
 					params[2] = tipoCred;
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					//Obtiene informacion de la devolucion de Excedente por imprimir
 					wsCat.getInfoGeneral.send(6, params);
 				}	
@@ -264,7 +266,7 @@
 			}
 			
 			public function enviar():void{
-				if(valida() == true){
+				if(valida()){
 					var cuenta:String = txtCodCuenta.text;
 					var fecha:String = dtfFecha.text;
 					var codAcred:String = txtCodAcred.text;
@@ -305,7 +307,7 @@
 							});
 							//Metodo que actualiza el registro de devolucion de Excedente
 							wsMS.setDevExcedente.send(cdgclns, ciclo, tipoCred, Number(secPago), fecha, monto, cuenta, cheque, 
-													  codAcred, acred, Application.application.U_ID);
+													  codAcred, acred, global.obtenerUsuario());
 						}
 						else{
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
@@ -318,6 +320,7 @@
 			}
 			
 			public function initApp():void{
+				permiso = new Permisos();
 				global = new Globales();
 				du = new Utils();
 				rep = "40";

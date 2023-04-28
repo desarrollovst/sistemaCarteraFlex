@@ -65,7 +65,7 @@
 		        	initConexion();
 					du.sCursor();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCargaArchivoEstimacion);
-				    wsMS.setAccionCargaArchivoEstimacion.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), Application.application.U_ID ,saldinsol, saldcap, rgoatrpnfm, eprcprnfm, nsciclocl, eprcmesant, eprcacum, eprcgenera);
+				    wsMS.setAccionCargaArchivoEstimacion.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), global.obtenerUsuario() ,saldinsol, saldcap, rgoatrpnfm, eprcprnfm, nsciclocl, eprcmesant, eprcacum, eprcgenera);
 				}
 	        }
         	
@@ -184,7 +184,7 @@
 	    
 	    private function setAccionCargaArchivoEstimacion(event:ResultEvent):void{
 			wsMS.disconnect();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCargaArchivoEstimacion);
 			wsMS = null;
 			var res:String = event.result.toString();
@@ -195,7 +195,7 @@
 			  }
 			  else {
 			  	du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				dgInfo.dataProvider = null;	
 				txtArchivo.text = "";				
 				lblResultado.text = totalElms + " Registro(s) han sido cargados";
@@ -211,7 +211,7 @@
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
 				}				
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				dgInfo.dataProvider = null;	
 				txtArchivo.text = "";	
 				compMesAnio.limpiar();

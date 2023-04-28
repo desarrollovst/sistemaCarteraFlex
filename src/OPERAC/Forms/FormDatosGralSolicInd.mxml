@@ -163,7 +163,7 @@
 							}
 						}	
 						else{
-							fec = Application.application._Current_Fecha;
+							fec = global.obtenerFechaSistema();
 							fecEnt = global.seleccionaDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
 									
 							dtfSolicitud.selectedDate = fec;
@@ -190,7 +190,7 @@
 			}	
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
 				var fecEnt:String = global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate);
 				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				

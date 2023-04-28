@@ -62,7 +62,7 @@
 				global = new Globales();
 				du = new Utils();
 				
-				Application.application.bloquear();
+				global.bloquear();
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
@@ -71,7 +71,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(_xmlAcred.elements().length() > 0){
 						formateaAcred();

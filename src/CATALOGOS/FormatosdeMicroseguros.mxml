@@ -7,6 +7,7 @@
 	
 	<mx:Script>
 	<![CDATA[
+		import Data.Permisos;
 		import Data.Globales;
 		import Data.Utils;
 		import Data.DatosFormatosMicroseguro;
@@ -36,6 +37,7 @@
 		private var titulo:String;	
 		private var du:Utils;
 		private var global:Globales;
+		private var permiso:Permisos;
 		
 		private var info:DatosFormatosMicroseguro;
 		
@@ -78,14 +80,14 @@
 		 		du.sCursor();
 		 	
 				if (tipo == 1)
-					Application.application.bloquear();	
+					global.bloquear();	
 					
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 					_xmlInfo = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlInfo.elements().length() > 0){
 						dgInfo.dataProvider = _xmlInfo.Table;
@@ -116,8 +118,9 @@
 		}
 		
 		private function initApp():void{
-			global = new Globales();
 			du = new Utils();
+			global = new Globales();
+			permiso = new Permisos();
 			titulo = "Mantenimiento de Formatos de Microseguros";
 			lblTitulo.text = titulo.toUpperCase();
 			alta = false;
@@ -149,7 +152,7 @@
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionMicroseguroFormatos);
 				wsMS.setAccionMicroseguroFormatos.send(info.codigo, info.cdgase, info.cdgpms, info.consentimiento, info.certificado, 3);
 		    } 
@@ -190,7 +193,6 @@
 			var mod_id:String = Application.application._Current_Mod_Id;
 			var perfil_id:String = Application.application.cadPerfil;
 			var Params:Array;
-			var i:int;
 			var cont:int;
 			
 			wsMS = du.initWs(wsMS);
@@ -201,11 +203,11 @@
 					
 				cont = dPermisos.elements().length();
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					switch(dPermisos.Table[i].OPCION.toString()){
 						case "C":
 							consulta = true;
-							if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+							if (permiso.permisosModGrupos(Application.application.PERFIL_ID)){
 								borrado = true;
 								alta = true;
 								edicion = true;
@@ -244,7 +246,7 @@
 		private function setAccionMicroseguroFormatos(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionMicroseguroFormatos);
 			var res:String = new String(event.result.toString());
 			

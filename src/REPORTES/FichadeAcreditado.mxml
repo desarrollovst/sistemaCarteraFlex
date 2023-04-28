@@ -113,7 +113,7 @@
 					});
 					params[0] = codigo;
 					params[1] = ciclo;
-					params[2] = Application.application.U_ID;
+					params[2] = global.obtenerUsuario();
 					//Obtiene la lista de Acreditados para realizar la impresion de sus fichas de datos
 					wsCat.getListado.send(51, params); 
 				}	

@@ -44,7 +44,7 @@
 				var lineaCred:String = cboLC.selectedItem.codigo;
 				var fecha:String = dtfFecha.text;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				initConexionRep();
 				du.sCursor();
 							
@@ -53,7 +53,7 @@
 	
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgReporte.dataProvider = null;
 					btnExportar.enabled = false;

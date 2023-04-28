@@ -40,7 +40,7 @@
 					else if(rep != "-1"){				
 						var consulta:String;
 						var id:String = "&id=" + rep;
-						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
 						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 						var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 						var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
@@ -71,7 +71,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				ctrlFiltro.limpiar();	
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfSolDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfSolHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfIniDesde.selectedDate = null;

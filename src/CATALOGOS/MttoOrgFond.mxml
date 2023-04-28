@@ -185,11 +185,11 @@
 		public function guardaOrgFond():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
 			wsMS.setAccionOrgFond.send(tipoAccion, info.cdgOF, info.nombre, info.segNombre, info.aPaterno,
 								 	   info.aMaterno, info.calle, info.cdgEntFed, info.cdgMun, 
-								 	   info.cdgLoc, info.cdgCol, info.telefono, Application.application.U_ID);	 
+								 	   info.cdgLoc, info.cdgCol, info.telefono, global.obtenerUsuario());	 
 		}
 	
 		public function init(tipo:int, codOF:String = null):void{
@@ -430,7 +430,7 @@
 		private function setAccionOrgFond(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

@@ -59,14 +59,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlAcred = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 				
 						if (_xmlAcred.elements().length() > 0){
 							formateaListaAcred();
@@ -78,7 +78,7 @@
 					params[0] = codigo;
 					params[1] = ciclo;
 					params[2] = clns;
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					wsCat.getInfoGeneral.send(15, params);
 				}	
 				else
@@ -105,7 +105,7 @@
 						else
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
 					}); 
-					wsMS.setOmiteMicroseguro.send(codigo, ciclo, clns, acred, cdgpms, Application.application.U_ID);
+					wsMS.setOmiteMicroseguro.send(codigo, ciclo, clns, acred, cdgpms, global.obtenerUsuario());
 				}
 			}
 			

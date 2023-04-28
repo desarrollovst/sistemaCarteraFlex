@@ -49,7 +49,7 @@
 			if(valida()){
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionCdr);
 				wsMS.setAccionCRD.send( txtCodCrd.text, txtCodReg.text, txtCodSuc.text, txtCoordinacion.text, 
 										cboGerCrd.selectedItem.codigo, tipoAccion );
@@ -127,7 +127,7 @@
 		
 			du.initWsCat(wsCat);
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 				
 			txtCodReg.text = codReg;
 			txtRegional.text = regional;
@@ -158,7 +158,7 @@
 				}
 				du.rCursor();
 				du.closeWs(wsCat);
-				Application.application.desbloquear();
+				global.desbloquear();
 			});
 			params[0] = "";
 			wsCat.getCatalogoGral.send(8, params);
@@ -173,7 +173,7 @@
 		private function setAccionCdr(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCdr);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

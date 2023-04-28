@@ -90,7 +90,7 @@
 		private function guardaTipoAsesor():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
 			wsMS.setAccionTipoAsesor.send(tipoAccion, info.codAnt, info.codCart, info.antMin, info.antMax,
 									      info.cartMin, info.cartMax, info.porc);	
@@ -139,7 +139,7 @@
 		private function setAccionTipoAsesor(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoAsesor);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

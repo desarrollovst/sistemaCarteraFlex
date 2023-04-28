@@ -4,7 +4,7 @@
 	<mx:Script>
 		<![CDATA[
 			public function initApp():void{
-				comFiltroGrupoCiclo.init("43","Plan de Pagos");			
+				comFiltroGrupoCiclo.init("99","Plan de Pagos");			
 			}		
 		]]>
 	</mx:Script>

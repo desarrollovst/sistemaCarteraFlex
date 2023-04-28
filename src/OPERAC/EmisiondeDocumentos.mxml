@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="395" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="370" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:local="*" creationComplete="initApp()">
 	
 	<mx:StringValidator id="formDocV" source="{formDoc}" property="selectedValue" required="true"/>
@@ -35,14 +35,14 @@
 			
 		private function imprimir():void{
 			var i:int;
-			var j:int
 			var grupo:String = txtGrupo.text;
 			var ciclo:String = txtCiclo.text;
 		    var anexo:int = Number(chkAnexo.selected); 
 			var pagos:int = Number(chkPagos.selected);
 			var garantia:int = Number(chkGarantia.selected);
 			var contrato:int = Number(chkContrato.selected);
-			var pagares:int = Number(chkPagare.selected); 
+			var pagares:int = Number(chkPagare.selected);
+			var pagareGrupal:int = Number(chkPagareGrupal.selected);
 			
 			//Modificaciòn de pantalla (Se agrega la opcion de consentimiento y certificados
 			var certificado:int = Number(chkCertificado.selected);
@@ -77,7 +77,7 @@
 					codGrupo = "&grupo=" + grupo;
 					infoCiclo = "&ciclo=" + ciclo;
 					infoClns = "&clns=" + clns;
-					usuario = "&usuario=" + Application.application.U_ID;	
+					usuario = "&usuario=" + global.obtenerUsuario();	
 					tipoDoc = "&tipoDoc=" + formDoc.selectedValue;
 					
 					i = 0;	
@@ -124,8 +124,15 @@
 						listData[i] = consulta;
 						i += 1;	
 					}
+					if(pagareGrupal == 1 && tipoProd == ""){
+						//Impresion de Pagare Grupal
+						id = "&id=43";
+						consulta = global.urlPdf + id + codGrupo + infoCiclo + usuario + tipoDoc;
+						listData[i] = consulta;
+						i += 1;	
+					}	
 					if(consentimiento == 1 && tipoProd == ""){
-				       	for(j = 0; j < _xmlImpSegMs.elements().length() ; j++){
+				       	for(var j:int = 0; j < _xmlImpSegMs.elements().length() ; j++){
 				            cdgpms = _xmlImpSegMs.Table[j].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
 				            formato = _xmlImpSegMs.Table[j].CONSENTIMIENTO; // FORMATO QUE SE DEBE DE IMPRIMIR
 					             
@@ -143,7 +150,7 @@
 						}
 					}
 					if(certificado == 1 && tipoProd == ""){
-				    	for(j = 0; j < _xmlImpSegMs.elements().length() ; j++){
+				    	for(var j:int = 0; j < _xmlImpSegMs.elements().length() ; j++){
 				     		cdgpms = _xmlImpSegMs.Table[j].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
 				     		formato = _xmlImpSegMs.Table[j].CERTIFICADO; // FORMATO QUE SE DEBE DE IMPRIMIR
 				     
@@ -164,8 +171,8 @@
 				else
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 			});
-			wsMS.setEmisionDocumentos.send(grupo, ciclo, clns, anexo, pagos, garantia, contrato, pagares, 
-										   tipoProd, Application.application.U_ID, consentimiento, certificado);
+			wsMS.setEmisionDocumentos.send(grupo, ciclo, clns, anexo, pagos, garantia, contrato, pagares, pagareGrupal, 
+										   tipoProd, global.obtenerUsuario(), consentimiento, certificado);
 		}	
 			
 		public function initApp():void{
@@ -239,7 +246,7 @@
  							}
  							else
    								imprimir();
-   							}
+   						}
    						else
  							Alert.show(info.substr(2,info.length - 1),titulo,4,null,null,global.iAlert);
 					});
@@ -265,8 +272,8 @@
 			}
 			if(chkAnexo.selected == false  && chkPagos.selected == false && 
 			   chkGarantia.selected == false && chkContrato.selected == false &&
-			   chkPagare.selected == false && chkConsentimiento.selected == false &&
-			   chkCertificado.selected == false){
+			   chkPagare.selected == false && chkPagareGrupal.selected == false && 
+			   chkConsentimiento.selected == false && chkCertificado.selected == false){
 				Alert.show("Debe seleccionar al menos un tipo de documento.",titulo,4,null,null,global.iAlert);
 				return false;	
 			}
@@ -286,21 +293,22 @@
 		<mx:TextInput id="txtCiclo" x="138.75" y="28.5" width="45" maxChars="2" restrict="0-9" enter="validarSituacion()"/>
 	</mx:Canvas>
 	<mx:Label x="16.95" y="34" text="Criterios de Selección"/>
-	<mx:Canvas x="16.95" y="146.5" width="247.55" height="139.5" styleName="canvasMod" id="canvas0">
-		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato" enabled="false"/>
-		<mx:CheckBox id="chkPagos" x="126.75" y="10" label="Carta Inst. Pagos"/>
-		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contratos" enabled="false"/>
-		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía" enabled="false"/>
-		<mx:CheckBox id="chkConsentimiento" x="126.75" y="74" label="Consentimiento"/>
-		<mx:CheckBox id="chkPagare" x="11.75" y="74" label="Pagaré"/>
-		<mx:CheckBox id="chkCertificado" x="11.75" y="106" label="Certificados"/>
+	<mx:Canvas x="16.95" y="146.5" width="247.55" height="110.5" styleName="canvasMod" id="canvas0">
+		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato" enabled="false" visible="false"/>
+		<mx:CheckBox id="chkPagos" x="11.75" y="10" label="Carta Inst. Pagos"/>
+		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contratos" enabled="false" visible="false"/>
+		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía" enabled="false" visible="false"/>
+		<mx:CheckBox id="chkConsentimiento" x="126.75" y="42" label="Consentimiento"/>
+		<mx:CheckBox id="chkPagare" x="126.75" y="10" label="Pagaré"/>
+		<mx:CheckBox id="chkPagareGrupal" x="10" y="42" label="Pagaré Grupal" width="108.75"/>
+		<mx:CheckBox id="chkCertificado" x="10" y="74" label="Certificados"/>
 	</mx:Canvas>
 	<mx:Label x="16.95" y="129" text="Documentos" width="124.25"/>
-	<mx:Button x="186.75" y="360.5" label="Imprimir" click="validarSituacion()"/>
-	<mx:Canvas x="16.2" y="311.5" width="247.55" height="41" styleName="canvasMod" id="canvas2">
+	<mx:Button x="192.5" y="333.5" label="Imprimir" click="validarSituacion()"/>
+	<mx:Canvas x="16.95" y="284.5" width="247.55" height="41" styleName="canvasMod" id="canvas2">
 		<mx:RadioButtonGroup id="formDoc"/>
 		<mx:RadioButton id="rdbPDF" x="10" y="8" label="Formato PDF" groupName="formDoc" value="PDF"/>
 		<mx:RadioButton id="rdbDOC" x="137.55" y="8" label="Formato DOC" groupName="formDoc" value="DOC"/>
 	</mx:Canvas>
-	<mx:Label x="16.95" y="294" text="Formato"/>
+	<mx:Label x="16.95" y="265" text="Formato"/>
 </mx:Canvas>

@@ -62,7 +62,7 @@
 				titulo = "Baja de Acreditado";
 				this.title = titulo;
 				
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				fec = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				txtFecha.text = global.formatoFecha(fec);
 				

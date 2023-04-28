@@ -249,7 +249,7 @@
 				
 				if(validaAsesor()){
 					
-					var vFecha:Date = Application.application._Current_Fecha;
+					var vFecha:Date = global.obtenerFechaSistema();
 					var vTipo:Number = 1; // Calcula solo el registro del asesor
 					
 					aAsesor = new Array;
@@ -272,10 +272,10 @@
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					wsMS.addEventListener(ResultEvent.RESULT, setSimuladorIncentivosAsesor);
-					wsMS.setSimuladorIncentivo.send(aAsesor, aNomAsesor, aSemana1, aSemana2, aSemana3, aSemana4, aMora, aPago, vFecha, Application.application.U_ID, vTipo);
+					wsMS.setSimuladorIncentivo.send(aAsesor, aNomAsesor, aSemana1, aSemana2, aSemana3, aSemana4, aMora, aPago, vFecha, global.obtenerUsuario(), vTipo);
 				}
 			}
 			
@@ -287,7 +287,7 @@
 				}
 				
 				var acDatos:ArrayCollection = dgDatos.dataProvider as ArrayCollection;
-				var vFecha:Date = Application.application._Current_Fecha;
+				var vFecha:Date = global.obtenerFechaSistema();
 				var vTipo:Number = 2; // Permite calcular el incentivo del coordinador
 				
 				trace("acDatos: " + acDatos.length);
@@ -378,12 +378,12 @@
 					if(aAsesor.length > 0){
 						initConexion();
 						du.sCursor();
-						Application.application.bloquear();
+						global.bloquear();
 						
 						trace("TIPO: " + vTipo);
 						
 						wsMS.addEventListener(ResultEvent.RESULT, setSimuladorIncentivosCoord);
-						wsMS.setSimuladorIncentivo.send(aAsesor, aNomAsesor, aSemana1, aSemana2, aSemana3, aSemana4, aMora, aPago, vFecha, Application.application.U_ID, vTipo);
+						wsMS.setSimuladorIncentivo.send(aAsesor, aNomAsesor, aSemana1, aSemana2, aSemana3, aSemana4, aMora, aPago, vFecha, global.obtenerUsuario(), vTipo);
 					}
 					else
 						Alert.show("Se deben proporcionar al menos los datos de un asesor",titulo,4,null,null,global.iAlert);
@@ -406,7 +406,7 @@
 				
 				// Se calcula el número de semanas que contiene el mes
 				var semanas:int = 0;
-				var fechaActual:Date = Application.application._Current_Fecha;
+				var fechaActual:Date = global.obtenerFechaSistema();
 				var fechaInicio:Date = new Date(fechaActual.getFullYear(), fechaActual.month, 1);
 				var fechaFin:Date = new Date(fechaActual.getFullYear(), fechaActual.month + 1, 1 - 1);
 				var Dias:int = fechaFin.getDate();
@@ -505,7 +505,7 @@
 			private function setSimuladorIncentivosAsesor(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 								
 				wsMS.removeEventListener(ResultEvent.RESULT, setSimuladorIncentivosAsesor);
 				wsMS = null;
@@ -514,7 +514,7 @@
 				if (res.substr(0,1) == "1"){
 					initConexionRep();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					lblInteres.text = "";
 					lblIncentivo.text = "";
 					lblClasificacionI.text = "";
@@ -525,7 +525,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);	
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						var cont:int = _xmlRep.elements().length();
 						if(cont > 0){
@@ -546,7 +546,7 @@
 							Alert.show("No se encontraron registros.",titulo,4,null,null,global.iAlert);
 						
 					});
-					wsMS.getSimuladorIncentivos.send(Application.application.U_ID);
+					wsMS.getSimuladorIncentivos.send(global.obtenerUsuario());
 				}	
 				else
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
@@ -555,7 +555,7 @@
 			private function setSimuladorIncentivosCoord(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 								
 				wsMS.removeEventListener(ResultEvent.RESULT, setSimuladorIncentivosCoord);
 				wsMS = null;
@@ -564,7 +564,7 @@
 				if (res.substr(0,1) == "1"){
 					initConexionRep();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					dgDatos.dataProvider = null;
 					acReporte = new ArrayCollection();	
@@ -574,7 +574,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);	
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						var cont:int = _xmlRep.elements().length();
 						if(cont > 0){
@@ -584,7 +584,7 @@
 						else
 							Alert.show("No se encontraron registros.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getSimuladorIncentivos.send(Application.application.U_ID);
+					wsMS.getSimuladorIncentivos.send(global.obtenerUsuario());
 				}	
 				else
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		

@@ -60,7 +60,7 @@
 						else
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getRepConciliacionGL.send(comFiltroFecha.dtfFecha.text, Application.application.U_ID);	
+					wsMS.getRepConciliacionGL.send(comFiltroFecha.dtfFecha.text, global.obtenerUsuario());	
 				}
 			}			
 						
@@ -68,7 +68,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Conciliación de Garantía Líquida";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(Application.application._Current_Fecha));
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(global.obtenerFechaSistema()));
 				comFiltroFecha.lblFecha.text = "Fecha Operación:";
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);

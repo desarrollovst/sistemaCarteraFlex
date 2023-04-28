@@ -9,6 +9,7 @@
 
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import OPERAC.MttoListaNegra;
 			import Data.EventAcred;
 			import Data.DatosAcred;
@@ -35,6 +36,7 @@
 			public var causa:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var vResult:ValidationResultEvent;
 			
 			private function actualizaCausa(event:Event):void{
@@ -153,6 +155,7 @@
 			public function init(info:DatosAcred):void{
 				causa = "";
 				global = new Globales();
+				permiso = new Permisos();
 				permisos();
 				formateaNivel();
 				cboNivelEsc.dataProvider = nivelEscObj;
@@ -207,14 +210,13 @@
 			
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
-				var i:int;
 				var cont:int;
 				
-				if (global.permisosListaNegra(Application.application.PERFIL_ID)){
+				if (permiso.permisosListaNegra(Application.application.PERFIL_ID)){
 					marca.visible = true;	
 				}
 				
-				if (global.permisosMarcaEnano(Application.application.PERFIL_ID)){
+				if (permiso.permisosMarcaEnano(Application.application.PERFIL_ID)){
 					enano.visible = true;
 					cantEnano.visible = true;	
 				}

@@ -53,7 +53,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					var cont:int = _xmlInfo.elements().length();
 					
@@ -123,7 +123,7 @@
 				var mMicroseguro:String = "";
 				var mEstatus:String = rdgEstatus.selectedValue.toString();
 				var mObservacion:String = txtObservaciones.text;
-				var mUsuario:String = Application.application.U_ID;
+				var mUsuario:String = global.obtenerUsuario();
 				
 				if(chkConvenio.selected) mConvenio = "S"; else mConvenio = "N";
 				if(chkIncentivo.selected) mIncentivo = "S"; else mIncentivo = "N";
@@ -132,7 +132,7 @@
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionPondIncTot);
 				
 				wsMS.setAccionPondIncTot.send(mNomina, mMes, mAnio, mConvenio, mIncentivo, mPromocion, mMicroseguro
@@ -167,7 +167,7 @@
 		private function setAccionPondIncTot(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionPondIncTot);
 			wsMS = null;

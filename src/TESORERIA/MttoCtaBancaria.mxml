@@ -127,11 +127,11 @@
 		public function guardaCtaBancaria():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.nombre, 
 											  info.titular, info.favor, info.saldo, info.moneda, info.tipo, info.activa, 
-									       	  Application.application.U_ID);	
+									       	  global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String = null):void{
@@ -227,7 +227,7 @@
 		private function setAccionCuentaBancaria(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

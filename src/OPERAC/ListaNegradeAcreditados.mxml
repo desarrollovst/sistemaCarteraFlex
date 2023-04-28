@@ -6,6 +6,7 @@
 	<!--Componente que permite registrar la lista negra de acreditados-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -35,6 +36,7 @@
 			public var wsMS:WebService;	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			public var titulo:String;
 			
 			//variables que especifican el indice del elemento 
@@ -72,9 +74,9 @@
 				causa = comMttoLista.cboCausa.selectedItem.id;	
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionListaNegra);
-				wsMS.setAccionListaNegra.send(3, curp, causa, Application.application.U_ID);
+				wsMS.setAccionListaNegra.send(3, curp, causa, global.obtenerUsuario());
 			} 
 			
 			public function actualizarLista(event:Event):void{
@@ -97,14 +99,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{																				
 						_xmlAcred = new XML(evt.result);
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();	
+						global.desbloquear();	
 						
 						if(_xmlAcred.elements().length() > 0)
 							dgAcred.dataProvider = _xmlAcred.Table;
@@ -129,8 +131,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Lista Negra de Acreditados";
 				alta = true;
 				borrado = true;
@@ -200,7 +203,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				ws = du.initWs(ws);
@@ -211,13 +213,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModAcredInd(Application.application.PERFIL_ID)){
+								if (permiso.permisosModAcredInd(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -256,7 +256,7 @@
 			private function setAccionListaNegra(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionListaNegra);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1"){

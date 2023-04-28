@@ -38,7 +38,7 @@
 					var impreso:int = chkImpreso.selected == true ? 1: 0; 
 					var preimp:int = chkPreimp.selected == true ? 1: 0;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
@@ -47,7 +47,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -91,7 +91,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				chkImpreso.selected = false;

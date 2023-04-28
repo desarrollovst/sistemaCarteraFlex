@@ -6,6 +6,7 @@
 	<!--Componente de Devolucion de Garantia-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -45,6 +46,7 @@
 			public var estatus:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var vResult:ValidationResultEvent;
 		
 			private var listaObj:ArrayCollection = new ArrayCollection();
@@ -52,7 +54,7 @@
 			private var acredObj:ArrayCollection = new ArrayCollection();
 							
 			public function activarControles():void{
-				if(global.permisosBusqAcred(Application.application.PERFIL_ID) == true){
+				if(permiso.permisosBusqAcred(Application.application.PERFIL_ID) == true){
 					txtCodAcred.editable = true;
 					btnBusqAcred.visible = true;
 				}
@@ -124,14 +126,14 @@
 					txtCuenta.setFocus();
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlCta = new XML(evt.result);
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlCta.elements().length() > 0){
 							banco = _xmlCta.Table[0].CDGIB;
@@ -146,7 +148,7 @@
 					params[0] = "4";
 					params[1] = txtCodCuenta.text;
 					params[2] = "";
-					params[3] = Application.application.U_ID;
+					params[3] = global.obtenerUsuario();
 					params[4] = coord;
 					wsCat.getInfoRegistro.send(3, params);
 				}	
@@ -161,7 +163,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlGrupo = new XML(evt.result);
@@ -204,7 +206,7 @@
 								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 								_xmlGL = XML(evt.result.toString());
 							
-									Application.application.desbloquear();
+									global.desbloquear();
 									du.rCursor();
 									du.closeWs(wsCat);
 									
@@ -223,14 +225,14 @@
 							wsCat.getInfoGrupo.send(8, params);
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							txtGrupo.text = "";
 							lblInfoGL.text = "";
 							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = txtCodGrupo.text;
-					params[1] = Application.application.U_ID;
+					params[1] = global.obtenerUsuario();
 					wsCat.getInfoGrupo.send(7, params);
 				}	
 			}
@@ -259,7 +261,7 @@
 			}
 			
 			public function enviar():void{
-				if(valida() == true){
+				if(valida()){
 					var grupo:String = txtCodGrupo.text;
 					var cuenta:String = txtCodCuenta.text;
 					var fecha:String = dtfFecha.text;
@@ -301,7 +303,7 @@
 							//Se sustituyo la variable ciclo por la secuencia de pago para hacer mas precisa
 							//la actualizacion del registro de garantia 
 							wsMS.setDevGarantia.send(grupo, Number(secPago), fecha, monto, estatus, cuenta, cheque, 
-													 codAcred, acred, Application.application.U_ID);
+													 codAcred, acred, global.obtenerUsuario());
 						}
 						else{
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
@@ -355,7 +357,7 @@
 				rep = "25";
 				titulo = "Devolución de Garantía";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}
 			

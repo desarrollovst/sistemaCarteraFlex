@@ -56,10 +56,10 @@
         	if(formateaInfo() == true){
 	        	initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				//Servicio invocado en la etapa de marca de clientes mediante archivo
 				wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeoArchivo);
-				wsMS.setAsignaFondeoArchivo.send(orgFond, lineaCred, disp, fecSdo, grupo, ciclo, acred, Application.application.U_ID);
+				wsMS.setAsignaFondeoArchivo.send(orgFond, lineaCred, disp, fecSdo, grupo, ciclo, acred, global.obtenerUsuario());
         	}
         }
         
@@ -198,14 +198,14 @@
 	    private function setAsignaFondeoArchivo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaFondeoArchivo);
 			wsMS = null;
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){
 				initConexionRep();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				dgInfo.dataProvider = null;	
 					
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -219,10 +219,10 @@
 						
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();				
+					global.desbloquear();				
 				});
 				//Método que obtiene el resultado del proceso de carga de archivo de asignacion de fondeo
-				wsMS.getRepFondeoArchivo.send(Application.application.U_ID);		
+				wsMS.getRepFondeoArchivo.send(global.obtenerUsuario());		
 			}	
 			else
 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		

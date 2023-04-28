@@ -86,7 +86,7 @@
 				
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncCart);
 				wsIncR.setAccionParametrosIncCartera.send(mCodigo, mTipo, mCartIni, mCartFin, mPorcInc, tipoAccion);
@@ -127,7 +127,7 @@
 		private function setAccionParametrosIncCart(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncCart);
 			wsIncR = null;

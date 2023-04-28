@@ -6,6 +6,7 @@
 	<!--Componente de Administracion de chequeras-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;		
@@ -40,6 +41,7 @@
 			public var codCuenta:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -121,7 +123,7 @@
 					dgChequera.dataProvider = null;
 					
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
@@ -130,7 +132,7 @@
 							
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 									
 						if(_xmlChq.elements().length() > 0){
 							dgChequera.dataProvider = _xmlChq.Table;
@@ -144,7 +146,7 @@
 						seleccionaChq();			
 					});
 					params[0] = txtCodCuenta.text;
-					params[1] = Application.application.U_ID;
+					params[1] = global.obtenerUsuario();
 					wsCat.getListado.send(27, params);
 				}	
 			}
@@ -152,14 +154,14 @@
 			private function emitirResponsiva():void{
 				if(valida()){
 					var res:String;
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 								
 					du.ejecutaWsMethod(wsMS,function(event:ResultEvent):void {											
 						res = event.result.toString();
 							
-						Application.application.desbloquear();			
+						global.desbloquear();			
 						du.rCursor();
 						du.closeWs(wsMS);
 									
@@ -168,7 +170,7 @@
 						else
 							Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.setResponsivaChequeras.send(codCuenta, dtfFecha.text, Application.application.U_ID);
+					wsMS.setResponsivaChequeras.send(codCuenta, dtfFecha.text, global.obtenerUsuario());
 				}
 			}
 			
@@ -182,7 +184,7 @@
 				id = "&id=38";
 				cuenta = "&cuenta=" + codCuenta;
 				fecha = "&fecha=" + dtfFecha.text;
-				usuario = "&usuario=" + Application.application.U_ID;
+				usuario = "&usuario=" + global.obtenerUsuario();
 				
 				consulta = global.urlPdf + id + cuenta + fecha + usuario;
 				navigateToURL(new URLRequest(consulta), "_blank");
@@ -194,8 +196,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Administración de Chequeras";
 				alta = true;
 				borrado = true;
@@ -217,7 +220,7 @@
 					var coord:String = dgChequera.selectedItem.CDGCO; 
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaChequera);
 					wsMS.setEliminaChequera.send(codigo, cuenta, coord);
 			    } 
@@ -272,7 +275,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				initConexion();
@@ -283,11 +285,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++){
+					for(var i:int = 0; i < cont; i++){
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -326,7 +328,7 @@
 			private function setEliminaChequera(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaChequera);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")

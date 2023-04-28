@@ -38,7 +38,7 @@
 				if(comFiltroFecha.valida() == true){
 					fecha = comFiltroFecha.dtfFecha.text;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
@@ -47,7 +47,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -65,7 +65,7 @@
 							lblTotal.text = "";
 						}	
 					});
-					wsMS.getRepSaldoCierreAcredEsp.send(fecha, Application.application.U_ID);	
+					wsMS.getRepSaldoCierreAcredEsp.send(fecha, global.obtenerUsuario());	
 				}
 			}			
 						
@@ -73,7 +73,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Saldos al Cierre de Acreditado";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(Application.application._Current_Fecha));
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(global.obtenerFechaSistema()));
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);
 			}		

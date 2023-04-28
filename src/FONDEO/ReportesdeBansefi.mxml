@@ -293,7 +293,7 @@
 								break;
 						}
 					});
-					wsMS.getRepMarcadoBansefi.send(fecha, organizacion, linea, disposicion, opcion, Application.application.U_ID);
+					wsMS.getRepMarcadoBansefi.send(fecha, organizacion, linea, disposicion, opcion, global.obtenerUsuario());
 				}
 			}
 			

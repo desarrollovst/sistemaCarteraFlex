@@ -70,7 +70,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepTasaReal.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), Application.application.U_ID);
+					wsMS.getRepTasaReal.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), global.obtenerUsuario());
 				}	
 			}			
 						

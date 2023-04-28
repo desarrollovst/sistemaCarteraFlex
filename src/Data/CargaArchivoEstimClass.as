@@ -99,7 +99,7 @@ package Data
 	                    }
 	                }    
 	            }
-	            //Application.application.desbloquear(); 	           
+	            //global.desbloquear(); 	           
 	            dgInfo.includeInLayout = true;
 	            dgInfo.visible = true;
 	            //du.rCursor();

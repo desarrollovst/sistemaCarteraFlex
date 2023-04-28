@@ -157,7 +157,7 @@
 		public function guardaSucBancaria():void{
 			initConexion();			
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 			wsMS.setAccionSucBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.nombre, info.gerente, info.ejecutivo, info.calle, 
 										   info.colonia, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.telefono, info.labora);	 
@@ -388,7 +388,7 @@
 		private function setAccionSucBancaria(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

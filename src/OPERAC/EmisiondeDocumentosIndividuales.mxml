@@ -57,7 +57,7 @@
 						
 						codAcred = "&acred=" + acred;
 						infoCiclo = "&ciclo=" + ciclo;
-						usuario = "&usuario=" + Application.application.U_ID;	
+						usuario = "&usuario=" + global.obtenerUsuario();	
 						
 						i = 0;	
 						listData = new Array();	 	
@@ -106,7 +106,7 @@
 				
 				});
 				wsMS.setEmisionDocumentosInd.send(acred, ciclo, "I", anexo, pagos, garantia, contrato, pagares, 
-											      tipoProd, Application.application.U_ID);
+											      tipoProd, global.obtenerUsuario());
 		}	
 			
 		public function initApp():void{
@@ -169,7 +169,7 @@
 					else
 						Alert.show(info.substr(2,info.length - 1),titulo,4,null,null,global.iAlert);
 				});
-				wsMS.getValidaSituacionAcred.send(acred, "I", Application.application.U_ID);
+				wsMS.getValidaSituacionAcred.send(acred, "I", global.obtenerUsuario());
 			}
 		}
 		

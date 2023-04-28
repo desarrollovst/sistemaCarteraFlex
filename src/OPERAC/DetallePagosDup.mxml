@@ -36,14 +36,14 @@
 				dgInfo.dataProvider = null;
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	Application.application.bloquear();
+			 	global.bloquear();
 			 	
 			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 			 		_xmlInfo = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = tipo;
 				params[1] = fecha;

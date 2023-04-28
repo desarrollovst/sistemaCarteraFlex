@@ -81,7 +81,7 @@
 			
 				du.initWsCat(wsCat);
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.sCursor();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -89,7 +89,7 @@
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlConv.elements().length() > 0){
 						dgConv.dataProvider = _xmlConv.Table;
@@ -115,7 +115,7 @@
 				
 				du.initWsCat(wsCat);
 				if(tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				du.sCursor();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
@@ -123,7 +123,7 @@
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlMeta.elements().length() > 0){
 						dgMeta.dataProvider = _xmlMeta.Table;
@@ -176,7 +176,7 @@
 					var codAnt:String = dgMeta.selectedItem.CODIGO;
 					initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionConv);
 					wsMS.setAccionConv.send(3, codAnt, "", "");
 			    } 
@@ -187,7 +187,7 @@
 					var codTipo:String = dgConv.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionMeta);
 					wsMS.setAccionMeta.send(3, codTipo, "", "");
 			    } 
@@ -323,7 +323,7 @@
 			private function setAccionConv(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionConv);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -335,7 +335,7 @@
 			private function setAccionMeta(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionMeta);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

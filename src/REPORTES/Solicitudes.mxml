@@ -58,7 +58,7 @@
 										      comRepSol.obtieneFecSolHasta(), comRepSol.obtieneFecIniDesde(), 
 										      comRepSol.obtieneFecIniHasta(), comRepSol.obtieneSitSol(), 
 											  comRepSol.obtieneSitAut(), comRepSol.obtieneSitRec(), 
-											  Application.application.U_ID, Application.application.lblUser.text, 
+											  global.obtenerUsuario(), Application.application.lblUser.text, 
 											  comRepSol.obtieneRegion(), comRepSol.obtieneSucursal(), 
 											  comRepSol.obtieneAsesor());	
 				}

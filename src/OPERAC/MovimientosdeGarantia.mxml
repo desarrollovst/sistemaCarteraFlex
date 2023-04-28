@@ -76,7 +76,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlGrupo = new XML(evt.result);
@@ -100,7 +100,7 @@
 							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 								_xmlGL = XML(evt.result.toString());
 						
-								Application.application.desbloquear();
+								global.desbloquear();
 								du.rCursor();
 								du.closeWs(wsCat);
 								
@@ -114,7 +114,7 @@
 							wsCat.getListado.send(23, params);							
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							txtGrupo.text = "";
 							lblInfoGL.text = "";
 							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
@@ -157,7 +157,7 @@
 						}
 					});
 					//Registro de Movimiento de garantia
-					wsMS.setRegistroAjusteGL.send(grupo, clns, fecha, monto, mov, grupoDest, Application.application.U_ID); 
+					wsMS.setRegistroAjusteGL.send(grupo, clns, fecha, monto, mov, grupoDest, global.obtenerUsuario()); 
 				}
 			}
 			
@@ -233,7 +233,7 @@
 			}			
 			
 			private function limpiar():void{
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				txtCodGrupo.text = "";
 				txtGrupo.text = "";

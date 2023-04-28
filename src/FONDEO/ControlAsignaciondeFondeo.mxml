@@ -114,11 +114,11 @@
 			
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			
 			if (tipoAccion == 1){
 				wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeo);
-				wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, tipoAccion, registro, Application.application.U_ID);
+				wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, tipoAccion, registro, global.obtenerUsuario());
 			}
 			else if(tipoAccion == 2){
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
@@ -126,17 +126,17 @@
 					
 					if (res.substr(0,1) == "1"){
 						wsMS.addEventListener(ResultEvent.RESULT, setAsignaFondeo);
-						wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, tipoAccion, registro, Application.application.U_ID);
+						wsMS.setAsignaFondeo.send(orgFond, lineaCred, disp, tipoAccion, registro, global.obtenerUsuario());
 					}
 					else{
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iInfo);
 					}
 				});
 				// ENVIA LOS REGISTROS A FONDEAR A LA TABLA FONDEO_CADENA
-				wsMS.setAccionFondeoCadena.send(cadena, Application.application.U_ID, "PRONAFIM", orgFond, lineaCred, disp, 1);
+				wsMS.setAccionFondeoCadena.send(cadena, global.obtenerUsuario(), "PRONAFIM", orgFond, lineaCred, disp, 1);
 			}
 		}
 		
@@ -381,14 +381,14 @@
 							else
 								Alert.show("No se encontró información que coincida con los criterios de consulta.\n\nVerifique la información selecionada.",titulo,4,null,null,global.iAlert);
 						});
-						params[0] = Application.application.U_ID;
+						params[0] = global.obtenerUsuario();
 						wsCat.getListado.send(34, params);
 					}
 					else
 						Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);
 				});
 				wsMS.getInfoFondeo.send(tipoAccion, orgFond, lineaCred, disp, importe, montoMax, fecIni, fecFin,
-									    sexo, region, coord, entFed, munic, localidad, Application.application.U_ID,
+									    sexo, region, coord, entFed, munic, localidad, global.obtenerUsuario(),
 									    fecSaldo);
 			}
 		}
@@ -672,15 +672,15 @@
 		}
 		
 		public function limpiarCriteriosSelec():void{
-			var fecMin:Date = global.obtieneInicioMesAnt(Application.application._Current_Fecha);
-			var fecMax:Date = Application.application._Current_Fecha;
+			var fecMin:Date = global.obtieneInicioMesAnt(global.obtenerFechaSistema());
+			var fecMax:Date = global.obtenerFechaSistema();
 			
 			txtImporte.text = "";
 			txtMontoMax.text = "";
 			
-			dtfFecIni.selectedDate = Application.application._Current_Fecha;
+			dtfFecIni.selectedDate = global.obtenerFechaSistema();
 			dtfFecIni.selectableRange = {rangeStart: fecMin, rangeEnd: fecMax};
-			dtfFecFin.selectedDate = Application.application._Current_Fecha;
+			dtfFecFin.selectedDate = global.obtenerFechaSistema();
 			dtfFecFin.selectableRange = {rangeStart: fecMin, rangeEnd: fecMax};
 			cboSexo.selectedIndex = 0;
 			cargaRegion();
@@ -809,7 +809,7 @@
 		private function setAsignaFondeo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAsignaFondeo);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

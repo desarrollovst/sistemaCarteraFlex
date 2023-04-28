@@ -112,7 +112,7 @@
 							}
 						});
 						wsMS.getRepProrrateoConsultas.send(compMesAnio.obtieneAnio(), compMesAnio.obtieneMes(), Number(RedondeoStr)
-						, Application.application.U_ID, redondear, cbTipoReporte.selectedItem.NOMBRE);
+						, global.obtenerUsuario(), redondear, cbTipoReporte.selectedItem.NOMBRE);
 					}
 				}
 			}			

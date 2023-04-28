@@ -88,6 +88,10 @@ package Data
 			this.urlIncI = xmlIncI.toString();
 		}
 		
+		public function bloquear():void{
+			Application.application.bloquear();
+		}
+		
         public function calculaEdad(nacimiento:Date, today:Date):int{     
 			var age:uint = today.getFullYear() - nacimiento.getFullYear();
            	nacimiento.setFullYear(today.getFullYear());
@@ -105,6 +109,10 @@ package Data
 		
 		public function convCadenaFecha(fecha:String):Date {
         	return DateField.stringToDate(fecha, "DD/MM/YYYY");     	
+        }
+        
+        public function desbloquear():void{
+        	Application.application.desbloquear();
         }
         
         public function formateaAnio(anios:ArrayCollection=null):ArrayCollection{
@@ -355,6 +363,10 @@ package Data
 			return texto; 	
 		}
 		
+		public function obtenerFechaSistema():Date{
+			return Application.application._Current_Fecha;
+		}
+		
 		//funcion que permite obtener el indice del valor que se esta buscando en la coleccion
 		public function obtieneIndice(array:ArrayCollection, prop:String, valor:String):Number{
             for (var i:Number = 0; i < array.length; i++){
@@ -383,155 +395,11 @@ package Data
         	fec = new Date(anio,mes,1);
         	return fec;
         }
-		
-		public function permisosBusqAcred(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN"){
-					return true;	
-				}
-			}
-			return false;
-		}
-		
-		public function permisosConsBuro(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC"){
-					return true;	
-				}
-			}
-			return false;
-		}
+        
+        public function obtenerUsuario():String{
+        	return Application.application.U_ID;
+        }
 	
-		public function permisosDesautoriza(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "ADMIN")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosListaNegra(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ANSUC")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosMarcaEnano(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ANSUC")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosModCtaDes(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosModFecDes(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosModGrupos(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AMOCA" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "GTOCA" 
-				|| perfil[i].toString() == "ADMIN" || perfil[i].toString() == "CMOCA" || perfil[i].toString() == "OIM"
-				|| perfil[i].toString() == "ANSUC")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosModAcred(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
-					return true;	
-			}
-			/*if(perfil == "AUTC" || perfil == "ADMIN" || perfil == "OIM")
-				return true;	
-			else*/
-				return false;
-		}
-		
-		public function permisosModAcredInd(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN")
-					return true;	
-			}
-			return false;
-		}
-		
-		public function permisosModVigencia(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC")
-					return true;	
-			}
-			return false;
-		}
-		
-		public function permisosEvSolic(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || 
-				perfil[i].toString() == "COMIT" || perfil[i].toString() == "ANSUC")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosLocalidades(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosRegionales(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
-					return true;
-			}	
-			return false;
-		}
-		
-		public function permisosSelecCuenta(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN"){
-					return true;	
-				}
-			}
-			return false;
-		}
-		
-		public function permisosModSolic(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AMOCA" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "CMOCA" 
-				|| perfil[i].toString() == "GTOCA")
-					return true;
-			}	
-			return false;
-		}
-		
-		//funcion que permite a los perfiles de usuario especificos
-		//modificar el registro de acreditados aunque cuenten con un prestamo vigente 
-		public function permisosModRegAcred(perfil:Array):Boolean{
-			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN")
-					return true;
-			}	
-			return false;
-		}
-		
 		public function reemplazaVocAcentos(cadena:String):String{
 			var myPattern:RegExp = /á/g;
 			cadena = cadena.replace(myPattern, "a");

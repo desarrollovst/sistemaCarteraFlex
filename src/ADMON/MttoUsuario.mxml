@@ -458,7 +458,7 @@
 			
 			du.initWsCat(wsCat);
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 				
 			_xmlEntidad = null;
 					
@@ -504,7 +504,7 @@
 							formateaCrd();
 							
 							if(tipoAccion == 1)
-								Application.application.desbloquear();
+								global.desbloquear();
 							//carga informacion del registro de usuario
 							else if(tipoAccion == 2){
 								llenaRegistros();			
@@ -534,7 +534,7 @@
 										du.rCursor();
 										du.closeWs(ws);
 										
-										Application.application.desbloquear();	
+										global.desbloquear();	
 
 										if(_xmlLstCoord.elements().length() > 0){
 											var cont:int = _xmlLstCoord.elements().length();

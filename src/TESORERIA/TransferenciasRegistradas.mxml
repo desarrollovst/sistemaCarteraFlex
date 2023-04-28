@@ -62,7 +62,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepDispersion.send(dtfFecha.text, dtfFechaFinal.text, Application.application.U_ID);
+					wsMS.getRepDispersion.send(dtfFecha.text, dtfFechaFinal.text, global.obtenerUsuario());
 				}	
 			}			
 						
@@ -85,7 +85,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
@@ -126,17 +126,17 @@
 				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="70"/>
 				<mx:DataGridColumn headerText="FECHA" dataField="FINICIO" width="70"/>
-				<mx:DataGridColumn headerText="TIPO" dataField="TIPO" width="100"/>
-				<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="110"/>
+				<mx:DataGridColumn headerText="TIPO TRANSFERENCIA" dataField="TIPO" width="140"/>
+				<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="110"/>-->
 				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
-				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100"/>
+				<!--<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100"/>-->
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="CLIENTE" width="200"/>
 				<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="90"/>
 				<mx:DataGridColumn headerText="CLABE" dataField="CLABE" width="130"/>
-				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>
+				<!--<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>-->
 				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="90"/>
-				<mx:DataGridColumn headerText="ASESOR" dataField="CDGOCPE" width="70"/>
-				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMOCPE" width="180"/>
+				<!--<mx:DataGridColumn headerText="ASESOR" dataField="CDGOCPE" width="70"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMOCPE" width="180"/>-->
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:Button id="btnExportar" x="678.5" y="133" label="Exportar Excel" click="exportar()" enabled="false"/>

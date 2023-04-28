@@ -100,7 +100,7 @@
 								
 				initConexionIncR();
 				du.sCursor();
-				Application.application.bloquear()
+				global.bloquear()
 				
 				wsIncR.addEventListener(ResultEvent.RESULT, setAccionParametrosIncRegional);
 				wsIncR.setAccionParametrosIncRegion.send(mCodigo, mPorcInc, mPorcMora, mPorcPagos, mPorcCart
@@ -132,7 +132,7 @@
 		private function setAccionParametrosIncRegional(event:ResultEvent):void{
 			wsIncR.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsIncR.removeEventListener(ResultEvent.RESULT, setAccionParametrosIncRegional);
 			wsIncR = null;

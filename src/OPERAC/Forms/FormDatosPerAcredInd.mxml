@@ -24,6 +24,7 @@
 
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.DatosAcred;
 			import Data.EventAcred;
 			import Data.Globales;
@@ -57,6 +58,7 @@
 			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var bandCURP:Boolean;
 			public var f:Date;
 			public var fecMin:Date;
@@ -235,9 +237,11 @@
 			public function init(info:DatosAcred):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
-				global = new Globales();
 				du = new Utils();
-				f = Application.application._Current_Fecha;
+				global = new Globales();
+				permiso = new Permisos();
+				
+				f = global.obtenerFechaSistema();
 				fecMin = new Date(f.getFullYear()-18,f.getMonth(),f.getDate());
 				fecMax = new Date(f.getFullYear()-75,f.getMonth(),f.getDate());
 				txtFecha.selectableRange = {rangeStart: fecMax, rangeEnd: fecMin};
@@ -359,7 +363,7 @@
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlEntFed = new XML(evt.result.toString());
 					
-					Application.application.desbloquear();						
+					global.desbloquear();						
 					du.rCursor();
 					du.closeWs(wsCat);
 					
@@ -376,7 +380,7 @@
 			}
 			
 			public function permisos():void{
-				if(global.permisosModAcred(Application.application.PERFIL_ID)){
+				if(permiso.permisosModAcred(Application.application.PERFIL_ID)){
 					txtRfc.editable = true;
 					txtCurp.editable = true;
 				}

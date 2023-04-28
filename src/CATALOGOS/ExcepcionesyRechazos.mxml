@@ -272,7 +272,7 @@
 						cargaOpciones();
 					
 					});
-					wsMS.setAccionExcepcionesRechazos.send(catalogo, tipoAccion, codigo, nombre, descripcion, estatus, Application.application.U_ID);
+					wsMS.setAccionExcepcionesRechazos.send(catalogo, tipoAccion, codigo, nombre, descripcion, estatus, global.obtenerUsuario());
 				}
 				else{
 					Alert.show("Seleccione un catálogo.",titulo,4,null,null,global.iAlert);	
@@ -382,7 +382,7 @@
 						}
 						cargaOpciones();
 					});
-					wsMS.setAccionCambiaEstatusExcepRech.send(catalogo, tipoAccionArr, codigoArr, nombreArr, descripcionArr, estatusArr, Application.application.U_ID);
+					wsMS.setAccionCambiaEstatusExcepRech.send(catalogo, tipoAccionArr, codigoArr, nombreArr, descripcionArr, estatusArr, global.obtenerUsuario());
 				}
 				else{
 					Alert.show("Seleccione un catálogo.",titulo,4,null,null,global.iAlert);	

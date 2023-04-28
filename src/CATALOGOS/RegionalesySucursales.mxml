@@ -6,6 +6,7 @@
 	<!--Componente que permite observar el listado de regionales y coordinaciones que pertenecen a la empresa-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.controls.DataGrid;
 			import mx.events.*;  
@@ -41,6 +42,7 @@
 			public var wsMS:WebService = new WebService();	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -159,14 +161,14 @@
 					du.sCursor();
 					
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlReg = new XML(evt.result);
 					
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlReg.elements().length() > 0){
 							dgRegional.dataProvider = _xmlReg.Table;
@@ -198,14 +200,14 @@
 				du.sCursor();
 				
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlCrd = new XML(evt.result);
 					
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlCrd.elements().length() > 0){
 						dpCrd = _xmlCrd.elements();
@@ -238,14 +240,14 @@
 				du.sCursor();
 				
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlCoord = new XML(evt.result);
 					
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlCoord.elements().length() > 0){
 						dpCoord = _xmlCoord.elements();
@@ -285,8 +287,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -315,7 +318,7 @@
 					var codCrd:String = dgCrd.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCrd);
 					wsMS.setAccionCRD.send(codCrd, "", "", "", "", 3);
 			    } 
@@ -327,7 +330,7 @@
 					var codCoord:String = dgCoord.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCoord);
 					wsMS.setAccionCoord.send(3, codReg, codCoord, "", "", "",
                                  			 "", "", "", "", "");
@@ -339,7 +342,7 @@
 					var codReg:String = dgRegional.selectedItem.CODIGO;
 			    	initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
 					wsMS.setAccionReg.send(3, codReg, "", "", "", "", "", "", "", "");
 			    } 
@@ -459,7 +462,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				wsMS = du.initWs(wsMS);
@@ -470,13 +472,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+								if (permiso.permisosRegionales(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -550,7 +550,7 @@
 			private function setAccionCrd(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCrd);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -562,7 +562,7 @@
 			private function setAccionCoord(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCoord);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -574,7 +574,7 @@
 			private function setAccionReg(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

@@ -33,12 +33,12 @@
 					var params:Array = new Array;
 						
 					var fecha:String = dtfFecha.text;
-					var usuario:String = Application.application.U_ID;
+					var usuario:String = global.obtenerUsuario();
 					var tipo:Number = 1; // INSERTA
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 				
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{		
 						_xmlCc = new XML(event.result);
@@ -53,7 +53,7 @@
 								
 								du.closeWs(wsMS);			
 								du.rCursor();
-								Application.application.desbloquear();
+								global.desbloquear();
 								
 								if(res.substr(0,1) == "1"){
 									Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -69,7 +69,7 @@
 						else{
 							Alert.show("Ya se realizó la conciliación de cheques para la fecha " + fecha + ".",titulo,4,null,null,global.iAlert);
 							du.rCursor();
-						    Application.application.desbloquear();
+						    global.desbloquear();
 						}
 					});
 					params[0] = fecha

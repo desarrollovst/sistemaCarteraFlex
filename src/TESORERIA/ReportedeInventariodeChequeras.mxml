@@ -90,7 +90,7 @@
 			
 			private function generar():void{
 				if(valida()){
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 					
@@ -108,7 +108,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -140,7 +140,7 @@
 				var params:Array = new Array
 							
 				du.initWsCat(wsCat);
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 					_xmlBancos = new XML(event.result);
@@ -150,7 +150,7 @@
 					
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlBancos.elements().length() > 0){
 							formateaBancos();

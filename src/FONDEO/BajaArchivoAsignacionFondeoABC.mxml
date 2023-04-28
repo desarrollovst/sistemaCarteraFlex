@@ -69,7 +69,7 @@
         		var tipo:Number = 2; // CARGA EL MONTO A ELIMINAR
         		infoDBE.codigo = "";
         		infoDBE.fecha = "";
-        		infoDBE.cdgpe = Application.application.U_ID;
+        		infoDBE.cdgpe = global.obtenerUsuario();
         		infoDBE.descricpcion = "";
         		infoDBE.cdgib = "";
         		infoDBE.cdgcb = "";
@@ -81,7 +81,7 @@
         		        		
 	        	initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				//Servicio invocado en la etapa de marca de clientes mediante archivo
 				wsMS.addEventListener(ResultEvent.RESULT, cargaMonto);
 				wsMS.setBajaFondeoArchivo.send(infoDBE.codigo, infoDBE.fecha, infoDBE.cdgpe, infoDBE.descricpcion, infoDBE.cdgib
@@ -103,7 +103,7 @@
 	        		infoDBE.codigo = "";
 	        		infoDBE.fecha = "";
 	        		//infoDBE.cdgpe = "HUGO";
-	        		infoDBE.cdgpe = Application.application.U_ID;
+	        		infoDBE.cdgpe = global.obtenerUsuario();
 	        		infoDBE.descricpcion = "ELIMINA_FONDEO_ABC_MANUAL";
 	        		infoDBE.cdgib = "";
 	        		infoDBE.cdgcb = "";
@@ -115,7 +115,7 @@
 	        		        		
 		        	initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de marca de clientes mediante archivo
 					wsMS.addEventListener(ResultEvent.RESULT, BuscaListaBitacora);
 					wsMS.setBajaFondeoArchivo.send(infoDBE.codigo, infoDBE.fecha, infoDBE.cdgpe, infoDBE.descricpcion, infoDBE.cdgib
@@ -128,7 +128,7 @@
         private function cargaMonto(event:ResultEvent):void{
         	wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, cargaMonto);
 			wsMS = null;
@@ -277,7 +277,7 @@
 	    private function BuscaListaBitacora(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, BuscaListaBitacora);
 			wsMS = null;
@@ -288,7 +288,7 @@
 			if (res.substr(0,1) == "1"){
 				initConexionRep();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				dgInfo.dataProvider = null;	
 					
 				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -296,7 +296,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if(_xmlRep.elements().length() > 0){
 						var cont:int = _xmlRep.elements().length();	

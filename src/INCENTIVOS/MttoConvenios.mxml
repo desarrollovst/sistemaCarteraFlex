@@ -56,7 +56,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsMS);	
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					var cont:int = _xmlInfo.elements().length();
 					
@@ -114,13 +114,13 @@
 				var mFin:String = dtFin.text;
 				var mMonto:Number = Number(montoStr);
 				var mTipo:String = rdgTipo.selectedValue.toString();
-				var mUsuario:String = Application.application.U_ID;
+				var mUsuario:String = global.obtenerUsuario();
 				var mEstatus:String = rdgEstatus.selectedValue.toString();
 				var mObservacion:String = txtObservaciones.text;
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionConvenios);
 				
 				wsMS.setAccionConvenios.send(mNomina, mInicio, mFin, mMonto, mTipo, mUsuario, mEstatus, mObservacion, tipoAccion);
@@ -147,7 +147,7 @@
 			openEffect.duration = 1000;
 			openEffect.play([this]);
 			
-			var fec:Date = Application.application._Current_Fecha;
+			var fec:Date = global.obtenerFechaSistema();
     		dtInicio.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			dtFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 		}
@@ -163,7 +163,7 @@
 		private function setAccionConvenios(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionConvenios);
 			wsMS = null;

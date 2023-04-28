@@ -78,7 +78,7 @@
 						else{
 							if(Application.application.PUESTO == 'A'){
 								var i:int;
-								i = _xmlAsesor.Table.(CODIGO.toString() == Application.application.U_ID.toString()).childIndex();
+								i = _xmlAsesor.Table.(CODIGO.toString() == global.obtenerUsuario().toString()).childIndex();
 								cboAsesor.selectedIndex = i + 1;
 								cboAsesor.enabled = false;
 							}
@@ -140,7 +140,7 @@
 							} 
 							else if(Application.application.PUESTO == 'C'){
 								var i:int;
-								i = _xmlCoord.Table.(CODIGO.toString() == Application.application.U_ID.toString()).childIndex();
+								i = _xmlCoord.Table.(CODIGO.toString() == global.obtenerUsuario().toString()).childIndex();
 								cboCoord.selectedIndex = i + 1;
 								cboCoord.enabled = false;
 							}

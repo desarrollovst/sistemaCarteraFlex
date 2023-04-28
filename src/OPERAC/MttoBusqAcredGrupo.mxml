@@ -54,14 +54,14 @@
 				dgAcred.dataProvider = null;
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	Application.application.bloquear();
+			 	global.bloquear();
 			 	
 			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 			 		_xmlAcred = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
 				params[0] = this.grupo;
 				wsCat.getListado.send(1, params);

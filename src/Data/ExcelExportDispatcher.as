@@ -67,6 +67,8 @@ package Data
 		    					texto = global.modificaTextoFecha(texto);
 		    					if(texto.substr(0,1) == "0" && texto.length > 1 && texto.substr(1,1) != "." && (texto.substr(2,1) != "/" && texto.substr(5,1) != "/"))
 		    						str += "<col"+k.toString()+">'"+texto+"</col"+k.toString()+">";
+		    					else if(Number(texto) && texto.length >= 12)
+		    						str += "<col"+k.toString()+">'"+texto+"</col"+k.toString()+">";
 		    					else if(texto.substr(0,1) == "'")
 		    						str += "<col"+k.toString()+">'"+texto.substr(1,texto.length-1)+"</col"+k.toString()+">";
 		    					else
@@ -76,6 +78,8 @@ package Data
 		    						texto = dg.dataProvider.getItemAt(j)[dg.columns[k].dataField].toString();
 		    						texto = global.modificaTextoFecha(texto); 
 		    						if(texto.substr(0,1) == "0" && texto.length > 1 && texto.substr(1,1) != "." && (texto.substr(2,1) != "/" && texto.substr(5,1) != "/"))
+		    							str += "<col"+k.toString()+">'"+texto+"</col"+k.toString()+">";
+		    						else if(Number(texto) && texto.length >= 12)
 		    							str += "<col"+k.toString()+">'"+texto+"</col"+k.toString()+">";
 		    						else if(texto.substr(0,1) == "'")
 		    							str += "<col"+k.toString()+">'"+texto.substr(1,texto.length-1)+"</col"+k.toString()+">";

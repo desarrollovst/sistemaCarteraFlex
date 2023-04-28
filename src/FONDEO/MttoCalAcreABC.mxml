@@ -101,7 +101,7 @@
 				info.atrasomax = Number(txtAtrasoMax.text);
 				info.calificacion = txtCalificacion.text;
 				
-				Application.application.bloquear();				
+				global.bloquear();				
 				initConexion();
 				du.sCursor();
 										
@@ -110,7 +110,7 @@
 					
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(res.substr(0,1) == "1")
 						cerrar();

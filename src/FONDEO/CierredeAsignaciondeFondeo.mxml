@@ -41,7 +41,7 @@
 				if(valida() == true){
 					fecha = dtfFecSaldo.text;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 					
@@ -50,7 +50,7 @@
 							
 						du.closeWs(wsMS);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(res.substr(0,1) == "1"){
 							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);

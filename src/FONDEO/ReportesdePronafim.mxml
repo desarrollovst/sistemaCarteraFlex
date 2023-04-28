@@ -191,7 +191,7 @@
 				var lineaCred:String = cboLC.selectedItem.codigo;
 				var fecha:String = dtfFecha.text;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				initConexionRep();
 				du.sCursor();
 							
@@ -200,7 +200,7 @@
 	
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgRepClientes.dataProvider = null;
 					btnExportar.enabled = false;
@@ -229,7 +229,7 @@
 				var lineaCred:String = cboLC.selectedItem.codigo;
 				var fecha:String = dtfFecha.text;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				initConexionRep();
 				du.sCursor();
 							
@@ -238,7 +238,7 @@
 	
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgRepCreditos.dataProvider = null;
 					btnExportar.enabled = false;
@@ -267,7 +267,7 @@
 				var lineaCred:String = cboLC.selectedItem.codigo;
 				var fecha:String = dtfFecha.text;
 				
-				Application.application.bloquear();
+				global.bloquear();
 				initConexionRep();
 				du.sCursor();
 							
@@ -276,7 +276,7 @@
 	
 					du.rCursor();
 					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgRepDesgloce.dataProvider = null;
 					btnExportar.enabled = false;

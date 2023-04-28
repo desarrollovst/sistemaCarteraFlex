@@ -138,7 +138,7 @@
 			
 			        initConexionRep();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 			        		
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
@@ -152,16 +152,16 @@
 						else
 							Alert.show("No se encontro información relacionada con los datos de consulta.",titulo,4,null,null,global.iAlert);
 							
-						Application.application.desbloquear();
+						global.desbloquear();
 					
 					});
 					if(this.rep == "1"){
-						wsMS.getRepMora.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, Application.application.U_ID, 
+						wsMS.getRepMora.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(), 
 												Application.application.lblUser.text, ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(),
 												ctrlFiltro.obtieneCoord(), ctrlFiltro.obtieneAsesor(), tipoProd, nivelMora);
 					}
 					else if(this.rep == "4"){
-						wsMS.getRepAntSaldos.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, Application.application.U_ID, 
+						wsMS.getRepAntSaldos.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(), 
 											      Application.application.lblUser.text, ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(), 
 											      ctrlFiltro.obtieneCoord(), ctrlFiltro.obtieneAsesor());
 					}
@@ -225,7 +225,7 @@
 						var strCartVenc:String = "&cartVenc=" + Number(chkCartVenc.selected).toString();
 						var strCartRest:String = "&cartRest=" + Number(chkCartRest.selected).toString();
 						var strCartCast:String = "&cartCast=" + Number(chkCartCast.selected).toString();
-						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
 						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 						var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 						var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();
@@ -294,7 +294,7 @@
 				var fec:Date;
 				habilitaControles(false);
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				if(currentState == 'fechaNoExp')
 					dtfFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));

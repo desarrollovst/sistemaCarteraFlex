@@ -53,7 +53,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlCred = new XML(evt.result);
@@ -75,7 +75,7 @@
 							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 							_xmlExc = XML(evt.result.toString());
 						
-								Application.application.desbloquear();
+								global.desbloquear();
 								du.rCursor();
 								du.closeWs(wsCat);
 								
@@ -93,7 +93,7 @@
 							wsCat.getListado.send(41, params);
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							lblNombre.text = "";
 							lblInfoExc.text = "";
 							Alert.show("No se ha encontrado la información solicitada.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
@@ -130,7 +130,7 @@
 						}
 					});
 					//la variable de tipo de Credito indica si se trata de un credito individual o grupal
-					wsMS.setMovsExcedente.send(cdgclns, ciclo, tipoCred, fecha, monto, dev, Application.application.U_ID);
+					wsMS.setMovsExcedente.send(cdgclns, ciclo, tipoCred, fecha, monto, dev, global.obtenerUsuario());
 				}
 			}
 			
@@ -219,7 +219,7 @@
 			}
 			
 			private function limpiar():void{
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				cdgclns = "";
 				ciclo = "";
 				tipoCred = "";

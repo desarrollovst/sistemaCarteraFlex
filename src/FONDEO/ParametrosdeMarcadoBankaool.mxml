@@ -107,7 +107,7 @@
 				dgProducto.dataProvider = null;
 				activarContMod(false);
 												
-				Application.application.bloquear();
+				global.bloquear();
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
@@ -128,7 +128,7 @@
 						
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 				});
 				params[0] = "1";
@@ -142,7 +142,7 @@
 				if (dgDatos.selectedIndex >= 0){
 					dgProducto.dataProvider = null;
 													
-					Application.application.bloquear();
+					global.bloquear();
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
@@ -157,7 +157,7 @@
 							
 						du.closeWs(wsCat);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 					});
 					params[0] = "2";
@@ -223,7 +223,7 @@
 										
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					wsMS.addEventListener(ResultEvent.RESULT, setAccion);
 					wsMS.setAccionParametrosBankaool.send(vCodigo, vLocalidades, vPeriodicidad, vDias_atraso, aCdgTPC, 3);
@@ -232,7 +232,7 @@
 			private function setAccion(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccion);
 				var res:String = new String(event.result.toString());
 				

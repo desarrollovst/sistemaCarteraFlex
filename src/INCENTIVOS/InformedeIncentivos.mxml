@@ -32,17 +32,17 @@
 				if(valida()){
 					var pMes:String = cbxMes.selectedItem.id;
 					var pAnio:String = cbxAnio.selectedItem.id;
-					//var pFecha:String = Application.application._Current_Fecha;
+					//var pFecha:String = global.obtenerFechaSistema();
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					wsMS.addEventListener(ResultEvent.RESULT, setCalculoIncentivos);
-					wsMS.setCalculoIncentivos.send(pMes, pAnio, Application.application.U_ID);
+					wsMS.setCalculoIncentivos.send(pMes, pAnio, global.obtenerUsuario());
 					
 					//wsMS.addEventListener(ResultEvent.RESULT, setCalculoIncentivos);
-					//wsMS.setCalculoIncentivosAsesor.send(pFecha, Application.application.U_ID);
+					//wsMS.setCalculoIncentivosAsesor.send(pFecha, global.obtenerUsuario());
 				}
 			}
 			
@@ -65,7 +65,7 @@
 			private function setCalculoIncentivos(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 								
 				wsMS.removeEventListener(ResultEvent.RESULT, setCalculoIncentivos);
 				wsMS = null;
@@ -75,12 +75,12 @@
 					
 					if(rep != "-1"){
 						var c:Cookie = new Cookie;
-						c.crearCookie(Application.application.U_ID, Application.application.lblUser.text);
+						c.crearCookie(global.obtenerUsuario(), Application.application.lblUser.text);
 						var consulta:String = global.urlIncI;
 						var id:String = "&id=" + rep;
 						var mes:String = "&mes=" + cbxMes.selectedItem.id;
 						var anio:String = "&anioI=" + cbxAnio.selectedItem.id;
-						var usuario:String = "&us=" + Application.application.U_ID;
+						var usuario:String = "&us=" + global.obtenerUsuario();
 						consulta = consulta + id + mes + anio + usuario;
 						
 						var request:URLRequest = new URLRequest(consulta); 
@@ -94,7 +94,7 @@
 			/*private function setCalculoIncentivos(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 								
 				wsMS.removeEventListener(ResultEvent.RESULT, setCalculoIncentivos);
 				wsMS = null;
@@ -104,11 +104,11 @@
 					
 					if(rep != "-1"){
 						var c:Cookie = new Cookie;
-						c.crearCookie(Application.application.U_ID, Application.application.lblUser.text);
+						c.crearCookie(global.obtenerUsuario(), Application.application.lblUser.text);
 						var consulta:String = global.urlIncI;
 						var id:String = "&id=" + "2";
-						var fecha:String = "&fe=" + Application.application._Current_Fecha;
-						var usuario:String = "&us=" + Application.application.U_ID;
+						var fecha:String = "&fe=" + global.obtenerFechaSistema();
+						var usuario:String = "&us=" + global.obtenerUsuario();
 						consulta = consulta + id + fecha + usuario;
 						
 						var request:URLRequest = new URLRequest(consulta); 

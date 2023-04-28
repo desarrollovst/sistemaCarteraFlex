@@ -43,7 +43,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				if(currentState == null)
 					dtfFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 					dtfFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));

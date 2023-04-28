@@ -93,14 +93,14 @@
 			var vAnio:String = cbxAnio.selectedItem.id;
 			
 			if (tipo == 1)
-				Application.application.bloquear();		
+				global.bloquear();		
 				
 			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 				_xmlInfo = new XML(evt.result.toString());
 				
 				du.rCursor();
 				du.closeWs(wsMS);	
-				Application.application.desbloquear();
+				global.desbloquear();
 					
 				var cont:int = _xmlInfo.elements().length();
 				
@@ -196,7 +196,7 @@
 				
 		    	initConexion();
 		    	du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
 				wsMS.setAccionAplPagosExtras.send(mGrupo, mCiclo, mClns, aPeriodo, aSecuencia, aCantidad, aFecha, aInteres, mMes, mAnio, mObservacion, mUsuario, 3);
 		    } 
@@ -252,7 +252,7 @@
 		private function setAccionAplPagosExtras(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionAplPagosExtras);
 			var res:String = new String(event.result.toString());

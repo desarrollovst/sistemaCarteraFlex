@@ -37,14 +37,14 @@
 					var suc:String = ctrlFiltro.cboSucursal.selectedItem.codigo;
 					var asesor:String = ctrlFiltro.cboAsesor.selectedItem.codigo;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexionRep();
 					du.sCursor();
 								
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(wsMS);
 							
@@ -62,7 +62,7 @@
 						}
 						wsMS = null;
 					});
-					wsMS.getRepControlPagosGrupoMod.send(dtfFecha.text, region, suc, asesor, Application.application.U_ID);
+					wsMS.getRepControlPagosGrupoMod.send(dtfFecha.text, region, suc, asesor, global.obtenerUsuario());
 				}
 			}
 			
@@ -71,7 +71,7 @@
 					var consulta:String;
 					var id:String = "&id=" + rep;
 					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
 					var region:String = "&region=" + ctrlFiltro.cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + ctrlFiltro.cboSucursal.selectedItem.codigo;
@@ -113,7 +113,7 @@
 				var fec:Date;
 				habilitaControles(false);
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
