@@ -85,7 +85,7 @@
 								var ciclo:String = "&ciclo=" + txtCiclo.text;
 								var puesto:String = "&puesto=" + Application.application.PUESTO;
 								var usuario:String = "&usuario=" + global.obtenerUsuario();
-								var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+								var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 								var consulta:String = global.urlPdf + id + grupo + ciclo + usuario + nomUsuario;
 								Application.application.muestraPdf(consulta);
 							}

@@ -157,12 +157,12 @@
 					});
 					if(this.rep == "1"){
 						wsMS.getRepMora.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(), 
-												Application.application.lblUser.text, ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(),
+												global.obtenerNombreUsuario(), ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(),
 												ctrlFiltro.obtieneCoord(), ctrlFiltro.obtieneAsesor(), tipoProd, nivelMora);
 					}
 					else if(this.rep == "4"){
 						wsMS.getRepAntSaldos.send(dtfFecha.text, nivel.selectedValue.toString(), cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(), 
-											      Application.application.lblUser.text, ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(), 
+											      global.obtenerNombreUsuario(), ctrlFiltro.obtieneRegion(), ctrlFiltro.obtieneSucursal(), 
 											      ctrlFiltro.obtieneCoord(), ctrlFiltro.obtieneAsesor());
 					}
 				}
@@ -226,7 +226,7 @@
 						var strCartRest:String = "&cartRest=" + Number(chkCartRest.selected).toString();
 						var strCartCast:String = "&cartCast=" + Number(chkCartCast.selected).toString();
 						var usuario:String = "&usuario=" + global.obtenerUsuario();
-						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 						var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 						var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();
 						var coord:String = "&coord=" + ctrlFiltro.obtieneCoord();

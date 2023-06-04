@@ -99,6 +99,7 @@
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
 			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
 			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125"/>
+			<mx:DataGridColumn headerText="ENTREGADO REAL" dataField="ENTRREAL" width="125"/>
 			<mx:DataGridColumn headerText="% INCREMENTO" dataField="PORC_INC" width="125"/>	
 			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="180"/>		
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>

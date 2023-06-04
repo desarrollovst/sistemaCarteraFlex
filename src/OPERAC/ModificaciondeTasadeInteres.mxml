@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="390" height="234" backgroundAlpha="1.0" 
-	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
-	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" verticalScrollPolicy="off" 
+	horizontalScrollPolicy="off" xmlns:Data="Data.*">
 	
 	<mx:Script>
 		<![CDATA[
@@ -44,11 +44,12 @@
 					formateaTasa();	
 					cboTasa.dataProvider = tasaObj;	
 				});
-				if(cboTdp.selectedItem == null){
+				
+				if(cboTipoProd.selectedItem == null)
 					params[0] = '0';
-				} else {
-					params[0] = cboTdp.selectedItem.codigo;
-				}
+				else 
+					params[0] = cboTipoProd.selectedItem.codigo;
+				
 				
 				params[1] = global.obtenerUsuario(); 
 				//Obtiene Informacion de Tasas de Usuario
@@ -68,7 +69,7 @@
 					du.rCursor();
 					du.closeWs(wsCat);						
 					formateaTipoProd();	
-					cboTdp.dataProvider = tipoProd;	
+					cboTipoProd.dataProvider = tipoProd;	
 					cargaTasaInteres();
 				});
 			    params[0] = "G";
@@ -85,7 +86,7 @@
 					
 					var grupo:String = txtGrupo.text;
 					var ciclo:String = txtCiclo.text;
-					var tipoProd:String = cboTdp.selectedItem.codigo;
+					var tipoProd:String = cboTipoProd.selectedItem.codigo;
 					var prodCred:String = cboTasa.selectedItem.prodCred;
 					var tasa:Number = cboTasa.selectedItem.tasa;
 					
@@ -172,7 +173,7 @@
 			}	
 		
 			private function limpiar():void{
-				cboTdp.selectedIndex = 0; 			   	
+				cboTipoProd.selectedIndex = 0; 			   	
 			   	cargaTasaInteres();
 				cboTasa.selectedIndex = 0; 
 				txtGrupo.text = "";
@@ -207,7 +208,7 @@
 	</mx:Canvas>
 	<mx:Canvas x="19.55" y="112" width="350.9" height="77" styleName="canvasMod" id="cnvFecha">
 		<mx:Label x="9.85" y="13" text="Tipo de Producto:" id="lblTipoProd"/>
-		<mx:ComboBox id="cboTdp" x="106.85" y="10" width="232.05" labelField="nombre" change="cargaTasaInteres()"/>
+	<mx:ComboBox id="cboTipoProd" x="106.85" y="10" width="232.05" labelField="nombre" change="cargaTasaInteres()"/>
 		<mx:Label x="15.85" y="44" text="Tasa de Interés:" id="lblTasa"/>
 		<mx:ComboBox id="cboTasa" x="106.85" y="41" width="232.05" labelField="nombre"/>
 	</mx:Canvas>

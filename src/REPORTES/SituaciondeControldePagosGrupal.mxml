@@ -72,7 +72,7 @@
 					var id:String = "&id=" + rep;
 					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
-					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var region:String = "&region=" + ctrlFiltro.cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + ctrlFiltro.cboSucursal.selectedItem.codigo;
 					var asesor:String = "&asesor=" + ctrlFiltro.cboAsesor.selectedItem.codigo;

@@ -37,7 +37,7 @@
 					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
 					var niv:String = "&nivel=" + nivel.selectedValue.toString();
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
-					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 					var sucursal:String = "&sucursal=" + ctrlFiltro.obtieneSucursal();
 					var coord:String = "&coord=" + ctrlFiltro.obtieneCoord();

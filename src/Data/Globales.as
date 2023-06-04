@@ -396,6 +396,10 @@ package Data
         	return fec;
         }
         
+        public function obtenerNombreUsuario():String{
+        	return Application.application.NOM_U;
+        }
+        
         public function obtenerUsuario():String{
         	return Application.application.U_ID;
         }

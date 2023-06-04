@@ -150,9 +150,9 @@
 						}
 					}
 					if(certificado == 1 && tipoProd == ""){
-				    	for(var j:int = 0; j < _xmlImpSegMs.elements().length() ; j++){
-				     		cdgpms = _xmlImpSegMs.Table[j].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
-				     		formato = _xmlImpSegMs.Table[j].CERTIFICADO; // FORMATO QUE SE DEBE DE IMPRIMIR
+				    	for(var n:int = 0; n < _xmlImpSegMs.elements().length() ; n++){
+				     		cdgpms = _xmlImpSegMs.Table[n].CDGPMS; //CONJUNTO DE MICROSEGUROS PARA SABER QUE FORMATO IMPRIMIR
+				     		formato = _xmlImpSegMs.Table[n].CERTIFICADO; // FORMATO QUE SE DEBE DE IMPRIMIR
 				     
 				            if(cdgpms != ""){
    								infoTipoProd = "&tipo=" + cdgpms;

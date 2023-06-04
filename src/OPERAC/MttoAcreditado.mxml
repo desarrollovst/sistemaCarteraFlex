@@ -97,7 +97,7 @@
 						var id:String = "&id=19";
 						var codAcred:String = "&acred=" + acred;
 						var usuario:String = "&usuario=" + global.obtenerUsuario();
-						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 						var tipo:String = "&tipo=CC";
 						
 						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo;					

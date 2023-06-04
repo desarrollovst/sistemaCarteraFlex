@@ -75,7 +75,7 @@
 					
 					if(rep != "-1"){
 						var c:Cookie = new Cookie;
-						c.crearCookie(global.obtenerUsuario(), Application.application.lblUser.text);
+						c.crearCookie(global.obtenerUsuario(), global.obtenerNombreUsuario());
 						var consulta:String = global.urlIncI;
 						var id:String = "&id=" + rep;
 						var mes:String = "&mes=" + cbxMes.selectedItem.id;
@@ -104,7 +104,7 @@
 					
 					if(rep != "-1"){
 						var c:Cookie = new Cookie;
-						c.crearCookie(global.obtenerUsuario(), Application.application.lblUser.text);
+						c.crearCookie(global.obtenerUsuario(), global.obtenerNombreUsuario());
 						var consulta:String = global.urlIncI;
 						var id:String = "&id=" + "2";
 						var fecha:String = "&fe=" + global.obtenerFechaSistema();

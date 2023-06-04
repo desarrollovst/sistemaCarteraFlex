@@ -41,7 +41,7 @@
 						var consulta:String;
 						var id:String = "&id=" + rep;
 						var usuario:String = "&usuario=" + global.obtenerUsuario();
-						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 						var region:String = "&region=" + ctrlFiltro.obtieneRegion();
 						var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
 						var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();

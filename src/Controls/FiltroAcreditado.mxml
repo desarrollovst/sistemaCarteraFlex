@@ -49,7 +49,7 @@
 					var id:String = "&id=" + rep;
 					var acred:String = "&acred=" + txtAcred.text;
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
-					var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario;
 					Application.application.muestraPdf(consulta);
 				}

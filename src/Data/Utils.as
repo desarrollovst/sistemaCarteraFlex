@@ -10,6 +10,7 @@ package Data
 	public class Utils
 	{
 		public var strWsdl:String;
+		public var strWsdlAdmin:String;
 		public var strWsMS:String;
 		public var strWsCat:String;
 		public var strWsCatCap:String;
@@ -23,6 +24,7 @@ package Data
 	
 		public function Utils(){
 			var xmlL:XMLList = new XMLList();
+			var xmlAdmin:XMLList = new XMLList();
 			var xmlMS:XMLList = new XMLList();
 			var xmlCat:XMLList = new XMLList();
 			var xmlCatCap:XMLList = new XMLList();
@@ -31,6 +33,7 @@ package Data
 			var xmlAdCred:XMLList = new XMLList();
 			xmlResult = Application.application.wsStr;
 			xmlL = xmlResult.child("wsdl");
+			xmlAdmin = xmlResult.child("wsdlAdmin");
 			xmlMS = xmlResult.child("wsdlReg");
 			xmlCat = xmlResult.child("wsdlCat");
 			xmlCatCap = xmlResult.child("wsdlCatCap");
@@ -39,6 +42,7 @@ package Data
 			xmlAdCred = xmlAdCred.child("wsdlAdCred");
 			
 			strWsdl = xmlL.toString();
+			strWsdlAdmin = xmlAdmin.toString();
 			strWsMS = xmlMS.toString();
 			strWsCat = xmlCat.toString();
 			strWsCatCap = xmlCatCap.toString();
@@ -52,6 +56,13 @@ package Data
 			ws.loadWSDL();	
 			ws.addEventListener(FaultEvent.FAULT, wsFault);						
 			return ws;		
+		}
+		
+		public function initWsAdmin(ws:WebService):WebService{
+			ws.wsdl = this.strWsdlAdmin;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);						
+			return ws;
 		}
 		
 		public function initWsMS(ws:WebService):WebService{			

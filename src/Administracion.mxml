@@ -145,7 +145,6 @@
 		import Data.Globales;
 		import Data.Utils;
 		import Data.Modulos;
-		import Data.md5;
 		import flash.utils.getDefinitionByName;
 		import flash.external.ExternalInterface;
 		import PRINCIPAL.*;
@@ -178,6 +177,7 @@
 		public var URL:String;
 		public var _Current_Fecha:Date;
 		public var U_ID:String;
+		public var NOM_U:String;
 		public var S_ID:String;
 		public var SUC_ID:String;
 		public var cadPerfil:String;
@@ -193,6 +193,7 @@
         public var _Current_Mod_Id:String;
         private var du:Utils;
         private var global:Globales;
+        private var titulo:String;
         private var mod:Modulos;
         private var fecUltAcceso:Date;
         private var loading:pLoading;
@@ -216,10 +217,10 @@
 						txtUsr.text = "";
 						txtPwd.text = "";
 						txtUsr.setFocus();
-						Alert.show("Proceso finalizado exitosamente.","Mantenimiento de Usuario",4,null,null,global.iInfo);
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 					}
 					else
-						Alert.show(res.substr(2, res.length - 1),"Mantenimiento de Usuario",4,null,null,global.iAlert);		
+						Alert.show(res.substr(2, res.length - 1),titulo,4,null,null,global.iAlert);		
 																		
 					du.rCursor();
 					du.closeWs(ws);												
@@ -253,6 +254,7 @@
 		
 		private function initApp():void{				
 			txtUsr.setFocus();
+			titulo = "Mantenimiento de Usuario";
 			httpService.url = "Config.xml";
             httpService.send();
             ws = new WebService();
@@ -334,6 +336,8 @@
 							}
 							
 							U_ID = usrInfo.Table[0].CODIGO;
+							NOM_U = usrInfo.Table[0].NOMBREC;
+							
 							var t:Date = global.convCadenaFecha(usrInfo.Table[0].FECHA);
 						    _Current_Fecha = t;
 							fecUltAcceso = usrInfo.Table[0].FULTACCESO.toString() != ""? global.convCadenaFecha(usrInfo.Table[0].FULTACCESO): null;
@@ -344,7 +348,7 @@
 								txtPwdAnt.setFocus();
 								var ingreso:String = fecUltAcceso != null? "\n\nÚltimo acceso al sistema " + global.formatoFecha(fecUltAcceso)+ "." : "";
 								var est:String = "\n\nIntroduzca una contraseña de 8 a 12 caracteres, que al menos tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico";
-								Alert.show("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est,"Mantenimiento de Usuario",4,null,null,global.iAlert);								
+								Alert.show("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est, titulo, 4, null, null, global.iAlert);								
 								return;	
 							}
 							
@@ -354,7 +358,7 @@
 							
 							activarTimeout();
 					
-						    lblUser.text = usrInfo.Table[0].NOMBREC;
+						    lblUser.text = NOM_U;
 						    lblSucursal.text = usrInfo.Table[0].S_D;
 						    lblFecha.text = global.formatoFecha(t);
 						    
@@ -621,28 +625,28 @@
 		
 		private function validaMod():Boolean{
 			if(txtPwdAnt.text == ""){
-				Alert.show("Debe capturar la contraseña anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe capturar la contraseña anterior.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text == ""){
-				Alert.show("Debe capturar la nueva contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe capturar la nueva contraseña.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtConfPwd.text == ""){
-				Alert.show("Debe capturar la confirmación de contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe capturar la confirmación de contraseña.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text != txtConfPwd.text){
-				Alert.show("La nueva contraseña no coincide con su confirmación.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("La nueva contraseña no coincide con su confirmación.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text == txtPwdAnt.text){
-				Alert.show("Debe capturar una nueva contraseña diferente de la anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe capturar una nueva contraseña diferente de la anterior.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			var arrayResult:Array = Validator.validateAll([vPass]);
             if(arrayResult.length > 0){
-                Alert.show("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico","Mantenimiento de Usuario",4,null,null,global.iAlert);
+                Alert.show("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico",titulo,4,null,null,global.iAlert);
                 return false;
             }
 			return true;

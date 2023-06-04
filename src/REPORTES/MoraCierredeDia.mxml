@@ -150,7 +150,7 @@
 						}
 					});
 					wsMS.getRepPagosNoRecibidosDia.send(comFiltroAsesor.dtfFecha.text, "2", comFiltroAsesor.tipoCart.selectedValue.toString(), global.obtenerUsuario(), 
-													    Application.application.lblUser.text, comFiltroAsesor.cboRegion.selectedItem.codigo, 
+													    global.obtenerNombreUsuario(), comFiltroAsesor.cboRegion.selectedItem.codigo, 
 													    comFiltroAsesor.cboCoord.selectedItem.codigo, comFiltroAsesor.cboAsesor.selectedItem.codigo);	
 				}
 			}			

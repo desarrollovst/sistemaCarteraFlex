@@ -120,7 +120,7 @@
 											  Number(chkSitTes.selected), Number(chkSitSaldo.selected), 
 											  Number(chkSitLiq.selected), Number(chkSitDev.selected),   
 										      cartVig, cartVenc, cartRest, cartCast, global.obtenerUsuario(),
-										      Application.application.lblUser.text, ctrlFiltro.cboRegion.selectedItem.codigo,
+										      global.obtenerNombreUsuario(), ctrlFiltro.cboRegion.selectedItem.codigo,
 										      ctrlFiltro.cboSucursal.selectedItem.codigo, ctrlFiltro.cboCoord.selectedItem.codigo, 
 										      ctrlFiltro.cboAsesor.selectedItem.codigo, cboTipoProd.selectedItem.id);	
 				}
