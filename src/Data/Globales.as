@@ -4,9 +4,9 @@ package Data
 	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
+	import mx.controls.dataGridClasses.DataGridColumn;
 	import mx.controls.DateField;
 	import mx.controls.TextInput;
-	import mx.controls.dataGridClasses.DataGridColumn;
 	import mx.core.Application;
 	import mx.events.ValidationResultEvent;
 	import mx.formatters.CurrencyFormatter;
