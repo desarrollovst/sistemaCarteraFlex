@@ -404,6 +404,25 @@ package Data
         	return fec;
         }
         
+        public function permisosConsBuroProsp(perfil:Array):Boolean{
+			for(var i:int = 0; i < perfil.length; i++){
+				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC"
+				|| perfil[i].toString() == "AMOCA"){
+					return true;	
+				}
+			}
+			return false;
+		}
+		
+		public function permisosModProsp(perfil:Array):Boolean{
+			for(var i:int = 0; i < perfil.length; i++){
+				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM"
+				|| perfil[i].toString() == "AMOCA")
+					return true;	
+			}
+			return false;
+		}
+        
 		public function reemplazaVocAcentos(cadena:String):String{
 			var myPattern:RegExp = /á/g;
 			cadena = cadena.replace(myPattern, "a");

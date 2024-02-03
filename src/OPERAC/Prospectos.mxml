@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%"
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" >
+	
+	<!--Componente que permite observar el listado de clientes individuales-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+
+			public var dPermisos:XML = new XML();	
+			public var _xmlProsp:XML = new XML();
+			
+			private var du:Utils;
+			private var global:Globales;
+			public var wsMS:WebService;	
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionProsp:int;
+			public var indProsp:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public var comMttoFecha:MttoSelFecha;
+			//public var comMttoBusq:MttoBusqProsp;
+			
+			public function activarContProsp(band:Boolean):void{
+				txtCodProsp.editable = band;
+				txtPaterno.editable = band;
+				txtMaterno.editable = band
+				btnBuscar.enabled = band;
+				if(alta == true)
+					btnAgregar.enabled = band;
+			}
+			
+			public function activarContModProsp(band:Boolean):void{
+				if(edicion == true)	
+					btnEditar.enabled = band;
+			}
+			
+			public function actualizarProsp(event:Event):void{
+				buscarProsp();
+			}
+			
+			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
+			//DE BUSQUEDA SELECCIONADOS
+			public function buscarProsp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodProsp.text != "" || txtPaterno.text != "" || txtMaterno.text != ""){
+					btnBuscar.setFocus();
+					dgProsp.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlProsp = new XML(evt.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if(_xmlProsp.elements().length() > 0){
+							dgProsp.dataProvider = _xmlProsp.Table;
+						}
+						seleccionaProsp();
+					});
+					params[0] = global.obtenerUsuario();
+					params[1] = txtCodProsp.text; 
+					params[2] = txtPaterno.text;
+					params[3] = txtMaterno.text;
+					wsCat.getInfoAcred.send(13, params);
+				}
+			}
+
+			public function eliminarProsp(event:MouseEvent):void{
+				var fechaBaja:String = comMttoFecha.dtfFecha.text;
+				PopUpManager.removePopUp(comMttoFecha);  
+				var prosp:String = dgProsp.selectedItem.CODIGO;
+				initConexion();
+				du.sCursor();
+				global.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setEliminaProsp);
+				//wsMS.setEliminaAcred.send(global.obtenerUsuario(), grupo, acred, fechaBaja);
+			}
+			
+			public function iniVar():void{
+				this.indProsp = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiarContProsp():void{
+				txtCodProsp.text = "";
+				txtPaterno.text = "";
+				txtMaterno.text = "";
+			}
+			
+			public function manejadorEliminarProsp(e:CloseEvent):void{
+				if(e.detail == Alert.YES){
+					var prosp:String = dgProsp.selectedItem.CODIGO;
+			    	initConexion();
+					du.sCursor();
+					global.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaProsp);
+					//wsMS.setEliminaAcred.send(global.obtenerUsuario(), grupo, acred);
+			    } 
+			}
+			
+			public function mostrarBaja():void{
+				var fec:Date;
+				if (dgProsp.selectedItem.ESTATUS != "Baja"){	
+					comMttoFecha = new MttoSelFecha();
+					comMttoFecha = MttoSelFecha(PopUpManager.createPopUp(this,MttoSelFecha,true));
+					comMttoFecha.title = "Fecha de Baja";
+					comMttoFecha.lblFecha.text="Fecha de Baja del Cliente"; 
+					fec = global.obtenerFechaSistema();
+					comMttoFecha.fechaMin = new Date(fec.fullYear,fec.month,fec.date - 1);
+					comMttoFecha.fechaMax = new Date(fec.fullYear,fec.month,fec.date - 1);
+					comMttoFecha.edita = false;
+					//PARAMETRO IGUAL A 1 PERMITE OMITIR EL DATO
+					comMttoFecha.init(1);
+					comMttoFecha.btnAceptar.addEventListener(MouseEvent.CLICK, eliminarProsp);
+					PopUpManager.centerPopUp(comMttoFecha);	
+				}
+				else
+					Alert.show("El cliente ya está dado de baja","Prospectos", 4,null,null,global.iInfo);
+			}
+			
+			public function mostrarFormProsp(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var comMttoProsp:MttoProspecto = new MttoProspecto();
+					switch(tipo){
+						case 1: 
+							comMttoProsp = MttoProspecto(PopUpManager.createPopUp(this,MttoProspecto,true)); 
+							PopUpManager.centerPopUp(comMttoProsp);
+							comMttoProsp.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProsp);
+							comMttoProsp.registraInfoProsp();
+							break;
+						case 2: 
+							if (dgProsp.selectedIndex >= 0){
+								accionProsp = tipo;
+								comMttoProsp = MttoProspecto(PopUpManager.createPopUp(this,MttoProspecto,true)); 
+								PopUpManager.centerPopUp(comMttoProsp);
+								var indice:int = dgProsp.selectedIndex;
+								iniVar();
+								this.indProsp = indice;
+								this.vScroll = dgProsp.verticalScrollPosition;
+								var prosp:String = dgProsp.selectedItem.CODIGO;
+								comMttoProsp.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProsp);
+								comMttoProsp.cargaInfoProsp(prosp);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Prospecto","Mantenimiento de Prospecto",4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var ws:WebService = new WebService();
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosModProsp(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+//					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaProsp():void{
+				if (dgProsp.selectedIndex >= 0){
+					activarContModProsp(true);
+				}
+				else{
+					activarContModProsp(false);
+				}
+			}
+			
+			private function setEliminaProsp(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				global.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaProsp);
+				var res:String = new String(event.result.toString());
+				//if (res.substr(0,1) == "1")
+					//buscarListaAcred(1);
+				//else
+				//	Alert.show(res.substr(2,res.length-1), "Mantenimiento de Acreditado",4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="860" height="510">
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="820.5" height="400" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgProsp" x="10" y="10" width="798.5" height="378"
+				sortableColumns="true" verticalScrollPolicy="on" click="seleccionaProsp()"  
+				doubleClickEnabled="true" doubleClick="mostrarFormProsp(2)" horizontalScrollPolicy="auto"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="PROSPECTO" dataField="NOMPR" width="250"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>
+					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" width="300" fontSize="12" fontWeight="bold" fontStyle="italic" text="PROSPECTOS"/>
+		<mx:Canvas x="679" y="39" width="160" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarProsp()" toolTip="Buscar Prospectos" width="40"/>
+			<mx:Button id="btnAgregar" x="107" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormProsp(1)" toolTip="Registrar Prospecto" width="40"/>
+			<mx:Button id="btnEditar" x="59" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormProsp(2)" toolTip="Editar Prospecto" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="45.5" y="39" width="625.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodProsp" x="8" y="8" text="CODIGO:"/>
+			<mx:Label id="lblPaterno" x="127" y="8" text="APELLIDO PATERNO:"/>
+			<mx:Label id="lblMaterno" x="367" y="8" text="APELLIDO MATERNO:"/>
+			<mx:TextInput id="txtPaterno" x="247" y="5" width="110" enter="buscarProsp()" maxChars="50"/>
+			<mx:TextInput id="txtMaterno" x="491" y="5" width="110" enter="buscarProsp()" maxChars="50"/>
+			<mx:TextInput id="txtCodProsp" x="62" y="5" width="56" enter="buscarProsp()" maxChars="6" restrict="0-9"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

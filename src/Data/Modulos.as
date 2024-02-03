@@ -380,6 +380,7 @@ package Data
 		public var frm_347:PagosEsperadosSemanales;
 		
 		public var frm_348:ReporteSaldos;
+		public var frm_349:Prospectos;
 
 		public function Modulos()
 		{
