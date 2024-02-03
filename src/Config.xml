@@ -3,6 +3,7 @@
 	<!--<wsdl>http://vensumat.theworkpc.com/administracion_vst/Process_Service/ES_Process_Service.asmx?wsdl</wsdl>-->
 	<wsdl>http://localhost/administracion/seguridad/Process_Service/ES_Process_Service.asmx?wsdl</wsdl>
 	<wsdlAdmin>http://localhost/administracion/seguridad/Admin_Sistema/Admin_Sistema.asmx?wsdl</wsdlAdmin>
+	<!--<wsdlAdmin>http://vensumat.theworkpc.com/administracion_vst/Admin_Sistema/Admin_Sistema.asmx?wsdl</wsdlAdmin>-->
 	
 	<wsdlServ>http://localhost/ws_servicios/registro.asmx?wsdl</wsdlServ>
 	<wsdlReg>http://localhost/ws_servicios/service.asmx?wsdl</wsdlReg>

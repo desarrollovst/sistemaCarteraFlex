@@ -283,7 +283,6 @@
 			}
 			
 			public function formateaColonia():void{
-				var i:int;
 				var cont:int = _xmlColonia.elements().length();
 				var item:Array = new Array();
 				var oItem:Object;
@@ -293,7 +292,7 @@
 				colObj.removeAll();
 				colObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlColonia.Table[i].NOMBRE;
 					oItem.codigo = _xmlColonia.Table[i].CODIGO;
@@ -304,7 +303,6 @@
 			}
 			
 			public function formateaEntidad():void{
-				var i:int;
 				var cont:int = _xmlEntidad.elements().length();
 				var item:Array = new Array();
 				var oItem:Object;
@@ -314,7 +312,7 @@
 				entObj.removeAll();
 				entObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlEntidad.Table[i].NOMBRE;
 					oItem.codigo = _xmlEntidad.Table[i].CODIGO;
@@ -324,7 +322,6 @@
 			}
 			
 			public function formateaLocalidad():void{
-				var i:int;
 				var cont:int = _xmlLocalidad.elements().length();
 				var item:Array = new Array();
 				var oItem:Object;
@@ -334,7 +331,7 @@
 				locObj.removeAll();
 				locObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlLocalidad.Table[i].NOMBRE;
 					oItem.codigo = _xmlLocalidad.Table[i].CODIGO;
@@ -344,7 +341,6 @@
 			}
 			
 			public function formateaMunicipio():void{
-				var i:int;
 				var cont:int = _xmlMunicipio.elements().length();
 				var item:Array = new Array();
 				var oItem:Object;
@@ -354,7 +350,7 @@
 				munObj.removeAll();
 				munObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlMunicipio.Table[i].NOMBRE;
 					oItem.codigo = _xmlMunicipio.Table[i].CODIGO;

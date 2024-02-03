@@ -367,6 +367,14 @@ package Data
 			return Application.application._Current_Fecha;
 		}
 		
+		public function obtenerNombreUsuario():String{
+        	return Application.application.NOM_U;
+        }
+        
+        public function obtenerUsuario():String{
+        	return Application.application.U_ID;
+        }
+		
 		//funcion que permite obtener el indice del valor que se esta buscando en la coleccion
 		public function obtieneIndice(array:ArrayCollection, prop:String, valor:String):Number{
             for (var i:Number = 0; i < array.length; i++){
@@ -396,14 +404,6 @@ package Data
         	return fec;
         }
         
-        public function obtenerNombreUsuario():String{
-        	return Application.application.NOM_U;
-        }
-        
-        public function obtenerUsuario():String{
-        	return Application.application.U_ID;
-        }
-	
 		public function reemplazaVocAcentos(cadena:String):String{
 			var myPattern:RegExp = /á/g;
 			cadena = cadena.replace(myPattern, "a");

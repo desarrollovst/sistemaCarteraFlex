@@ -206,11 +206,14 @@
 				fechaBaja = comMttoBaja.obtieneFecha();
 				causa = comMttoBaja.obtieneCausa();
 				PopUpManager.removePopUp(comMttoBaja);
+				
 				var grupo:String = dgGrupos.selectedItem.CODIGO;  
 				var acred:String = dgAcred.selectedItem.CODIGO;
+				
 				initConexion();
 				du.sCursor();
 				global.bloquear();
+				
 				wsMS.addEventListener(ResultEvent.RESULT, setBajaAcred);
 				wsMS.setBajaAcred.send(global.obtenerUsuario(), grupo, acred, fechaBaja, causa);
 			}
@@ -383,13 +386,13 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (permiso.permisosModGrupos(Application.application.PERFIL_ID)){
+								/*if (permiso.permisosModGrupos(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
-								}
+								}*/
 								break;	
-							/*case "B":
+							case "B":
 								borrado = true;
 								break;
 							case "I":
@@ -397,7 +400,7 @@
 								break;
 							case "E":
 								edicion = true;
-								break;*/
+								break;
 						}
 					}
 					btnAgregar.enabled = alta;
@@ -449,8 +452,10 @@
 				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setBajaAcred);
 				var res:String = new String(event.result.toString());
-				if (res.substr(0,1) == "1")
+				if (res.substr(0,1) == "1"){
+					Alert.show(res.substr(2,res.length-1),tituloAcred,4,null,null,global.iInfo);
 					buscarListaAcred(1);
+				}
 				else
 					Alert.show(res.substr(2,res.length-1),tituloAcred,4,null,null,global.iAlert);
 			}

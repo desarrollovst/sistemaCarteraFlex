@@ -227,7 +227,6 @@
 					if(Number(txtEnano.text) <= 0)
 						txtEnano.text = "";						
 					var invalidArray:Array = Validator.validateAll([cantidadV]);
-					var i:int;
 					
 					if(invalidArray.length == 0)
 						return true;

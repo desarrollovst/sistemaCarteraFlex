@@ -5,20 +5,20 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.controls.DataGrid;
 			import Data.ExcelExportXls;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;	
-			import mx.managers.PopUpManager;
-			import mx.formatters.NumberFormatter;
 			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
 			private var _xmlRep:XML = new XML();
@@ -40,7 +40,7 @@
 			}
 		
 			public function generar():void{
-				if(valida() == true){
+				if(valida()){
 					var tipo:int;
 					var tipoFecha:int;
 					initConexion();
@@ -206,6 +206,7 @@
 			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL"/>
 			<mx:DataGridColumn headerText="INTERES" dataField="INTERES"/>
 			<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>
+			<mx:DataGridColumn headerText="SEGURO" dataField="SEGURO"/>
 			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
 			<!--<mx:DataGridColumn headerText="CDGCB" dataField="CDGCB"/>-->
 			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA"/>

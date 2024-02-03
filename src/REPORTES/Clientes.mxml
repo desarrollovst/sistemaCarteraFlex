@@ -12,14 +12,14 @@
 				<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="15" y="42" width="820" 
 					visible="true" height="229" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
 					<Data:columns>
-						<mx:DataGridColumn headerText="REGION" dataField="COD_REG" width="90"/>
+						<!--<mx:DataGridColumn headerText="REGION" dataField="COD_REG" width="90"/>-->
 						<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION" width="150"/>
-						<mx:DataGridColumn headerText="SUCURSAL" dataField="COD_SUC" width="80"/>
+						<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="COD_SUC" width="80"/>-->
 						<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL" width="150"/>
 						<mx:DataGridColumn headerText="GRUPO" dataField="COD_GPO" width="70"/>
 						<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="180"/>
 						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
-						<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>
+						<!--<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>-->
 						<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR" width="180"/>
 						<mx:DataGridColumn headerText="CLIENTE" dataField="COD_CTE" width="80"/>
 						<mx:DataGridColumn headerText="PATERNO" dataField="PATERNO" width="110"/>
@@ -101,12 +101,12 @@
 
 			private var _xmlRep:XML =  new XML();
 			
+			private var du:Utils;
+			private var global:Globales;
 			public var wsMS:WebService;
-			public var du:Utils;
 			public var titulo:String;
 			public var fecha:String;
-			private var global:Globales;
-						
+			
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls();
 				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecha);		
@@ -115,15 +115,41 @@
 			private function generar(event:Event):void{
 				if(comFiltroRepAsesor.valida()){	
 					var region:String;
-					var coord:String;
+					var sucursal:String;
 					var asesor:String;
 					
 					region = comFiltroRepAsesor.obtieneRegion();
-					coord = comFiltroRepAsesor.obtieneSucursal();
+					sucursal = comFiltroRepAsesor.obtieneSucursal();
 					asesor = comFiltroRepAsesor.obtieneAsesor();
-					fecha = comFiltroRepAsesor.dtfFecha.text;
+					fecha = comFiltroRepAsesor.obtenerFecha();
+					
+					initConexion();
+					du.sCursor();
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						global.desbloquear();
+						
+						var cont:Number = _xmlRep.elements().length() - 1;
+						
+						if(_xmlRep.elements().length() > 0){
+							currentState = "resultado";
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							//lblTotal.text = "";
+						}	
+					});
+					wsMS.getRepClientes.send(region, sucursal, asesor, fecha);
 
-					var consulta:String = global.urlInf;
+					/* var consulta:String = global.urlInf;
 					var id:String = "&id=17";
 					region = "&re=" + region;
 					coord = "&co=" + coord;
@@ -132,7 +158,7 @@
 					consulta = consulta + id + region + coord + asesor + fecha;
 										
 					var request:URLRequest = new URLRequest(consulta); 
-					navigateToURL(request,"_blank");
+					navigateToURL(request,"_blank"); */
 				}
 			}
 			

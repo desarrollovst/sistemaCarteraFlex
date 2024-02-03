@@ -51,6 +51,7 @@ package Data
 		public var frm_27:SolicituddeCredito;
 		public var frm_36:ControlSemanalImpreso;
 		public var frm_38:CierredeDia;
+		public var frm_39:REPORTES.SaldosalCierre;
 		public var frm_40:SeguimientoMensual;
 		public var frm_46:OrdenesdePagoenVentanilla;
 		public var frm_47:DispersionReferenciada;
@@ -79,7 +80,7 @@ package Data
 		public var frm_75:InstrumentosdeCredito;
 		public var frm_76:ChequesImpresos;
 		public var frm_77:ConciliaciondeGarantiaLiquida;
-		public var frm_78:SaldosalCierre;
+		public var frm_78:ReporteSaldos;
 		public var frm_79:AjustesManuales;
 		public var frm_80:RegistrodeAjustes;
 		public var frm_81:InteresDevengado;
@@ -376,6 +377,9 @@ package Data
 		public var frm_344:ReasignaciondeCartera;
 		public var frm_345:ConciliaciondeMicroseguros;
 		public var frm_346:TransferenciasRegistradas;
+		public var frm_347:PagosEsperadosSemanales;
+		
+		public var frm_348:ReporteSaldos;
 
 		public function Modulos()
 		{

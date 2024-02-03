@@ -75,7 +75,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlDestino.Table[i].CODIGO.toString();	
 					oItem.nombre = _xmlDestino.Table[i].DESCRIPCION;
@@ -94,7 +94,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
 					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
@@ -113,7 +113,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlTipoPers.Table[i].CODIGO.toString();	
 					oItem.nombre = _xmlTipoPers.Table[i].DESCRIPCION;

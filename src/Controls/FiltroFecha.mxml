@@ -16,12 +16,11 @@
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;	
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
-			public var wsMS:WebService;
 			public var rep:String;
 			public var titulo:String;
 			private var du:Utils;
@@ -64,14 +63,12 @@
 				lblTitulo.text = titulo.toUpperCase();
 				dtfFecha.selectableRange = {rangeStart: global.convCadenaFecha(fechaMin), rangeEnd: global.convCadenaFecha(fechaMax)};
 				limpiar();
-			}			
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
 			}	
-		
+			
+			public function obtenerFecha():String{
+				return dtfFecha.text;
+			}		
+			
 			public function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();

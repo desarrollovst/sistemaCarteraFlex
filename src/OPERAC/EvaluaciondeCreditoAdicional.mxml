@@ -251,13 +251,8 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (permiso.permisosEvSolic(Application.application.PERFIL_ID)){
-									borrado = true;
-									alta = true;
-									edicion = true;
-								}
 								break;	
-							/*case "B":
+							case "B":
 								borrado = true;
 								break;
 							case "I":
@@ -265,7 +260,7 @@
 								break;
 							case "E":
 								edicion = true;
-								break;*/
+								break;
 						}
 					}
 					du.rCursor();

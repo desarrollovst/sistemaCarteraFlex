@@ -418,8 +418,8 @@
 	<mx:Button id="btnCancelar" x="462" y="478" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="414" y="478" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
 	<mx:Canvas x="101" y="7" width="310" height="37" styleName="canvasMod">
-		<mx:Label x="13" y="7" text="Grupo Solidario:"/>
-		<mx:TextInput id="txtGrupo" x="99" y="5" width="199" editable="false"/>
+		<mx:Label x="31.5" y="7" text="Grupo:"/>
+		<mx:TextInput id="txtGrupo" x="77.5" y="6" width="199" editable="false"/>
 	</mx:Canvas>
 	<mx:Image x="430" y="10" width="57" height="57" scaleContent="true">
 		<mx:source>assets/images/user2.png</mx:source>

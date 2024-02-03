@@ -64,6 +64,7 @@
 			public var fecMax:Date;
 			private var vResult:ValidationResultEvent;
 			
+			//Ejemplo de metodo sincrono
 			private function devuelveEntidad(callback:Function):void{
 				var listener:Function = function(e:Event):void{								
 					try{
@@ -273,6 +274,7 @@
 						
 						//devuelve la entidad federativa del acreditado
 						//el proceso espera a que el service devuelva la informacion
+						//ejemplo de proceso sincrono
 						devuelveEntidad(function(e:Event):void {
 							cont = 0;
 							cont = entFedObj.length;

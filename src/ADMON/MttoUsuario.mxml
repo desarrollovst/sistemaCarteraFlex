@@ -59,6 +59,7 @@
 		public var info:DatosPer;		
 		public var tipoAccion:int;
 		public var texto:String;
+		private var titulo:String;
 		private var global:Globales;
 		private var du:Utils;
 		private var wsMS:WebService;
@@ -169,7 +170,7 @@
 			oItem.nombre = "--Seleccionar--";
 			item.push(oItem);
 			
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				oItem = new Object();
 				oItem.id = _xmlCoord.Table[i].CODIGO;	
 				oItem.nombre = _xmlCoord.Table[i].NOMBRE;
@@ -271,12 +272,11 @@
 		}
 			
 		private function formateaPerfil():void{
-			var i:int;
 			var cont:int = _xmlPerfil.elements().length();
 			var oItem:Object;
 			var item:Array = new Array;
 			
-			for (i = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				oItem = new Object();
 				oItem.estatus = false; 
 				oItem.id = _xmlPerfil.Table[i].CODIGO;	
@@ -335,11 +335,12 @@
 			puestoObj = new ArrayCollection(item);
 		}
 						
-		private function guardar():void{
-			if(ValidarForm() == false)
+		/*private function guardar():void{
+			var wsAdmin:WebService = new WebService;
+			
+			if(!ValidarForm())
 				return;
 			
-			var i:int;
 			var p_usuario:Array = new Array(18);
 			var x:String = UsrInfo.toString();
 			var sSucursales:String = "";
@@ -364,7 +365,7 @@
 			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
 			perfil.filterFunction = filtraPerfil;
 			perfil.refresh();
-			for(i = 0; i < perfil.length; i++){
+			for(var i:int = 0; i < perfil.length; i++){
 				sPerfil += perfil[i].id + "|"; 	
 			}
 			sPerfil = sPerfil.substr(0,sPerfil.length-1);
@@ -372,41 +373,32 @@
 			perfil.refresh();
 			
 			p_usuario[0] = txtAPaterno.text;
-			if(txtAMaterno.text != "")
-				p_usuario[1] = txtAMaterno.text;
-			else
-				p_usuario[1] = "-";
+			p_usuario[1] = txtAMaterno.text;
 			p_usuario[2] = txtNombre.text;
-			if(txtSegNombre.text != "")
-				p_usuario[3] = txtSegNombre.text;
-			else
-				p_usuario[3] = "-";
+			p_usuario[3] = txtSegNombre.text;
 			p_usuario[4] = txtUsuario.text;
 			p_usuario[5] = txtPwd.text;	
 			p_usuario[6] = sexo.selectedValue.toString();
 			p_usuario[7] = cboNivelEsc.selectedItem.id.toString();
-			p_usuario[8] = (txtCalle.text != "" ? txtCalle.text : "-");	
-			if(txtTelefono.text != "")
-				p_usuario[9] = txtTelefono.text;
-			else
-				p_usuario[9] = "-";
-			p_usuario[10] = info.cdgEntFed != null && info.cdgEntFed.toString() != "" ? info.cdgEntFed : "-";
-			p_usuario[11] = info.cdgMun != null && info.cdgMun.toString() != "" ? info.cdgMun : "-";
-			p_usuario[12] = info.cdgLoc != null && info.cdgLoc.toString() != "" ? info.cdgLoc : "-";
-			p_usuario[13] = info.cdgCol != null && info.cdgCol.toString() != "" ? info.cdgCol : "-";		
-			p_usuario[14] = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "-";
+			p_usuario[8] = txtCalle.text;	
+			p_usuario[9] = txtTelefono.text;
+			p_usuario[10] = info.cdgEntFed != null && info.cdgEntFed.toString() != "" ? info.cdgEntFed : "";
+			p_usuario[11] = info.cdgMun != null && info.cdgMun.toString() != "" ? info.cdgMun : "";
+			p_usuario[12] = info.cdgLoc != null && info.cdgLoc.toString() != "" ? info.cdgLoc : "";
+			p_usuario[13] = info.cdgCol != null && info.cdgCol.toString() != "" ? info.cdgCol : "";		
+			p_usuario[14] = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "";
 			p_usuario[15] = cboPuesto.selectedItem.id.toString();
-			p_usuario[16] = sPerfil != "" ? sPerfil : "-"; //cboPerfil.selectedItem.id.toString() != "" ? cboPerfil.selectedItem.id.toString() : "-";	
-			p_usuario[17] = sSucursales != "" ? sSucursales : "-";
+			p_usuario[16] = sPerfil;	
+			p_usuario[17] = sSucursales;
 			
 			if(chkActivo.selected == true)
 				p_usuario[18] = "S";
 			else 
 				p_usuario[18] = "N";
 			
-			p_usuario[19] = (txtEmail.text != "" ? txtEmail.text : "-");	
+			p_usuario[19] = txtEmail.text;	
 			p_usuario[20] = Number(txtSueldo.text);
-			p_usuario[21] = (dtfIngreso.text != "" ? dtfIngreso.text : "-");	
+			p_usuario[21] = dtfIngreso.text;	
 			
 			//Bloqueo de usuario
 			if(chkBloqueo.selected == true)
@@ -420,13 +412,15 @@
 			else
 				p_usuario[23] = "";
 				
-			ws = du.initWs(ws)
+			//du.initWsAdmin(wsAdmin);
+			du.initWs(wsAdmin);
 			du.sCursor();
-			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+			
+			du.ejecutaWsMethod(wsAdmin,function(evt:ResultEvent):void{
 				var res:String = evt.result.toString();
 				
 				du.rCursor();
-				du.closeWs(ws);
+				du.closeWs(wsAdmin);
 				
 				if(res.substr(0,1) == "1")
 					cerrar();
@@ -434,9 +428,108 @@
 					Alert.show("Error al guardar la información del usuario: " + res,"Mantenimiento de Usuario",4,null,null,global.iAlert);																			
 			});
 			if(tipoAccion == 1)
-				ws.ES_Admin_Usuarios.send(1, p_usuario);
+				wsAdmin.ES_Admin_Usuarios.send(1, p_usuario);
 			else
-				ws.ES_Admin_Usuarios.send(2, p_usuario);
+				wsAdmin.ES_Admin_Usuarios.send(2, p_usuario);
+		}*/
+		
+		private function guardar():void{
+			var wsAdmin:WebService = new WebService;
+			
+			if(!validarForm())
+				return;
+			
+			var p_usuario:Array = new Array(18);
+			var x:String = UsrInfo.toString();
+			var sSucursales:String = "";
+			var sPerfil:String = "";
+			var sucBase:String = "";
+			
+			if(cboCoord.selectedIndex > 0){
+				sucBase = cboCoord.selectedItem.id.toString();
+				sSucursales = sucBase + "|";
+			}
+				
+			try
+			{
+				for each(var a:XML in lstSucursales.selectedItems){
+					if(a.CODIGO.toString() != sucBase)
+						sSucursales += a.CODIGO.toString() + "|";
+				}
+				sSucursales = sSucursales.substr(0,sSucursales.length-1);
+			}catch(err:Error)
+			{
+				sSucursales = "";
+			}
+			
+			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
+			perfil.filterFunction = filtraPerfil;
+			perfil.refresh();
+			
+			for(var i:int = 0; i < perfil.length; i++){
+				sPerfil += perfil[i].id + "|"; 	
+			}
+			
+			sPerfil = sPerfil.substr(0,sPerfil.length-1);
+			perfil.filterFunction = null;
+			perfil.refresh();
+			
+			info.aPaterno = txtAPaterno.text;
+			info.aMaterno = txtAMaterno.text;
+			info.nombre = txtNombre.text;
+			info.segNombre = txtSegNombre.text;
+			info.usuario = txtUsuario.text;
+			info.pass = txtPwd.text;	
+			info.sexo = sexo.selectedValue != null? sexo.selectedValue.toString(): "";
+			info.cdgNivEsc = cboNivelEsc.selectedItem.id.toString();
+			info.calle = txtCalle.text;	
+			info.telefono = txtTelefono.text;
+			info.cdgEntFed = comEntGrid.obtieneCodigo();
+			info.cdgMun = comMunGrid.obtieneCodigo();
+			info.cdgLoc = comLocGrid.obtieneCodigo();
+			info.cdgCol = comColGrid.obtieneCodigo();
+			info.email = txtEmail.text;		
+			info.cdgSuc = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "";
+			info.cdgPuesto = cboPuesto.selectedItem.id.toString();
+			info.sueldo = Number(txtSueldo.text);
+			info.fenIng = dtfIngreso.text;
+			info.cdgPerfil = sPerfil;	
+			info.lstSuc = sSucursales;
+			
+			if(chkActivo.selected)
+				info.activo = "S";
+			else 
+				info.activo = "N";
+				
+			if(chkBloqueo.selected)
+				info.bloqueo = "S";
+			else 
+				info.bloqueo = "N";
+				
+			du.initWsAdmin(wsAdmin);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsAdmin, function(evt:ResultEvent):void{
+				var res:String = evt.result.toString();
+				
+				du.rCursor();
+				du.closeWs(wsAdmin);
+				
+				if(res.substr(0,1) == "1")
+					cerrar();
+				else
+					Alert.show("Error al guardar la información del usuario: " + res, titulo, 4, null, null, global.iAlert);																			
+			});
+			if(tipoAccion == 1)
+				wsAdmin.setAltaUsuario.send(info.aPaterno, info.aMaterno, info.nombre, info.segNombre, info.usuario, info.pass,
+                           		       		info.sexo, info.cdgNivEsc, info.calle, info.telefono, info.cdgEntFed, info.cdgMun, 
+                               		   		info.cdgLoc, info.cdgCol, info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc,
+                               		   		info.activo, info.email, info.sueldo, info.fenIng, info.bloqueo, info.cdgCrd);
+			else
+				wsAdmin.setCambioUsuario.send(info.aPaterno, info.aMaterno, info.nombre, info.segNombre, info.usuario, info.pass,
+                           		              info.sexo, info.cdgNivEsc, info.calle, info.telefono, info.cdgEntFed, info.cdgMun, 
+                               		     	  info.cdgLoc, info.cdgCol, info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc,
+                               		   	      info.activo, info.email, info.sueldo, info.fenIng, info.bloqueo, info.cdgCrd);
 		}
 
 		private function init():void{
@@ -447,6 +540,7 @@
 			
 			du = new Utils();
 			global = new Globales();
+			titulo = "Mantenimiento de Usuario";
 			ws = new WebService();
 			info = new DatosPer();
 			
@@ -509,7 +603,6 @@
 							else if(tipoAccion == 2){
 								llenaRegistros();			
 							
-
 								var p_usuario:Array = new Array();
 								p_usuario[0] = UsrInfo[0].CODIGO;
 		
@@ -594,7 +687,7 @@
 			txtSegNombre.text = UsrInfo[0].NOMBRE2;
 			sexo.selectedValue = UsrInfo[0].SEXO.toString();
 			txtCalle.text = UsrInfo[0].CALLE; 
-			txtTelefono.text = UsrInfo[0].TELEFONO;//Contiene informacion de Nomina
+			txtTelefono.text = UsrInfo[0].TELEFONO; //Contiene informacion de Nomina
 			txtEmail.text = UsrInfo[0].EMAIL;
 			txtSueldo.text = UsrInfo[0].SUELDO;
 			dtfIngreso.text = UsrInfo[0].ALTA;
@@ -781,50 +874,50 @@
 			comMunGrid.setFocus();
 		}		
 		
-		private function ValidarForm():Boolean{
+		private function validarForm():Boolean{
 			if(txtAPaterno.text == ''){
-				Alert.show("El campo apellido paterno es inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("El campo apellido paterno es inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtAMaterno.text == ''){
-				Alert.show("El campo apellido materno es inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("El campo apellido materno es inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtNombre.text == ''){
-				Alert.show("El campo nombre es inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("El campo nombre es inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}				
 			if(txtUsuario.text == ''){
-				Alert.show("El campo usuario es inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("El campo usuario es inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtPwd.text == ''){
-				Alert.show("El campo password es inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("El campo password es inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}			
 			if(cboPuesto.selectedItem.id == '0'){
-				Alert.show("Puesto de usuario inválido","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Puesto de usuario inválido",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboPuesto.selectedItem.reqSuc == true && cboCoord.selectedIndex == 0){
-				Alert.show("Debe seleccionar una Sucursal Base","Mantenimiento de Usuario",4,null,null,global.iAlert);					
+				Alert.show("Debe seleccionar una Sucursal Base",titulo,4,null,null,global.iAlert);					
 				return false;
 			}		
 			if(cboCoord.selectedIndex == 0 && lstSucursales.selectedItems.length == 0){
-				Alert.show("Debe seleccionar una Sucursal Base u Otras Sucursales","Mantenimiento de Usuario",4,null,null,global.iAlert);					
+				Alert.show("Debe seleccionar una Sucursal Base u Otras Sucursales",titulo,4,null,null,global.iAlert);					
 				return false;
 			}
 			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
 			perfil.filterFunction = filtraPerfil;
 			perfil.refresh();
 			if(perfil.length == 0){
-				Alert.show("Debe seleccionar al menos un Perfil de Usuario","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe seleccionar al menos un Perfil de Usuario",titulo,4,null,null,global.iAlert);
 				perfil.filterFunction = null;
 				perfil.refresh();					
 				return false;
 			}
 			if(dtfIngreso.text==""){
-				Alert.show("Debe capturar la fecha de ingreso del usuario","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				Alert.show("Debe capturar la fecha de ingreso del usuario",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;
@@ -917,12 +1010,12 @@
 				<mx:Label x="63" y="76" text="Puesto:"/>
 				<mx:Label x="14" y="172" text="Otras sucursales:"/>
 				<mx:Label text="Nómina:" x="61" y="12"/>
-				<mx:Label text="Nómina Jefe:" x="35" y="44" width="69"/>
+				<mx:Label text="Nómina Jefe:" x="37" y="43"/>
 				<mx:TextInput width="200" id="txtCalle" x="112" y="42"/>
 				<mx:TextInput width="200" id="txtTelefono" x="112" y="10"/>
-				<mx:ComboBox x="112" y="106" width="238" id="cboCoord" labelField="nombre" change="formateaCrd()"></mx:ComboBox>
-				<mx:ComboBox x="112" y="74" width="238" id="cboPuesto" labelField="nombre"></mx:ComboBox>
-				<mx:List x="114" y="170" width="236" height="136" labelField="NOMBRE" id="lstSucursales" allowMultipleSelection="true" ></mx:List>
+				<mx:ComboBox x="112" y="106" width="238" id="cboCoord" labelField="nombre" change="formateaCrd()"/>
+				<mx:ComboBox x="112" y="74" width="238" id="cboPuesto" labelField="nombre"/>
+				<mx:List x="114" y="170" width="236" height="136" labelField="NOMBRE" id="lstSucursales" allowMultipleSelection="true"/>
 				<mx:CheckBox id="chkActivo" x="114" y="377" label="Activo"/>
 				<mx:TextInput id="txtSueldo" x="114" y="313" width="92"/>
 				<mx:Label id="lblSueldo" x="65" y="315" text="Sueldo:"/>
@@ -930,7 +1023,7 @@
 				<mx:Label id="lblIngreso" x="29" y="347" text="Fecha Ingreso:"/>
 				<mx:CheckBox id="chkBloqueo" x="114" y="409" label="Bloqueado"/>
 				<mx:Label id="lblcrd" x="35" y="140" text="Coordinación:"/>
-				<mx:ComboBox x="112" y="138" width="238" id="cboCrd" labelField="nombre"></mx:ComboBox>
+				<mx:ComboBox x="112" y="138" width="238" id="cboCrd" labelField="nombre"/>
 			</mx:Canvas>
 		</mx:Canvas>
 		<mx:Canvas label="Perfiles" width="100%" height="100%">

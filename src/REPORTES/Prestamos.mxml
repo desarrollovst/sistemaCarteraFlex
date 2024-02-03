@@ -335,6 +335,8 @@
 				<mx:DataGridColumn headerText="NOMBRE GRUPO ANTERIOR" dataField="NOM_GRUPO_ANT"/>
 				<mx:DataGridColumn headerText="CICLO ANTERIOR" dataField="CICLO_ANT"/>		
 				<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NOMINA_ASESOR"/>
+				<mx:DataGridColumn headerText="REFERENCIA INS PAGO" dataField="REFINSPAG"/>
+				<mx:DataGridColumn headerText="REFERENCIA INS GARANTIA" dataField="REFINSGAR"/>
 			</mx:columns>
 		</mx:DataGrid>
 	<mx:Label x="18.05" y="477" text="Tipo de Producto" id="lblproducto"/>

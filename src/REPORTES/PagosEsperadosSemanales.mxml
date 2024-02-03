@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var fecIni:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}
+		
+			public function generar():void{
+				var wsRep:WebService = new WebService;
+				
+				global.bloquear();
+				du.initWsRep(wsRep);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					global.desbloquear();
+					du.closeWs(wsRep);
+					du.rCursor();
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+						
+					if(_xmlRep.elements().length() > 0){	
+						btnExportar.enabled = true;
+						dgReporte.dataProvider = _xmlRep.Table;
+						fecIni = dtfFecha.text;
+					}
+					else
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+				});
+				wsRep.getRepPagosEsperadosSemanales.send(dtfFecha.text, global.obtenerUsuario());	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Pagos Esperados Semanales";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				fec = global.obtenerFechaSistema();
+				if(fec.getDay() < 6){
+					if (fec.getDay() > 0)
+						dtfFecha.selectedDate = new Date(fec.fullYear,fec.month,fec.date - (fec.getDay() - 1));
+					else if (fec.getDay() == 0)
+						dtfFecha.selectedDate = new Date(fec.fullYear,fec.month,fec.date + 1);
+				}
+				else
+					dtfFecha.selectedDate = new Date(fec.fullYear,fec.month,fec.date + 2);
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:CurrencyFormatter id="numVal" decimalSeparatorFrom="." precision="2" thousandsSeparatorFrom="," currencySymbol="$"/>
+	
+	<mx:Label id="lblTitulo" x="18" y="10" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="140.04999" height="68.5" styleName="canvasMod">
+		<mx:Label x="13.5" y="10" text="Fecha Inicial" height="20"/>
+		<mx:DateField id="dtfFecha" x="13.5" y="28.5" width="111" disabledDays="{[0,2,3,4,5,6]}"/>
+	</mx:Canvas>
+	<mx:Button x="71.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="149.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="true" height="185" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="100"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL" width="110"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="210"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="80"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOM_GRUPO" width="180"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="80"/>
+			<mx:DataGridColumn headerText="FIN" dataField="FIN" width="80"/>
+			<mx:DataGridColumn headerText="LUNES" dataField="LUNES" width="100"/>
+			<mx:DataGridColumn headerText="MARTES" dataField="MARTES" width="100"/>
+			<mx:DataGridColumn headerText="MIERCOLES" dataField="MIERCOLES" width="100"/>
+			<mx:DataGridColumn headerText="JUEVES" dataField="JUEVES" width="100"/>
+			<mx:DataGridColumn headerText="VIERNES" dataField="VIERNES" width="100"/>
+			<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD" width="100"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="678" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+</mx:Canvas>

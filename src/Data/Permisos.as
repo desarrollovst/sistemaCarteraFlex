@@ -31,7 +31,7 @@ package Data
 		
 		public function permisosConsBuro(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC"){
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF"){
 					return true;	
 				}
 			}
@@ -40,7 +40,7 @@ package Data
 	
 		public function permisosDesautoriza(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "ADMIN")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;
 			}	
 			return false;
@@ -48,7 +48,7 @@ package Data
 		
 		public function permisosListaNegra(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ANSUC")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;
 			}	
 			return false;
@@ -56,7 +56,7 @@ package Data
 		
 		public function permisosMarcaEnano(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ANSUC")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;
 			}	
 			return false;
@@ -90,13 +90,10 @@ package Data
 		
 		public function permisosModAcred(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;	
 			}
-			/*if(perfil == "AUTC" || perfil == "ADMIN" || perfil == "OIM")
-				return true;	
-			else*/
-				return false;
+			return false;
 		}
 		
 		public function permisosModAcredInd(perfil:Array):Boolean{
