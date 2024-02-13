@@ -37,7 +37,7 @@
 			}			
 						
 			private function generar(event:Event):void{
-				if(comFiltroFecha.valida() == true){
+				if(comFiltroFecha.valida()){
 					fecha = comFiltroFecha.dtfFecha.text;
 					global.bloquear();
 					initConexion();
