@@ -107,10 +107,10 @@
 						txtCalle.text = info.calle;
 						txtTelefono.text = info.telefono;
 						
-						comEntGrid.asignaTexto(info.entFed);
-						comMunGrid.asignaTexto(info.municipio);
-						comLocGrid.asignaTexto(info.localidad);
-						comColGrid.asignaTexto(info.colonia);
+						comEntGrid.asignarTexto(info.entFed);
+						comMunGrid.asignarTexto(info.municipio);
+						comLocGrid.asignarTexto(info.localidad);
+						comColGrid.asignarTexto(info.colonia);
 						
 						datos.cdgEntFed = info.cdgEntFed;		
 						datos.cdgMun = info.cdgMun;
@@ -244,7 +244,7 @@
 			}
 			
 			private function verifEntFed(event:Event):void{
-				if(comEntGrid.obtieneCodigo() == ""){	
+				if(comEntGrid.obtenerCodigo() == ""){	
 					comMunGrid.limpiar();
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
@@ -255,13 +255,13 @@
 			}
 			
 			private function verifLocalidad(event:Event):void{
-				if(comColGrid.obtieneCodigo() == "")
+				if(comColGrid.obtenerCodigo() == "")
 					comColGrid.limpiar();
 					datos.cdgCol = ""; 
 			}
 			
 			private function verifMunic(event:Event):void{
-				if(comMunGrid.obtieneCodigo() == ""){
+				if(comMunGrid.obtenerCodigo() == ""){
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgLoc = "";

@@ -95,7 +95,7 @@
 					params[1] = txtCodProsp.text; 
 					params[2] = txtPaterno.text;
 					params[3] = txtMaterno.text;
-					wsCat.getInfoAcred.send(13, params);
+					wsCat.getInfoAcred.send(12, params);
 				}
 			}
 
@@ -284,14 +284,14 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" width="300" fontSize="12" fontWeight="bold" fontStyle="italic" text="PROSPECTOS"/>
 		<mx:Canvas x="679" y="39" width="160" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarProsp()" toolTip="Buscar Prospectos" width="40"/>
-			<mx:Button id="btnAgregar" x="107" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormProsp(1)" toolTip="Registrar Prospecto" width="40"/>
-			<mx:Button id="btnEditar" x="59" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormProsp(2)" toolTip="Editar Prospecto" width="40"/>
+			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarProsp()" toolTip="Buscar Prospectos" width="40"/>
+			<mx:Button id="btnAgregar" x="107" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormProsp(1)" toolTip="Registrar Prospecto" width="40"/>
+			<mx:Button id="btnEditar" x="59" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormProsp(2)" toolTip="Editar Prospecto" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas x="45.5" y="39" width="625.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodProsp" x="8" y="8" text="CODIGO:"/>
-			<mx:Label id="lblPaterno" x="127" y="8" text="APELLIDO PATERNO:"/>
-			<mx:Label id="lblMaterno" x="367" y="8" text="APELLIDO MATERNO:"/>
+			<mx:Label id="lblCodProsp" x="13" y="6" text="Código:"/>
+			<mx:Label id="lblPaterno" x="153" y="6" text="Apellido Paterno:"/>
+			<mx:Label id="lblMaterno" x="395" y="6" text="Apellido Materno:"/>
 			<mx:TextInput id="txtPaterno" x="247" y="5" width="110" enter="buscarProsp()" maxChars="50"/>
 			<mx:TextInput id="txtMaterno" x="491" y="5" width="110" enter="buscarProsp()" maxChars="50"/>
 			<mx:TextInput id="txtCodProsp" x="62" y="5" width="56" enter="buscarProsp()" maxChars="6" restrict="0-9"/>

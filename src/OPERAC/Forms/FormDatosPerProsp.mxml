@@ -57,9 +57,9 @@
 			import mx.effects.easing.Elastic;
 			import mx.events.ValidationResultEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.soap.WebService;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
@@ -78,7 +78,6 @@
 			public var entFedObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosProsp = new DatosProsp();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
 			private var du:Utils;
 			private var global:Globales;
 			private var bandCURP:Boolean;
@@ -292,7 +291,7 @@
 						cboPais.dataProvider = paisObj;
 						cboNac.dataProvider = paisObj;
 					}
- 	
+					
 					if (info != null){
 						txtCodigo.text = info.codigo;
 						txtNombre.text = info.nombre;
@@ -326,6 +325,13 @@
 								break;
 							}
 						}
+						//selecciona la entidad federativa del acreditado
+						for(j = 0; j < entFedObj.length; j++){   
+							if (entFedObj[j].id.toString() == info.cdgEntFedNac){
+								cboEntidad.selectedIndex = j;
+								break;
+							}
+						}
 						txtRfc.text = info.rfc;
 						txtCurp.text = info.curp;
 						txtIfe.text = info.ife;
@@ -349,12 +355,6 @@
 				//CONSULTA LOS PAISES DISPONIBLES
 				wsCat.getCatalogoGral.send(1);
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			private function modificaFecha():void{
 				vResult = valFec.validate(txtFecha.text);

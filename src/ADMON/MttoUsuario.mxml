@@ -86,10 +86,10 @@
 					du.closeWs(wsCat);
 						
 					if(_xmlDir.elements().length() > 0){
-						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
-						comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
-						comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
-						comColGrid.asignaTexto(_xmlDir.Table[0].COL);	
+						comEntGrid.asignarTexto(_xmlDir.Table[0].ENTFED);
+						comMunGrid.asignarTexto(_xmlDir.Table[0].MUNIC);
+						comLocGrid.asignarTexto(_xmlDir.Table[0].LOC);
+						comColGrid.asignarTexto(_xmlDir.Table[0].COL);	
 						
 						info.cdgEntFed = _xmlDir.Table[0].CDGEF;		
 						info.cdgMun = _xmlDir.Table[0].CDGMU;
@@ -484,10 +484,10 @@
 			info.cdgNivEsc = cboNivelEsc.selectedItem.id.toString();
 			info.calle = txtCalle.text;	
 			info.telefono = txtTelefono.text;
-			info.cdgEntFed = comEntGrid.obtieneCodigo();
-			info.cdgMun = comMunGrid.obtieneCodigo();
-			info.cdgLoc = comLocGrid.obtieneCodigo();
-			info.cdgCol = comColGrid.obtieneCodigo();
+			info.cdgEntFed = comEntGrid.obtenerCodigo();
+			info.cdgMun = comMunGrid.obtenerCodigo();
+			info.cdgLoc = comLocGrid.obtenerCodigo();
+			info.cdgCol = comColGrid.obtenerCodigo();
 			info.email = txtEmail.text;		
 			info.cdgSuc = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "";
 			info.cdgPuesto = cboPuesto.selectedItem.id.toString();
@@ -691,10 +691,10 @@
 			txtEmail.text = UsrInfo[0].EMAIL;
 			txtSueldo.text = UsrInfo[0].SUELDO;
 			dtfIngreso.text = UsrInfo[0].ALTA;
-			comEntGrid.asignaTexto(UsrInfo[0].ENTFED);
-			comMunGrid.asignaTexto(UsrInfo[0].MUNIC);
-			comLocGrid.asignaTexto(UsrInfo[0].LOC);
-			comColGrid.asignaTexto(UsrInfo[0].COL);
+			comEntGrid.asignarTexto(UsrInfo[0].ENTFED);
+			comMunGrid.asignarTexto(UsrInfo[0].MUNIC);
+			comLocGrid.asignarTexto(UsrInfo[0].LOC);
+			comColGrid.asignarTexto(UsrInfo[0].COL);
 			txtCodPostal.text = UsrInfo[0].CDGPOSTAL;
 			
 			//asignacion de codigos de direccion
@@ -745,15 +745,15 @@
 		} 
 		
 		public function limpiaDatosDir():void{
-			comEntGrid.asignaTexto("");
-			comMunGrid.asignaTexto("");
-			comLocGrid.asignaTexto("");
-			comColGrid.asignaTexto("");	
+			comEntGrid.asignarTexto("");
+			comMunGrid.asignarTexto("");
+			comLocGrid.asignarTexto("");
+			comColGrid.asignarTexto("");	
 						
-			comEntGrid.asignaCodigo("");
-			comMunGrid.asignaCodigo("");
-			comLocGrid.asignaCodigo("");
-			comColGrid.asignaCodigo("");	
+			comEntGrid.asignarCodigo("");
+			comMunGrid.asignarCodigo("");
+			comLocGrid.asignarCodigo("");
+			comColGrid.asignarCodigo("");	
 			
 			info.cdgEntFed = "";		
 			info.cdgMun = "";
@@ -924,7 +924,7 @@
 		}
 		
 		private function verifEntFed(event:Event):void{
-			if(comEntGrid.obtieneCodigo() == ""){	
+			if(comEntGrid.obtenerCodigo() == ""){	
 				comMunGrid.limpiar();
 				comLocGrid.limpiar();
 				comColGrid.limpiar();
@@ -935,14 +935,14 @@
 		}
 		
 		private function verifLocalidad(event:Event):void{
-			if(comLocGrid.obtieneCodigo() == ""){
+			if(comLocGrid.obtenerCodigo() == ""){
 				comColGrid.limpiar();
 				info.cdgCol = ""; 
 			}
 		}
 		
 		private function verifMunic(event:Event):void{
-			if(comMunGrid.obtieneCodigo() == ""){
+			if(comMunGrid.obtenerCodigo() == ""){
 				comLocGrid.limpiar();
 				comColGrid.limpiar();
 				info.cdgLoc = "";

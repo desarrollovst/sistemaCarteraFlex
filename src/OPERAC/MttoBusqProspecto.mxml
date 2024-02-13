@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" 
+	close="cerrar()" layout="absolute" width="448" height="340" creationPolicy="all">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.core.DragSource;
+			import mx.effects.*;
+			import mx.events.CloseEvent;
+			import mx.events.EffectEvent;
+			import mx.events.FlexEvent;
+            import mx.managers.DragManager;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+
+			[Bindable]
+			private var _xmlProsp:XML = new XML();
+			public var _xmlPospSel :XML = new XML();
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var closeEffect:Effect = new WipeDown();
+						
+			private function buscarProsp():void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				
+				_xmlProsp = new XML();
+				_xmlPospSel = new XML();
+				dgProsp.dataProvider = null;
+				
+				if (txtCodProsp.text != "" || txtNomProsp.text != ""){
+					btnBuscarProsp.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+						_xmlProsp = new XML(evt.result);
+								
+						if(_xmlProsp.elements().length() > 0)
+							dgProsp.dataProvider = _xmlProsp.Table;
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.", titulo, 4,null,null,global.iAlert);
+								
+						du.rCursor();
+						du.closeWs(wsCat);
+						global.desbloquear();
+					});
+					params[0] = txtCodProsp.text;
+					params[1] = txtNomProsp.text;
+					wsCat.getInfoAcred.send(13, params);
+				}
+			}
+			
+			private function terminarEfecto(event:EffectEvent):void{
+				closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function cerrar():void{
+				var playReverse:Boolean = true;   
+	            closeEffect.duration = 500;
+	            closeEffect.play([this], playReverse);
+	            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			}
+			
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Búsqueda de Prospecto";
+				this.title = titulo;
+			}
+			
+			private function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+			
+			private function seleccionar():void{
+				if(_xmlProsp.elements().length() > 0){
+					if (dgProsp.selectedIndex >= 0){
+						_xmlPospSel = _xmlProsp.Table[dgProsp.selectedIndex];
+						cerrar();
+					}
+					else
+						Alert.show("Seleccione el prospecto", titulo, 4,null,null,global.iAlert);
+				}
+				else
+					Alert.show("Realicé una búsqueda de prospecto", titulo, 4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="15" y="12" text="Código:" width="44"/>
+	<mx:Label x="131.5" y="12" text="Nombre:" width="54"/>
+	<mx:TextInput id="txtCodProsp" x="62.5" y="10" width="60" maxChars="6" restrict="0-9" enter="buscarProsp()"/>
+	<mx:TextInput id="txtNomProsp" x="184.5" y="10" width="200.5" enter="buscarProsp()"/>
+	<mx:Button x="393" y="268" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" id="btnCerrar" width="40"/>
+	<mx:Button id="btnAceptar" x="345" y="268" icon="@Embed(source='assets/images/iconAccept.png')" click="seleccionar()" width="40"/>
+	<mx:DataGrid id="dgProsp" x="15" y="51" width="418" height="209" sortableColumns="false" doubleClickEnabled="true" itemDoubleClick="seleccionar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Código" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="Nombre" dataField="NOMBREC"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnBuscarProsp" x="393" y="11" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarProsp()" toolTip="Buscar Prospecto" width="40"/>
+</mx:TitleWindow>

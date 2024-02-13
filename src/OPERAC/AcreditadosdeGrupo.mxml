@@ -58,6 +58,7 @@
 			public var comMttoFecha:MttoSelFecha;
 			public var comMttoAgrega:MttoAgregaAcred;
 			public var comMttoBusq:MttoBusqAcred;
+			public var comMttoBusqProsp:MttoBusqProspecto;
 			
 			public function activarContAcred(band:Boolean):void{
 				txtCodAcred.editable = band;
@@ -91,7 +92,8 @@
 				//o se realiza la busqueda de alguno previamente registrado
 				if (comMttoAgrega.rdbNuevo.selected == true){
 					PopUpManager.removePopUp(comMttoAgrega);
-					mostrarFormAcred(1);
+					mostrarBusqProsp();
+					//mostrarFormAcred(1);
 				}
 				if (comMttoAgrega.rdbExistente.selected == true){
 					PopUpManager.removePopUp(comMttoAgrega);
@@ -299,13 +301,22 @@
 					Alert.show("El cliente ya está dado de baja",tituloAcred, 4,null,null,global.iInfo);
 			}
 			
-			public function mostrarBusqAcred():void{
+			private function mostrarBusqAcred():void{
 				var grupo:String = dgGrupos.selectedItem.CODIGO;
 				comMttoBusq = new MttoBusqAcred();
 				comMttoBusq = MttoBusqAcred(PopUpManager.createPopUp(this,MttoBusqAcred,true));
 				comMttoBusq.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
 				comMttoBusq.init(grupo);
 				PopUpManager.centerPopUp(comMttoBusq);
+			}
+			
+			private function mostrarBusqProsp():void{
+				var grupo:String = dgGrupos.selectedItem.CODIGO;
+				comMttoBusqProsp = new MttoBusqProspecto();
+				comMttoBusqProsp = MttoBusqProspecto(PopUpManager.createPopUp(this,MttoBusqProspecto,true));
+				comMttoBusqProsp.addEventListener(Event.REMOVED_FROM_STAGE, mostrarFormProsp);
+				comMttoBusqProsp.init();
+				PopUpManager.centerPopUp(comMttoBusqProsp);
 			}
 			
 			public function mostrarFormAcred(tipo:int):void{
@@ -365,6 +376,21 @@
 							break;
 					}
 				}
+			}
+			
+			private function mostrarFormProsp(event:Event):void{
+				if(comMttoBusqProsp._xmlPospSel.elements().length() > 0){
+					var codGrupo:String = dgGrupos.selectedItem.CODIGO;
+					var nomGrupo:String = dgGrupos.selectedItem.GRUPO;
+					var comMttoAcred:MttoAcreditado = new MttoAcreditado();
+					accionAcred = 1;
+					comMttoAcred = MttoAcreditado(PopUpManager.createPopUp(this,MttoAcreditado,true)); 
+					PopUpManager.centerPopUp(comMttoAcred);
+					comMttoAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+					comMttoAcred.cargaInfoProsp(codGrupo, nomGrupo, comMttoBusqProsp._xmlPospSel);
+				}
+				else
+					buscarListaAcred(1);
 			}
 			
 			public function permisos():void{
