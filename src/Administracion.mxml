@@ -147,8 +147,6 @@
 		import Data.Modulos;
 		import flash.utils.getDefinitionByName;
 		import flash.external.ExternalInterface;
-		import PRINCIPAL.*;
-		import OPERAC.Forms.FormActEcoSolic;
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
 		import mx.controls.DateField;
@@ -164,6 +162,8 @@
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
 		import mx.validators.Validator;
+		import OPERAC.Forms.FormActEcoSolic;
+		import PRINCIPAL.*;
 		
 		public var Icono_Home:Class;
 

@@ -17,20 +17,19 @@
 		<![CDATA[
 			import Data.EventAcred;
 			import Data.DatosAcred;
-			import Data.Utils;
 			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;			
-			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.validators.Validator;
-			import mx.events.ValidationResultEvent;	
-			
+				
 			private var _xmlDestino:XML =  new XML();
 			private var _xmlOrigen:XML =  new XML();
 			private var _xmlTipoPers:XML =  new XML();
@@ -40,19 +39,12 @@
 			private var tipoPersObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			private var vResult:ValidationResultEvent;
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
-			
 			public function enviarDatosAcred(formData:DatosAcred):void{
-				if(valida() == true){
+				if(valida()){
 					formData.tipoPers = cboTipoPers.selectedItem.id;
 					formData.origen = cboOrigen.selectedItem.id;
 					formData.destino = cboDestino.selectedItem.id;
@@ -77,7 +69,7 @@
 				
 				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlDestino.Table[i].CODIGO.toString();	
+					oItem.id = _xmlDestino.Table[i].CODIGO;	
 					oItem.nombre = _xmlDestino.Table[i].DESCRIPCION;
 					item.push(oItem);
 				}
@@ -96,7 +88,7 @@
 				
 				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
+					oItem.id = _xmlOrigen.Table[i].CODIGO;	
 					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
 					item.push(oItem);
 				}
@@ -115,7 +107,7 @@
 				
 				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlTipoPers.Table[i].CODIGO.toString();	
+					oItem.id = _xmlTipoPers.Table[i].CODIGO;	
 					oItem.nombre = _xmlTipoPers.Table[i].DESCRIPCION;
 					item.push(oItem);
 				}
@@ -169,9 +161,9 @@
 							destino = "006";
 							
 							if (info != null){
-								tipoPers = info.tipoPers;
-								origen = info.origen;
-								destino = info.destino;								
+								tipoPers = info.tipoPers ? info.tipoPers : "004";
+								origen = info.origen ? info.origen : "002";
+								destino = info.destino ? info.destino : "006";								
 							}
 							
 							for(i = 0; i < tipoPersObj.length; i++){

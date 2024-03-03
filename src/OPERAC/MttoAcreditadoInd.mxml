@@ -251,7 +251,7 @@
 				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
 					consBuro = true;	
 				}
-				btnConsBuro.visible = consBuro;	
+				//btnConsBuro.visible = consBuro;	
 			}
 			
 			public function registraInfoAcred():void{

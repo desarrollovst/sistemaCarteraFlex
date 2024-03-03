@@ -25,11 +25,10 @@
 			
 			[Bindable]
 			private var info:DatosAcred;
-			private var _xmlAcred:XML =  new XML();
-			private var _xmlInegiEqu:XML =  new XML();
+			private var _xmlAcred:XML = new XML();
+			private var _xmlInegiEqu:XML = new XML();
 			
-			public var wsMS:WebService;	
-			public var wsReg:WebService;
+			public var wsMS:WebService;
 			public var tipoAccion:int;
 			public var band:Boolean;
 			public var grupo:String;
@@ -39,6 +38,7 @@
 			private var global:Globales;
 			private var permiso:Permisos;
 			private var prosp:String;
+			private var bandRepCred:Boolean = false;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var consBuro:Boolean = new Boolean();
@@ -86,39 +86,10 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			public function consultaBuro():void{
-				initConexion();
-				du.sCursor();
-				
-				global.bloquear();
-											
-				var titulo:String = "Consulta Reporte Crédito";
-				var acred:String = formDPAcred.txtCodigo.text;
-										
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-					var res:String = evt.result.toString();
-						
-					du.rCursor();
-					du.closeWs(wsMS);
-					global.desbloquear();
-													
-					if(res.substr(0,1) == "1"){
-						var consulta:String;
-						var id:String = "&id=19";
-						var codAcred:String = "&acred=" + acred;
-						var usuario:String = "&usuario=" + global.obtenerUsuario();
-						var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
-						var tipo:String = "&tipo=CC";
-						
-						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo;					
-						var pdfE:PdfExport = new PdfExport();
-						pdfE.cargaPdf(consulta);
-					}
-					else{
-						Alert.show(res,titulo,4,null,null,global.iAlert);
-					}
-				});
-				wsMS.setAccionCDC.send(acred, global.obtenerUsuario());	
+			private function consultaRepCredito():void{
+				bandRepCred = true;
+				this.addEventListener("consultar", procesarConsulta);
+				enviar();
 			}
 			
 			public function enviar():void{
@@ -166,24 +137,11 @@
 				//formDirAcred.addEventListener("seleccionarDir", seleccionarDir);
 			}
 			
-			public function initConexion():void{				
+			private function initConexion():void{				
 				wsMS = new WebService();			
 				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
 				wsMS.loadWSDL();
 			}	
-			
-			private function initConexionCat(wsCat:WebService):WebService{			
-				wsCat.wsdl = Application.application.wsStr.wsdlCat.toString();
-				wsCat.loadWSDL();
-				return wsCat;
-			}
-			
-			public function initConexionReg():void{				
-				wsReg = new WebService();			
-				wsReg.wsdl = Application.application.wsStr.wsdlReg.toString();
-				wsReg.loadWSDL();
-
-			}
 			
 			private function llenaRegistros():void{
 				info = new DatosAcred();
@@ -318,6 +276,41 @@
 				btnConsBuro.visible = consBuro;	
 			}
 			
+			private function procesarConsulta(event:Event):void{
+				var wsCC:WebService = new WebService;
+				
+				du.initWsCC(wsCC);
+				du.sCursor();
+							
+				var titulo:String = "Consulta Reporte Crédito";
+				var acred:String = formDPAcred.obtenerCodigo();
+										
+				du.ejecutaWsMethod(wsCC,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsCC);
+													
+					if(res.substr(0,1) == "1"){
+						var consulta:String;
+						var id:String = "&id=19";
+						var tipo:String = "&tipo=C";
+						var codAcred:String = "&acred=" + acred;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var sic:String = "&sic=CC";
+						
+						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo + sic;			
+						var pdfE:PdfExport = new PdfExport();
+						pdfE.cargaPdf(consulta);
+					}
+					else{
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsCC.getEjecutaConsulta.send("C", acred, "G", global.obtenerUsuario());
+			}
+			
 			public function registraInfoAcred(cdgGrupo:String, nomGrupo:String):void{
 				tipoAccion = 1;
 				//ASIGNACION DE CODIGO DE GRUPO
@@ -335,88 +328,35 @@
 			private function setAccionAcred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
+				global.desbloquear();
 				
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionAcred);
 				var res:String = event.result.toString();
 				
 				if(res.substr(0,1) == "1" || res.substr(0,1) == "2"){
-					/*initConexion();
-					du.sCursor();
-											
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-						var resQEQ:String = evt.result.toString();
-							
-						du.rCursor();
-						du.closeWs(wsMS);
-						
-						if(resQEQ.substr(0,1) == "1"){
-							initConexionReg();
-							du.sCursor();
-											
-							du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
-								var resEnv:String = evt.result.toString();
-								
-								du.rCursor();
-								du.closeWs(wsReg);
-							
-								Alert.show(resQEQ.substr(2,resQEQ.length -1),titulo,4,null,null,global.iAlert);*/
-								if(res.substr(0,1) == "1"){
-									var arr:Array = res.split("|");
-									Alert.show("Acreditado registrado exitosamente con el código " + arr[1],titulo,4,null,null,global.iInfo); 
-								}
-								global.desbloquear();
-								cerrar();
-							/*});
-							wsReg.setEnviaEmail.send("","tupatrimoniofin@gmail.com",
-													 "PEP y Listas Restringidas","Se han encontrado coincidencias en PEP y Listas Restingidas del acreditado: " + acred);		
+					if(!bandRepCred){
+						if(tipoAccion == 1){
+							var arr:Array = res.split("|");
+							var codigo:String = arr[1].toString();
+							Alert.show("Acreditado registrado exitosamente con el código - " + codigo,titulo,4,null,null,global.iInfo); 
 						}
-						else if(resQEQ.substr(0,1) == "2")
-							cerrar();
 						else
-							Alert.show(resQEQ,titulo,4,null,null,global.iAlert);
-					});
-					//Metodo que Obtiene el estatus de la busqueda de coincidencias como PEP o Listas Negras
-					wsMS.setAccionQEQ.send(acred, global.obtenerUsuario());*/
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						dispatchEvent(new Event("consultar"));
 				}
 				else if(res.substr(0,1) == "3"){
-					global.desbloquear();
-					cerrar();
+					if(!bandRepCred)
+						cerrar();
+					else
+						dispatchEvent(new Event("consultar"));
 				}
 				else{
-					global.desbloquear();
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 				}		
 			}
-			
-			/*public function seleccionarDir(event:Event):void{
-				if(formDirNegAcred.txtEntFed.text == ""){
-					var idSepomex:String = formDirAcred.obtieneCodEntFed() + formDirAcred.obtieneCodMun() + formDirAcred.obtieneCodLoc();
-					
-					var wsCat:WebService = new WebService();
-					var Params:Array = new Array();
-					
-					du.initWsCat(wsCat);
-					du.sCursor();
-					
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						_xmlInegiEqu = new XML(evt.result);
-								
-						du.rCursor();
-						du.closeWs(wsCat);
-								
-						if (_xmlInegiEqu.elements().length() > 0){
-							formDirNegAcred.limpiaDatosDir();
-							formDirNegAcred.cargaDirNeg(_xmlInegiEqu.Table[0]);
-						}							
-					});
-					Params[0] = idSepomex;
-					Params[1] = "";
-					Params[2] = "";
-					Params[3] = "";
-					Params[4] = "";
-					wsCat.getCatalogoGral.send(68, Params);
-				}
-			}*/
 			
 			public function validaDatosAcred(event:EventAcred):void{
 				info = event.customProp;
@@ -486,5 +426,5 @@
 	<mx:Image x="430" y="10" width="57" height="57" scaleContent="true">
 		<mx:source>assets/images/user2.png</mx:source>
 	</mx:Image>
-	<mx:Button id="btnConsBuro" x="10" y="478" click="consultaBuro()" label="Consulta Rep Crédito" visible="false"/>
+	<mx:Button id="btnConsBuro" x="10" y="478" click="consultaRepCredito()" label="Consulta Rep Crédito" visible="false"/>
 </mx:TitleWindow>

@@ -66,10 +66,10 @@
 			import mx.validators.Validator;
 
 			[Bindable]
-			private var _xmlDatos:XML =  new XML();
-			private var _xmlCoord:XML =  new XML();
-			private var _xmlEntFed:XML =  new XML();
-			private var _xmlPais:XML =  new XML();
+			private var _xmlDatos:XML = new XML();
+			private var _xmlCoord:XML = new XML();
+			private var _xmlEntFed:XML = new XML();
+			private var _xmlPais:XML = new XML();
 			
 			public var coordArr:Array = new Array();
 			
@@ -100,7 +100,7 @@
 			
 			public function enviarDatosProsp(formData:DatosProsp):void{
 				var invalidArray:Array = Validator.validateAll([nombreV, aPaternoV, fechaV, rfcV, curpV, ifeV]);
-				var i:int;
+
 				if(invalidArray.length == 0){	
 					formData.codigo = txtCodigo.text;
 					formData.nombre = StringUtil.trim(txtNombre.text.toUpperCase());
@@ -214,7 +214,6 @@
 					var nombres:String;
 					var sexo:String;
 					var clave:String;
-					var j:int;
 										
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -226,7 +225,7 @@
 					else if(rdbFemenino.selected == true)
 						sexo = "M";
 					
-					for(j = 0; j < entFedObj.length; j++){
+					for(var j:int = 0; j < entFedObj.length; j++){
 						if (entFedObj[j].nombre.toString() == cboEntidad.text){
 							clave = entFedObj[j].clave.toString();	
 							break;		
@@ -362,6 +361,10 @@
                     txtFecha.text = "";
 				else
 					generaCURP();
+			}
+			
+			public function obtenerCodigo():String{
+				return txtCodigo.text;
 			}
 			
 			public function obtieneBandCurp():Boolean{

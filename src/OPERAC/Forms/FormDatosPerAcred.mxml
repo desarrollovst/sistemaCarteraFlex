@@ -325,6 +325,10 @@
 					generaCURP();
 			}
 			
+			public function obtenerCodigo():String{
+				return txtCodigo.text;
+			}
+			
 			public function obtieneBandCurp():Boolean{
 				return bandCURP;
 			}

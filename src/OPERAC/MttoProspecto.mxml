@@ -25,16 +25,15 @@
 			private var info:DatosProsp;
 			private var _xmlProsp:XML = new XML();
 			
-			public var wsMS:WebService;	
-			public var wsReg:WebService;
+			public var wsMS:WebService;
 			public var tipoAccion:int;
 			public var band:Boolean;
-			public var grupo:String;
 			public var prosp:String;
 			public var titulo:String;
 			
 			private var du:Utils;
 			private var global:Globales;
+			private var bandRepCred:Boolean = false;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var consBuro:Boolean = new Boolean();
@@ -45,8 +44,9 @@
 				tipoAccion = 2;
 				this.prosp = prosp;
 				permisos();
-				du.sCursor();
+
 				du.initWsCat(wsCat);
+				du.sCursor();
 				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
@@ -56,12 +56,10 @@
 					du.closeWs(wsCat);
 					global.desbloquear();
 												
-					if (_xmlProsp.elements().length() > 0){
+					if (_xmlProsp.elements().length() > 0)
 						llenaRegistros();
-					}
-					else{
+					else
 						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
-					}
 				});
 				params[0] = this.prosp;
 				params[1] = "";
@@ -72,37 +70,10 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			public function consultaBuro():void{
-				initConexion();
-				du.sCursor();
-							
-				var titulo:String = "Consulta Reporte Crédito";
-				var prosp:String = formDPProsp.txtCodigo.text;
-										
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-					var res:String = evt.result.toString();
-						
-					du.rCursor();
-					du.closeWs(wsMS);
-													
-					if(res.substr(0,1) == "1" || res.substr(0,1) == "2"){
-						var consulta:String;
-						var id:String = "&id=19";
-						var tipo:String = "&tipo=P";
-						var codProsp:String = "&acred=" + prosp;
-						var usuario:String = "&usuario=" + global.obtenerUsuario();
-						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
-						var sic:String = "&sic=CC";
-						
-						consulta = global.urlPdf + id + codProsp + usuario + nomUsuario + tipo + sic;			
-						var pdfE:PdfExport = new PdfExport();
-						pdfE.cargaPdf(consulta);
-					}
-					else{
-						Alert.show(res,titulo,4,null,null,global.iAlert);
-					}
-				});
-				wsMS.setAccionCDC.send(prosp, "P", global.obtenerUsuario());
+			private function consultaRepCredito():void{
+				bandRepCred = true;
+				this.addEventListener("consultar", procesarConsulta);
+				enviar();
 			}
 			
 			public function enviar():void{
@@ -136,16 +107,10 @@
 				titulo = "Mantenimiento de Prospecto";
 			}
 			
-			public function initConexion():void{				
+			private function initConexion():void{				
 				wsMS = new WebService();			
 				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
 				wsMS.loadWSDL();
-			}	
-			
-			private function initConexionReg():void{				
-				wsReg = new WebService();			
-				wsReg.wsdl = Application.application.wsStr.wsdlReg.toString();
-				wsReg.loadWSDL();
 			}	
 			
 			public function llenaRegistros():void{
@@ -204,6 +169,41 @@
 				btnConsBuro.visible = consBuro;	
 			}
 			
+			private function procesarConsulta(event:Event):void{
+				var wsCC:WebService = new WebService;
+				
+				du.initWsCC(wsCC);
+				du.sCursor();
+							
+				var titulo:String = "Consulta Reporte Crédito";
+				var prosp:String = formDPProsp.obtenerCodigo();
+										
+				du.ejecutaWsMethod(wsCC,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsCC);
+													
+					if(res.substr(0,1) == "1" || res.substr(0,1) == "2"){
+						var consulta:String;
+						var id:String = "&id=19";
+						var tipo:String = "&tipo=P";
+						var codProsp:String = "&acred=" + prosp;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var sic:String = "&sic=CC";
+						
+						consulta = global.urlPdf + id + codProsp + usuario + nomUsuario + tipo + sic;			
+						var pdfE:PdfExport = new PdfExport();
+						pdfE.cargaPdf(consulta);
+					}
+					else{
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsCC.getEjecutaConsulta.send("P", prosp, "G", global.obtenerUsuario());
+			}
+			
 			public function registraInfoProsp():void{
 				tipoAccion = 1;
 				info = null;
@@ -226,42 +226,18 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProsp);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
-					/*initConexion();
-					du.sCursor();
-											
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-						var resQEQ:String = evt.result.toString();
-							
-						du.rCursor();
-						du.closeWs(wsMS);
-						global.desbloquear();
-						
-						if(resQEQ.substr(0,1) == "1"){
-							initConexionReg();
-							du.sCursor();
-											
-							du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
-								var resEnv:String = evt.result.toString();
-								
-								du.rCursor();
-								du.closeWs(wsReg);
-							
-								Alert.show(resQEQ.substr(2,resQEQ.length -1),titulo,4,null,null,global.iAlert);*/
-								cerrar();
-							/*});
-							wsReg.setEnviaEmail.send("","oficial.cumplimiento@emprendamosfin.com",
-											 		 "PEP y Listas Restringidas","Se han encontrado coincidencias en PEP y Listas Restingidas del prospecto: " + prosp);		
-						}
-						else if(resQEQ.substr(0,1) == "2")
-							cerrar();
+					if(!bandRepCred){
+						if(tipoAccion == 1){
+							var rSplit:Array = res.toString().split('|');
+							var codigo:String = rSplit[1].toString();
+							Alert.show("Registro de prospecto almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+						}	
 						else
-							Alert.show(resQEQ,titulo,4,null,null,global.iAlert);
-					});
-					//Metodo que Obtiene el estatus de la busqueda de coincidencias como PEP o Listas Negras
-					wsMS.setAccionQEQ.send(prosp, global.obtenerUsuario());*/
-				}
-				else if(res.substr(0,1) == "2"){
-					cerrar();
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						dispatchEvent(new Event("consultar"));
 				}
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
@@ -298,5 +274,5 @@
 	<mx:Image x="446" y="4" width="44" height="45" scaleContent="true">
 		<mx:source>assets/images/user2.png</mx:source>
 	</mx:Image>
-	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep Crédito" visible="false"/>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaRepCredito()" label="Consulta Rep Crédito" visible="false"/>
 </mx:TitleWindow>

@@ -406,8 +406,7 @@ package Data
         
         public function permisosConsBuroProsp(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC"
-				|| perfil[i].toString() == "AMOCA"){
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF"){
 					return true;	
 				}
 			}
@@ -416,8 +415,7 @@ package Data
 		
 		public function permisosModProsp(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM"
-				|| perfil[i].toString() == "AMOCA")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;	
 			}
 			return false;
