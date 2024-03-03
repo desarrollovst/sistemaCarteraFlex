@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="512" height="580" 
+	title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+	creationPolicy="all">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.EventProsp;
+			import Data.DatosProsp;
+			import Data.Globales;
+			import Data.PdfExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			private var info:DatosProsp;
+			private var _xmlProsp:XML = new XML();
+			
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var band:Boolean;
+			public var prosp:String;
+			public var titulo:String;
+			
+			private var du:Utils;
+			private var global:Globales;
+			private var bandRepCred:Boolean = false;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var consBuro:Boolean = new Boolean();
+			
+			public function cargaInfoProsp(prosp:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				tipoAccion = 2;
+				this.prosp = prosp;
+				permisos();
+
+				du.initWsCat(wsCat);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProsp = new XML(evt.result);
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+					global.desbloquear();
+												
+					if (_xmlProsp.elements().length() > 0)
+						llenaRegistros();
+					else
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+				});
+				params[0] = this.prosp;
+				params[1] = "";
+				wsCat.getInfoAcred.send(13, params);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function consultaRepCredito():void{
+				bandRepCred = true;
+				this.addEventListener("consultar", procesarConsulta);
+				enviar();
+			}
+			
+			public function enviar():void{
+				if(formDPProsp.obtieneBandCurp()){
+					info = new DatosProsp();
+					formDPProsp.enviarDatosProsp(info);
+					formDirProsp.enviarDatosProsp(info);
+					//formOtroProsp.enviarDatosProsp(info);
+					formOficialProsp.enviarOficialProsp(info);
+					validaFinal();
+				}
+				else
+					Alert.show("El proceso de cálculo de CURP Y RFC se está ejecutando. Intente nuevamente cuando se hayan actualizado los datos.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function guardaProsp():void{
+				initConexion();
+				global.bloquear();
+				du.sCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionProsp);
+				wsMS.setAccionProsp.send(tipoAccion, info.codigo, info.nombre, info.segNombre, info.aPaterno, info.aMaterno, info.sexo, 
+										 info.fecha, info.cdgPaisNac, info.cdgEntFedNac, info.cdgNac, info.curp, info.rfc, info.ife, 
+										 info.cdgPais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.calle, 
+										 info.entreCalles, /*info.noExt, info.noInt,*/ info.telefono, info.cdgco, info.cdgPr, 
+										 info.cdgRec, global.obtenerUsuario()); 
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Prospecto";
+			}
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function llenaRegistros():void{
+				info = new DatosProsp();
+				//Datos personales del Acreditado
+				info.codigo = _xmlProsp.Table[0].CODIGO;
+				info.nombre = _xmlProsp.Table[0].NOMBRE1;
+				info.segNombre = _xmlProsp.Table[0].NOMBRE2;
+				info.aPaterno = _xmlProsp.Table[0].PRIMAPE;
+				info.aMaterno = _xmlProsp.Table[0].SEGAPE;
+				info.cdgco = _xmlProsp.Table[0].CDGCO;
+				info.sexo = _xmlProsp.Table[0].SEXO;
+				info.fecha = _xmlProsp.Table[0].NACIMIENTO;
+				info.cdgPaisNac = _xmlProsp.Table[0].NACIOPAI;
+				info.cdgEntFedNac = _xmlProsp.Table[0].NACIOEF;
+				info.cdgNac = _xmlProsp.Table[0].NACIONALIDAD;
+				info.rfc = _xmlProsp.Table[0].RFC;	
+				info.curp = _xmlProsp.Table[0].CURP;
+				info.ife = _xmlProsp.Table[0].IFE;
+				
+				//Direccion del Acreditado
+				info.calle = _xmlProsp.Table[0].CALLE;
+				info.entreCalles = _xmlProsp.Table[0].ENTRECALLES;
+				//info.noExt = _xmlProsp.Table[0].NOEXT;
+				//info.noInt = _xmlProsp.Table[0].NOINT;
+				info.telefono = _xmlProsp.Table[0].TELEFONO;
+				info.codPostal = _xmlProsp.Table[0].CDGPOSTAL;
+				info.cdgPais = _xmlProsp.Table[0].CDGPAI;
+				info.cdgDirEntFed = _xmlProsp.Table[0].CDGEF;
+				info.dirEntFed = _xmlProsp.Table[0].ENTFED;
+				info.cdgMun = _xmlProsp.Table[0].CDGMU;
+				info.municipio = _xmlProsp.Table[0].MUNIC;
+ 				info.cdgLoc = _xmlProsp.Table[0].CDGLO; 
+				info.localidad = _xmlProsp.Table[0].LOC;
+				info.cdgCol = _xmlProsp.Table[0].CDGCOL;
+				info.colonia = _xmlProsp.Table[0].COL;
+				
+				//Oficial de Crédito
+				info.cdgPr = _xmlProsp.Table[0].CDGOCPE;
+				info.promotor = _xmlProsp.Table[0].PROMOTOR;
+				info.cdgRec = _xmlProsp.Table[0].CDGPRPE;
+				info.recuperador = _xmlProsp.Table[0].RECUPERADOR;
+			
+				formDPProsp.init(info,false);
+				formDPProsp.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
+				formDirProsp.init(info);formOficialProsp.init(info);
+			}
+			
+			public function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;
+				var cont:int;
+				
+				if (global.permisosConsBuroProsp(Application.application.PERFIL_ID)){
+					consBuro = true;	
+				}
+				btnConsBuro.visible = consBuro;	
+			}
+			
+			private function procesarConsulta(event:Event):void{
+				var wsCC:WebService = new WebService;
+				
+				du.initWsCC(wsCC);
+				du.sCursor();
+							
+				var titulo:String = "Consulta Reporte Crédito";
+				var prosp:String = formDPProsp.obtenerCodigo();
+										
+				du.ejecutaWsMethod(wsCC,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsCC);
+													
+					if(res.substr(0,1) == "1" || res.substr(0,1) == "2"){
+						var consulta:String;
+						var id:String = "&id=19";
+						var tipo:String = "&tipo=P";
+						var codProsp:String = "&acred=" + prosp;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var sic:String = "&sic=CC";
+						
+						consulta = global.urlPdf + id + codProsp + usuario + nomUsuario + tipo + sic;			
+						var pdfE:PdfExport = new PdfExport();
+						pdfE.cargaPdf(consulta);
+					}
+					else{
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsCC.getEjecutaConsulta.send("P", prosp, "G", global.obtenerUsuario());
+			}
+			
+			public function registraInfoProsp():void{
+				tipoAccion = 1;
+				info = null;
+				formDPProsp.init(info,false);
+				formDirProsp.init(info);
+				//formOtroProsp.init(info);
+				formOficialProsp.init(info);
+				formDPProsp.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
+			} 
+			
+			private function selecCoord(event:ListEvent):void{
+				Application.application.SUC_ID = ComboBox(event.currentTarget).selectedItem.id;
+				formOficialProsp.cargaPersonal();
+			}
+			
+			private function setAccionProsp(event:ResultEvent):void{
+				global.desbloquear();
+				wsMS.disconnect();
+				du.rCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProsp);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					if(!bandRepCred){
+						if(tipoAccion == 1){
+							var rSplit:Array = res.toString().split('|');
+							var codigo:String = rSplit[1].toString();
+							Alert.show("Registro de prospecto almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+						}	
+						else
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						dispatchEvent(new Event("consultar"));
+				}
+				else{
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+				}	
+			}
+			
+			public function validaDatosProsp(event:EventProsp):void{
+				info = event.customProp;
+			}
+			
+			public function validaFinal():void{
+				if (info.guardaDatos == true && info.guardaDir == true && info.guardaOficial ){
+					if(global.permisosModProsp(Application.application.PERFIL_ID) == true)
+						guardaProsp();
+				}
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="496" height="450" x="10" y="52" creationPolicy="all">
+		<mx:Canvas label="Datos Personales" width="100%" height="100%">
+			<Forms:FormDatosPerProsp id="formDPProsp" x="26" height="404" width="440"/>
+		</mx:Canvas>
+		<mx:Canvas label="Domicilio" width="100%" height="100%">	
+			<Forms:FormDirProsp id="formDirProsp" x="36" height="400" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas label="Oficial de Crédito" width="100%" height="100%">	
+			<Forms:FormOficialProsp id="formOficialProsp" x="47" y="10"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="462" y="508" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="414" y="508" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
+	<mx:Image x="446" y="4" width="44" height="45" scaleContent="true">
+		<mx:source>assets/images/user2.png</mx:source>
+	</mx:Image>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaRepCredito()" label="Consulta Rep Crédito" visible="false"/>
+</mx:TitleWindow>

@@ -25,4 +25,5 @@
     <wsdlIncI>http://localhost/ws_incentivos/Default.aspx?</wsdlIncI>
     
     <wsdlPcr>http://vensumat.theworkpc.com/ws_paycash_vst/Service.asmx?wsdl</wsdlPcr>
+    <wsdlCC>http://localhost:52845/service.asmx?wsdl</wsdlCC>
 </Configuration>

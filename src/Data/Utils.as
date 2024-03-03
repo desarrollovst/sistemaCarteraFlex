@@ -14,6 +14,7 @@ package Data
 		public var strWsMS:String;
 		public var strWsCat:String;
 		public var strWsCatCap:String;
+		public var strWsCC:String;
 		public var strWsRep:String;
 		public var strWsRepCont:String;
 		public var strWsAdCred:String;
@@ -28,6 +29,7 @@ package Data
 			var xmlMS:XMLList = new XMLList();
 			var xmlCat:XMLList = new XMLList();
 			var xmlCatCap:XMLList = new XMLList();
+			var xmlCC:XMLList = new XMLList();
 			var xmlRep:XMLList = new XMLList();
 			var xmlRepCont:XMLList = new XMLList();
 			var xmlAdCred:XMLList = new XMLList();
@@ -37,6 +39,7 @@ package Data
 			xmlMS = xmlResult.child("wsdlReg");
 			xmlCat = xmlResult.child("wsdlCat");
 			xmlCatCap = xmlResult.child("wsdlCatCap");
+			xmlCC = xmlResult.child("wsdlCC");
 			xmlRep = xmlResult.child("wsdlRep");
 			xmlRepCont = xmlResult.child("wsdlRepCont");
 			xmlAdCred = xmlAdCred.child("wsdlAdCred");
@@ -46,6 +49,7 @@ package Data
 			strWsMS = xmlMS.toString();
 			strWsCat = xmlCat.toString();
 			strWsCatCap = xmlCatCap.toString();
+			strWsCC = xmlCC.toString();
 			strWsRep = xmlRep.toString();
 			strWsRepCont = xmlRepCont.toString();
 			strWsAdCred = xmlAdCred.toString();
@@ -84,6 +88,13 @@ package Data
 			ws.loadWSDL();	
 			ws.addEventListener(FaultEvent.FAULT, wsFault);						
 			return ws;		
+		}
+		
+		public function initWsCC(ws:WebService):WebService{
+			ws.wsdl = this.strWsCC;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);						
+			return ws;
 		}
 		
 		public function initWsRep(ws:WebService):WebService{			

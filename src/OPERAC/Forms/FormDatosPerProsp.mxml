@@ -1,18 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="300" creationPolicy="all">
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="420" creationPolicy="all">
+	<mx:states>
+		<mx:State name="disabled">
+			<mx:SetProperty target="{txtNombre}" name="editable" value="true"/>
+			<mx:SetProperty target="{txtSegNombre}" name="editable" value="true"/>
+			<mx:SetProperty target="{txtAP}" name="editable" value="true"/>
+			<mx:SetProperty target="{txtAM}" name="editable" value="true"/>
+			<mx:SetProperty target="{rdbFemenino}" name="enabled" value="true"/>
+			<mx:SetProperty target="{rdbMasculino}" name="enabled" value="true"/>
+			<mx:SetProperty target="{cboCoord}" name="editable" value="false"/>
+			<mx:SetProperty target="{txtFecha}" name="editable" value="false"/>
+			<mx:SetProperty target="{cboPais}" name="editable" value="false"/>
+			<mx:SetProperty target="{cboEntidad}" name="editable" value="false"/>
+			<mx:SetProperty target="{cboNac}" name="editable" value="false"/>
+			<mx:SetProperty target="{txtRfc}" name="editable" value="false"/>
+			<mx:SetProperty target="{txtCurp}" name="editable" value="false"/>
+			<mx:SetProperty target="{txtIfe}" name="enabled" value="true"/>
+			<mx:SetProperty target="{txtFecha}" name="editable" value="false"/>
+		</mx:State>
+		<mx:State name="enabled"/>
+	</mx:states>
 	<mx:Metadata>
-		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+		[Event(name="enviarDatosProsp", type="Data.EventProsp")]
 	</mx:Metadata>
 	
 	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
-	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Acreditado Requerido"/>
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Prospecto Requerido"/>
 	 
 	<mx:Validator id="aPaternoV" source="{txtAP}" property="text" 
 	invalid="{txtAP.setFocus()}" triggerEvent="" requiredFieldError="Apellido Paterno Requerido"/> 
-	 
+	
 	<mx:DateValidator id="valFec" property="text" inputFormat="dd/mm/yyyy" allowedFormatChars="/" 
 	formatError="Formato de Fecha Incorrecto"/>
-	
+	 
 	<mx:Validator id="fechaV" source="{txtFecha}" property="text" 
 	invalid="{txtFecha.setFocus()}" triggerEvent="" requiredFieldError="Fecha de Nacimiento Requerida"/>
 	
@@ -27,44 +47,45 @@
 
 	<mx:Script>
 		<![CDATA[
-			import Data.Permisos;
-			import Data.EventAcred;
-			import Data.DatosAcred;
-			import Data.Utils;
+			import Data.DatosProsp;
+			import Data.EventProsp;
 			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
 			import mx.core.Application;			
-			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
 			import mx.events.ValidationResultEvent;
-			import mx.rpc.soap.WebService;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
+			import mx.validators.Validator;
 
-			private var _xmlDatos:XML =  new XML();
-			private var _xmlPais:XML =  new XML();
-			private var _xmlEntFed:XML =  new XML();
+			[Bindable]
+			private var _xmlDatos:XML = new XML();
+			private var _xmlCoord:XML = new XML();
+			private var _xmlEntFed:XML = new XML();
+			private var _xmlPais:XML = new XML();
 			
+			public var coordArr:Array = new Array();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
 			public var paisObj:ArrayCollection = new ArrayCollection();
 			public var entFedObj:ArrayCollection = new ArrayCollection();
-			public var datos:DatosAcred = new DatosAcred();
+			public var datos:DatosProsp = new DatosProsp();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
 			private var du:Utils;
 			private var global:Globales;
-			private var permiso:Permisos;
 			private var bandCURP:Boolean;
 			public var f:Date;
 			public var fecMin:Date;
 			public var fecMax:Date;
 			private var vResult:ValidationResultEvent;
 			
-			//Ejemplo de metodo sincrono
 			private function devuelveEntidad(callback:Function):void{
 				var listener:Function = function(e:Event):void{								
 					try{
@@ -77,8 +98,9 @@
 				this.addEventListener("Evento",listener);
 			}
 			
-			public function enviarDatosAcred(formData:DatosAcred):void{
+			public function enviarDatosProsp(formData:DatosProsp):void{
 				var invalidArray:Array = Validator.validateAll([nombreV, aPaternoV, fechaV, rfcV, curpV, ifeV]);
+
 				if(invalidArray.length == 0){	
 					formData.codigo = txtCodigo.text;
 					formData.nombre = StringUtil.trim(txtNombre.text.toUpperCase());
@@ -91,12 +113,17 @@
 						formData.sexo = "M";
 					if (rdbFemenino.selected == true)
 						formData.sexo = "F";
+					
+					//seleciona el codigo de la sucursal
+					if (cboCoord.text != "--Seleccionar--")
+						formData.cdgco = cboCoord.selectedItem.id;	
+						
 					//selecciona el codigo del pais	
 					if (cboPais.text != "--Seleccionar--")
-						formData.cdgPaisNac = cboPais.selectedItem.CODIGO;
+						formData.cdgPaisNac  = cboPais.selectedItem.CODIGO;
 					//selecciona el codigo de la entidad de nacimiento		
 					if (cboEntidad.text != "--Seleccionar--")
-						formData.cdgEntFedNac = cboEntidad.selectedItem.id;
+						formData.cdgEntFedNac  = cboEntidad.selectedItem.id;
 					//selecciona el codigo de la nacionalidad
 					if (cboNac.text != "--Seleccionar--")
 					 	formData.cdgNac = cboNac.selectedItem.CODIGO;
@@ -109,14 +136,34 @@
 				}
 				else
 					formData.guardaDatos = false;
-				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				var event:EventProsp = new EventProsp("enviarDatosProsp", formData);
 				dispatchEvent(event);
+			}
+			
+			private function formateaCoord():void{
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					item.push(oItem);
+					coordArr[i + 1] = _xmlCoord.Table[i].NOMBRE.toString();
+				}
+				coordObj = new ArrayCollection(item);
 			}
 			
 			private function formateaEntFed():void{
 				var cont:int = _xmlEntFed.elements().length();
 				var oItem:Object;
-				var item:Array = new Array();
+				var item:Array = new Array;
 				
 				oItem = new Object();
 				oItem.id = "0";	
@@ -124,7 +171,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for(var i:int = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlEntFed.Table[i].CODIGO;
 					oItem.clave = _xmlEntFed.Table[i].CDGCURP;	
@@ -151,9 +198,9 @@
 				paisObj.addItemAt(oItem, 0);
 			}
 			
-			public function generaCURP():void{
-				var wsCat:WebService = new WebService();
-				var params:Array = new Array();
+			private function generaCURP():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
 				bandCURP = false;
 				//Elimina espacios al principio y final de los textos 
 				txtAP.text = StringUtil.trim(txtAP.text);
@@ -167,7 +214,6 @@
 					var nombres:String;
 					var sexo:String;
 					var clave:String;
-					var cont:int;
 										
 					du.initWsCat(wsCat);
 					du.sCursor();
@@ -179,8 +225,7 @@
 					else if(rdbFemenino.selected == true)
 						sexo = "M";
 					
-					cont = entFedObj.length;
-					for(var j:int = 0; j < cont; j++){
+					for(var j:int = 0; j < entFedObj.length; j++){
 						if (entFedObj[j].nombre.toString() == cboEntidad.text){
 							clave = entFedObj[j].clave.toString();	
 							break;		
@@ -189,10 +234,9 @@
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						curp = evt.result.toString();
-
+	
 						du.rCursor();
 						du.closeWs(wsCat);
-						wsCat = null;
 						
 						bandCURP = true;
 						txtRfc.text = curp.substr(0,10);
@@ -210,24 +254,30 @@
 				else{
 					txtRfc.text = "";
 					txtCurp.text = "";
-				}
+				}	
 			}
 			
-			public function init(info:DatosAcred):void{
+			public function init(info:DatosProsp, estado:Boolean):void{
 				var j:int;
 				var cont:int;
-				var wsCat:WebService = new WebService();
-				du = new Utils();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
 				global = new Globales();
-				permiso = new Permisos();
-				
+				du = new Utils();
 				f = global.obtenerFechaSistema();
 				fecMin = new Date(f.getFullYear()-18,f.getMonth(),f.getDate());
-				fecMax = new Date(f.getFullYear()-76,f.getMonth(),f.getDate());
+				fecMax = new Date(f.getFullYear()-75,f.getMonth(),f.getDate());
 				txtFecha.selectableRange = {rangeStart: fecMax, rangeEnd: fecMin};
 				bandCURP = true;
 				
 				permisos();
+				
+				_xmlCoord = Application.application._xmlSuc;
+				
+				if (_xmlCoord.elements().length() > 0){
+					formateaCoord();
+					cboCoord.dataProvider = coordObj;
+				} 	
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
@@ -236,12 +286,11 @@
 					_xmlPais = new XML(evt.result.toString());
 					
 					if (_xmlPais.elements().length() > 0){
-						//formateaPais();
 						formateaPais(evt.result.toString());
 						cboPais.dataProvider = paisObj;
 						cboNac.dataProvider = paisObj;
 					}
- 	
+					
 					if (info != null){
 						txtCodigo.text = info.codigo;
 						txtNombre.text = info.nombre;
@@ -253,6 +302,13 @@
 						else if (info.sexo.toUpperCase() == "M")
 							rdbMasculino.selected = true;
 						txtFecha.text = info.fecha;
+						//selecciona la sucursal del acreditado
+						for(j = 0; j < coordObj.length; j++){   
+							if (coordObj[j].id.toString() == info.cdgco){
+								cboCoord.selectedIndex = j;
+								break;
+							}
+						}
 						//selecciona el pais del acreditado
 						cont = paisObj.length;
 						for(j = 0; j < cont; j++){   
@@ -268,13 +324,19 @@
 								break;
 							}
 						}
+						//selecciona la entidad federativa del acreditado
+						for(j = 0; j < entFedObj.length; j++){   
+							if (entFedObj[j].id.toString() == info.cdgEntFedNac){
+								cboEntidad.selectedIndex = j;
+								break;
+							}
+						}
 						txtRfc.text = info.rfc;
 						txtCurp.text = info.curp;
 						txtIfe.text = info.ife;
 						
 						//devuelve la entidad federativa del acreditado
 						//el proceso espera a que el service devuelva la informacion
-						//ejemplo de proceso sincrono
 						devuelveEntidad(function(e:Event):void {
 							cont = 0;
 							cont = entFedObj.length;
@@ -288,34 +350,10 @@
 						});	
 						obtieneEntidad(info.cdgPaisNac);
 					}		
-					else{
-						initConexion();
-						du.sCursor();
-				
-						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-							var codigo:String = evt.result.toString();
-							
-							global.desbloquear();
-							du.rCursor();
-							du.closeWs(wsMS);
-							
-							txtCodigo.text = codigo;
-							
-							obtieneEntidad("0");
-						});
-						//EXTRAE EL CODIGO CONSECUTIVO DE ACREDITADOS
-						wsMS.setCodigoAcred.send();
-					}
 				});
 				//CONSULTA LOS PAISES DISPONIBLES
 				wsCat.getCatalogoGral.send(1);
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			private function modificaFecha():void{
 				vResult = valFec.validate(txtFecha.text);
@@ -363,7 +401,7 @@
 			}	
 			
 			public function permisos():void{
-				if(permiso.permisosModAcred(Application.application.PERFIL_ID)){
+				if(global.permisosModProsp(Application.application.PERFIL_ID)){
 					txtRfc.editable = true;
 					txtCurp.editable = true;
 				}
@@ -390,10 +428,15 @@
 	<mx:FormItem label="Apellido Materno:" id="AM" visible="true">
 		<mx:TextInput id="txtAM" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
 	</mx:FormItem>
-	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="350">
+	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="330">
 		<mx:Canvas>
 			<mx:RadioButton id="rdbFemenino" label="Femenino" focusOut="generaCURP()"/>
 			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()"/>	
+		</mx:Canvas>	
+	</mx:FormItem>
+	<mx:FormItem label="Sucursal:" id="coord" visible="true" width="330">
+		<mx:Canvas>
+			<mx:ComboBox id="cboCoord" labelField="nombre" width="170"/>
 		</mx:Canvas>	
 	</mx:FormItem>
 	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="350">
@@ -415,9 +458,7 @@
 		<mx:TextInput id="txtRfc" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="CURP:" id="curp" visible="true">
-		<mx:Canvas>
-			<mx:TextInput id="txtCurp" editable="false"/>
-		</mx:Canvas>
+		<mx:TextInput id="txtCurp" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="IFE:" id="ife" visible="true">
 		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15"/>
