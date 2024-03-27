@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="140" backgroundAlpha="1.0" 
-	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="310" height="180" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.ExcelExportXls;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -17,7 +19,8 @@
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
-			public var wsMS:WebService;
+			private var _xmlRep:XML =  new XML();
+			
 			public var fecIni:String;
 			public var fecFin:String;
 			public var titulo:String;
@@ -26,22 +29,38 @@
 			private var global:Globales;
 			
 			private function generar():void{
-				if(valida()){			
-					var fecAux:Date = dtfFecha.selectedDate;		
-					fecIni = global.formatoFecha(new Date(fecAux.fullYear,fecAux.month,fecAux.date - 6));
-					fecFin = dtfFecha.text; 
-
-					var consulta:String = global.urlInf;
-					var id:String = "&id=8";
-					var fecha:String = "&in=" + fecIni;
-					var fechaFin:String = "&fi=" + fecFin;
-					var usuario:String = "&us=" + global.obtenerUsuario();
-					consulta = consulta + id + fecha + fechaFin + usuario;
+				if(valida()){		
+					var wsRep:WebService = new WebService;		
+					fecIni = dtfFecIni.text;
+					fecFin = dtfFecFin.text;
 					
-					var request:URLRequest = new URLRequest(consulta); 
-					navigateToURL(request,"_blank");
+					global.bloquear();
+					du.initWsRep(wsRep);
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						global.desbloquear();
+						du.rCursor();
+						du.closeWs(wsRep);
+													
+						dgReporte.dataProvider = null;
+														
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();   
+							dgReporte.dataProvider = _xmlRep.Table;
+							var dgE:ExcelExportXls = new ExcelExportXls();
+							dgE.ocultarTitulo(true); 
+							dgE.loadDGInExcel(dgReporte,null,"Reporte de Circulo de Crédito");		
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						} 
+					});
+					wsRep.getRepCirculoCredito.send(fecIni, fecFin, global.obtenerUsuario());
 				}
-			} 
+			}
 				
 			public function initApp():void{
 				global = new Globales();
@@ -51,21 +70,20 @@
 				limpiar();
 			}		
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			private function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecFin.selectedDate = global.seleccionaDiaHabil(fec);
 			}
 				
 			private function valida():Boolean{
-				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
+				if(dtfFecIni.text == ""){
+					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecFin.text == ""){
+					Alert.show("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -73,12 +91,117 @@
 			
 		]]>
 	</mx:Script>
-	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53" width="264.05" height="40.5" styleName="canvasMod">
-		<mx:Label x="49.5" y="10" text="Fecha:" textAlign="right"/>
-		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
+	<mx:Label id="lblTitulo" x="14.95" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="14.95" y="53" width="280.05" height="75.5" styleName="canvasMod">
+		<mx:Label x="46" y="12" text="Fecha Inicial:" textAlign="right"/>
+		<mx:DateField id="dtfFecIni" x="121" y="11" width="111"/>
+		<mx:Label x="50" y="41" text="Fecha Final:" textAlign="right"/>
+		<mx:DateField id="dtfFecFin" x="121" y="40" width="111"/>
 	</mx:Canvas>
-	<mx:Button x="75" y="105.5" label="Generar" click="generar()"/>
-	<mx:Button x="154" y="106" label="Limpiar" click="limpiar()"/>
-	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="80" y="139.5" label="Generar" click="generar()"/>
+	<mx:Button x="159" y="140" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="14.95" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" height="165" visible="false" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="ClaveOtorgante" dataField="CVE_OTORGANTE"/><!-- 1 -->
+			<mx:DataGridColumn headerText="NombreOtorgante" dataField="NOM_OTORGANTE"/><!-- 2 -->
+			<mx:DataGridColumn headerText="IdentificadorDeMedio" dataField="ID_MEDIO"/><!-- 3 -->
+			<mx:DataGridColumn headerText="FechaExtraccion" dataField="FECHA_EXT"/>			<!-- 4 -->
+			<mx:DataGridColumn headerText="NotaOtorgante" dataField="NOTA_OTORGANTE"/><!-- 5 -->
+			<mx:DataGridColumn headerText="Version" dataField="VERSION"/><!--6 -->
+			<mx:DataGridColumn headerText="ApellidoPaterno" dataField="PATERNO"/><!--7 -->
+			<mx:DataGridColumn headerText="ApellidoMaterno" dataField="MATERNO"/><!-- 8 -->
+			<mx:DataGridColumn headerText="ApellidoAdicional" dataField="APELL_EXTRA"/><!-- 9 -->
+			<mx:DataGridColumn headerText="Nombres" dataField="NOMBRES"/><!-- 10 -->
+			<mx:DataGridColumn headerText="FechaNacimiento" dataField="FECHA_NACIMIENTO"/><!-- 11 -->
+			<mx:DataGridColumn headerText="RFC" dataField="RFC"/><!-- 12 -->
+			<mx:DataGridColumn headerText="CURP" dataField="CURP"/><!-- 13 -->
+			<mx:DataGridColumn headerText="NumeroSeguridadSocial" dataField="NSS"/><!-- 14 -->
+			<mx:DataGridColumn headerText="Nacionalidad" dataField="NACIONALIDAD"/><!-- 15 -->
+			<mx:DataGridColumn headerText="Residencia" dataField="RESIDENCIA"/><!-- 16 -->
+			<mx:DataGridColumn headerText="NumeroLicenciaConducir" dataField="NO_LICENCIA_COND"/><!-- 17 -->
+			<mx:DataGridColumn headerText="EstadoCivil" dataField="EDO_CIVIL"/><!-- 18 -->
+			<mx:DataGridColumn headerText="Sexo" dataField="SEXO"/><!-- 19 -->
+			<mx:DataGridColumn headerText="ClaveElectorIFE" dataField="IDENT"/><!-- 20 -->
+			<mx:DataGridColumn headerText="NumeroDependientes" dataField="NO_DEPEN"/><!-- 21 -->
+			<mx:DataGridColumn headerText="FechaDefuncion" dataField="FECHA_DEF"/><!-- 22 -->
+			<mx:DataGridColumn headerText="IndicadorDefuncion" dataField="IND_DEFUN"/><!-- 23 -->
+			<mx:DataGridColumn headerText="TipoPersona" dataField="TIPO_PERSONA"/><!-- 24 -->
+			<mx:DataGridColumn headerText="Direccion" dataField="DIRECCION"/><!-- 25 -->
+			<mx:DataGridColumn headerText="ColoniaPoblacion" dataField="COLONIA"/><!-- 26 -->
+			<mx:DataGridColumn headerText="DelegacionMunicipio" dataField="MUNICIPIO"/><!-- 27 -->
+			<mx:DataGridColumn headerText="Ciudad" dataField="LOCALIDAD"/><!-- 28 -->
+			<mx:DataGridColumn headerText="Estado" dataField="ESTADO"/><!-- 29 -->
+			<mx:DataGridColumn headerText="CP" dataField="CP"/><!-- 30 -->
+			<mx:DataGridColumn headerText="FechaResidencia" dataField="FECHA_RES"/><!-- 31 -->
+			<mx:DataGridColumn headerText="NumeroTelefono" dataField="TELEFONO"/><!-- 32 -->
+			<mx:DataGridColumn headerText="TipoDomicilio" dataField="TIPO_DOM"/><!-- 33 -->
+			<mx:DataGridColumn headerText="TipoAsentamiento" dataField="TIPO_ASENT"/><!-- 34 -->
+			<mx:DataGridColumn headerText="OrigenDomicilio" dataField="ORI_DOM"/><!-- 35 -->
+			<mx:DataGridColumn headerText="NombreEmpresa" dataField="NOMBRE_EMPRESA"/><!-- 35 -->
+			<mx:DataGridColumn headerText="Direccion" dataField="DIR_EMP"/><!-- 36 -->
+			<mx:DataGridColumn headerText="ColoniaPoblacion" dataField="COL_EMP"/><!-- 37 -->
+			<mx:DataGridColumn headerText="DelegacionMunicipio" dataField="DELEG_EMP"/><!-- 38 -->
+			<mx:DataGridColumn headerText="Ciudad" dataField="CIUDAD_EMP"/>			<!-- 39 -->
+			<mx:DataGridColumn headerText="Estado" dataField="EDO_EMP"/><!-- 40 -->
+			<mx:DataGridColumn headerText="CP" dataField="CP_EMP"/><!-- 41 -->
+			<mx:DataGridColumn headerText="NumeroTelefono" dataField="TEL_EMP"/><!-- 42 -->
+			<mx:DataGridColumn headerText="Extension" dataField="EXT_TEL_EMP"/><!-- 43 -->
+			<mx:DataGridColumn headerText="Fax" dataField="FAX"/><!-- 44 -->
+			<mx:DataGridColumn headerText="Puesto" dataField="PUESTO"/><!-- 45 -->
+			<mx:DataGridColumn headerText="FechaContratacion" dataField="FECHA_CONT"/><!-- 46 -->
+			<mx:DataGridColumn headerText="ClaveMoneda" dataField="MONEDA"/><!-- 47 -->
+			<mx:DataGridColumn headerText="SalarioMensual" dataField="SALARIO_MENS"/><!-- 48 -->
+			<mx:DataGridColumn headerText="FechaUltimoDiaEmpleo" dataField="FECHA_ULT_EMP"/><!-- 49 -->
+			<mx:DataGridColumn headerText="FechaVerificacionEmpleo" dataField="FECHA_VERIF_EMP"/><!-- 50 -->
+			<mx:DataGridColumn headerText="OrigenRazonSocialDomicilio" dataField="ORI_RAZ_SOC_DOM"/><!-- 51 -->
+			<mx:DataGridColumn headerText="ClaveActualOtorgante" dataField="CVE_OTORGANTE"/><!-- 52 -->
+			<mx:DataGridColumn headerText="NombreOtorgante" dataField="NOM_OTORGANTE"/><!-- 53 -->
+			<mx:DataGridColumn headerText="CuentaActual" dataField="CTA_ACTUAL"/><!-- 54 -->
+			<mx:DataGridColumn headerText="TipoResponsabilidad" dataField="TIPO_RESP"/><!-- 55 -->
+			<mx:DataGridColumn headerText="TipoCuenta" dataField="TIPO_CUENTA"/><!-- 56 -->
+			<mx:DataGridColumn headerText="TipoContrato" dataField="TIPO_CONTRATO"/><!-- 57 -->
+			<mx:DataGridColumn headerText="ClaveUnidadMonetaria" dataField="CLAVE_MONE"/><!-- 58 -->
+			<mx:DataGridColumn headerText="ValorActivoValuacion" dataField="VALOR_VALUA"/>		<!-- 59 -->
+			<mx:DataGridColumn headerText="NumeroPagos" dataField="NUMERO_PAGOS"/>		<!-- 60 -->
+			<mx:DataGridColumn headerText="FrecuenciaPagos" dataField="FREC_PAGOS"/>		<!-- 61 -->
+			<mx:DataGridColumn headerText="MontoPagar" dataField="MONTO_PAGAR"/>		<!-- 62 -->
+			<mx:DataGridColumn headerText="FechaAperturaCuenta" dataField="FECHA_APERT"/>		<!-- 63 -->
+			<mx:DataGridColumn headerText="FechaUltimoPago" dataField="FEC_ULT_PAGO"/>		<!-- 64 -->
+			<mx:DataGridColumn headerText="FechaUltimaCompra" dataField="FECHA_ULT_COMPRA"/>		<!-- 65 -->
+			<mx:DataGridColumn headerText="FechaCierreCuenta" dataField="FEC_CIERRE_CTA"/>		<!-- 66 -->
+			<mx:DataGridColumn headerText="FechaCorte" dataField="FECHA_CORTE"/>		<!-- 67 -->
+			<mx:DataGridColumn headerText="Garantia" dataField="GAR"/>		<!-- 68 -->
+			<mx:DataGridColumn headerText="CreditoMaximo" dataField="CREDITOMAX"/><!--69 -->
+			<mx:DataGridColumn headerText="SaldoActual" dataField="SALDO"/>		<!-- 70 -->
+			<mx:DataGridColumn headerText="LimiteCredito" dataField="LIM_CRED"/>		<!-- 71 -->
+			<mx:DataGridColumn headerText="SaldoVencido" dataField="SALDO_VENCIDO"/>	<!-- 72 -->
+			<mx:DataGridColumn headerText="NumeroPagosVencidos" dataField="NUM_PAGOS_VENCI"/><!--73 -->
+			<mx:DataGridColumn headerText="PagoActual" dataField="PAGO_ACT"/>			<!-- 74 -->
+			<mx:DataGridColumn headerText="HistoricoPagos" dataField="HIST_PAGOS"/>		<!-- 75 -->
+			<mx:DataGridColumn headerText="ClavePrevencion" dataField="CLAVE_PREVE"/>	<!-- 76 -->
+			<mx:DataGridColumn headerText="TotalPagosReportados" dataField="TOT_PAGOS_REP"/><!-- 77 -->
+			<mx:DataGridColumn headerText="ClaveAnteriorOtorgante" dataField="CVE_ANT_OTOR"/><!-- 78 -->
+			<mx:DataGridColumn headerText="NombreAnteriorOtorgante" dataField="NOM_ANT_OTOR"/><!-- 79 -->
+			<mx:DataGridColumn headerText="NumeroCuentaAnterior" dataField="NUM_CTA_ANT"/><!-- 80 -->
+			<mx:DataGridColumn headerText="FechaPrimerIncumplimiento" dataField="FEC_INCUMP"/><!-- 81 -->
+			<mx:DataGridColumn headerText="SaldoInsoluto" dataField="SDO_INSOLUTO"/>			<!-- 82 -->
+			<mx:DataGridColumn headerText="MontoUltimoPago" dataField="MONTO_ULT_PAGO"/>		<!-- 83 -->
+			<mx:DataGridColumn headerText="FechaIngresoCarteraVencida" dataField="FEC_ING_CAR_VENC"/>		<!-- 84 -->
+			<mx:DataGridColumn headerText="MontoCorrespondienteIntereses" dataField="MONT_CORR_INT"/>		<!-- 85 -->
+			<mx:DataGridColumn headerText="FormaPagoActualIntereses" dataField="FORM_PAG_ACT_INT"/>		<!-- 86 -->
+			<mx:DataGridColumn headerText="DiasVencimiento" dataField="DIAS_VENC"/>		<!-- 87 -->
+			<mx:DataGridColumn headerText="PlazoMeses" dataField="PLAZO_MES"/>			<!-- 88 -->
+			<mx:DataGridColumn headerText="MontoCreditoOriginacion" dataField="MONTO_CRED"/>		<!-- 89 -->
+			<mx:DataGridColumn headerText="CorreoElectronicoConsumidor" dataField="EMAIL"/>		<!-- 90 -->
+			<mx:DataGridColumn headerText="TotalSaldosActuales" dataField="TOT_SDOS_ACT"/>			<!-- 91 -->
+			<mx:DataGridColumn headerText="TotalSaldosVencidos" dataField="TOT_SDOS_VENC"/>			<!-- 92 -->
+			<mx:DataGridColumn headerText="TotalElementosNombreReportados" dataField="TOT_NOM_REP"/><!-- 93 -->
+			<mx:DataGridColumn headerText="TotalElementosDireccionReportados" dataField="TOT_DIR_REP"/><!-- 94 -->
+			<mx:DataGridColumn headerText="TotalElementosEmpleoReportados" dataField="TOT_EMP_REP"/><!-- 95 -->
+			<mx:DataGridColumn headerText="TotalElementosCuentaReportados" dataField="TOT_CTA_REP"/><!-- 96 -->
+			<mx:DataGridColumn headerText="NombreOtorgante" dataField="NOM_OTOR"/>					<!-- 97 -->
+			<mx:DataGridColumn headerText="DomicilioDevolucion" dataField="DIR_DEVOL" width="1000"/><!-- 98 -->
+		</mx:columns>
+	</mx:DataGrid>
 </mx:Canvas>

@@ -8,20 +8,19 @@
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;		
-			import mx.managers.PopUpManager;
-			import mx.formatters.NumberFormatter;
 			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
 			private var _xmlRep:XML =  new XML();
 			
-			public var wsMS:WebService;
 			public var fecIni:String;
 			public var fecFin:String;
 			public var titulo:String;
@@ -35,20 +34,21 @@
 		
 			public function generar():void{
 				if(valida()){
-					initConexion();
+					var wsRep:WebService = new WebService;
+					
+					du.initWsRep(wsRep);
 					du.sCursor();
 							
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsRep);
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
 													
 						if(_xmlRep.elements().length() - 1 > 0){
-							var i:int;
 							var cantidad:Number = 0;
 							var cont:int = _xmlRep.elements().length() - 1;
 							btnExportar.enabled = true;
@@ -62,7 +62,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepDispersion.send(dtfFecha.text, dtfFechaFinal.text, global.obtenerUsuario());
+					wsRep.getRepDispersion.send(dtfFecha.text, dtfFechaFinal.text, global.obtenerUsuario());
 				}	
 			}			
 						
@@ -74,12 +74,6 @@
 				limpiar();
 			}		
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			public function limpiar():void{
 				var fec:Date;
 				dgReporte.dataProvider = null;
@@ -122,7 +116,7 @@
 		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
 		<mx:DataGrid id="dgReporte" x="18.45" y="169" width="763.05" visible="true" height="165" horizontalScrollPolicy="auto">
 			<mx:columns>
-				<mx:DataGridColumn headerText="GRUPO" dataField="CODGRUPO" width="110"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CODGRUPO" width="70"/>
 				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="70"/>
 				<mx:DataGridColumn headerText="FECHA" dataField="FINICIO" width="70"/>
@@ -131,6 +125,7 @@
 				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
 				<!--<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100"/>-->
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="CLIENTE" width="200"/>
+				<mx:DataGridColumn headerText="CICLO ACREDITADO" dataField="CICLO_ACRED" width="120"/>
 				<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="90"/>
 				<mx:DataGridColumn headerText="CLABE" dataField="CLABE" width="130"/>
 				<!--<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>-->

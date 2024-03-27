@@ -4,9 +4,9 @@
 	<mx:states>
 		<mx:State name="resultado">
 			<mx:SetProperty name="width" value="610"/>
-			<mx:SetProperty name="height" value="480"/>
+			<mx:SetProperty name="height" value="560"/>
 			<mx:AddChild position="lastChild">
-				<mx:Canvas id="cnvTotal" x="296" y="30" width="300" height="440" styleName="canvasMod">
+				<mx:Canvas id="cnvTotal" x="296" y="30" width="300" height="515" styleName="canvasMod">
 					<mx:Label id="lblEtiqNumero" x="5" y="10" text="NÚMERO / MONTO MOVIMIENTOS:" fontSize="16"/>
 					<mx:Label id="lblNumero" x="5" y="33" width="283" height="40" textAlign="center" fontSize="32"/>
 					<mx:Label id="lblEtiqPagos" x="6" y="81" text="DEPÓSITOS CRÉDITOS:" fontSize="16"/>
@@ -17,8 +17,10 @@
 					<mx:Label id="lblNoIden" x="5" y="246" width="253" height="40" textAlign="center" fontSize="32"/>
 					<mx:Label id="lblEtiqMovsDup" x="5" y="294" text="DEPÓSITOS DUPLICADOS DÍA:" fontSize="16"/>
 					<mx:Label id="lblMovsDup" x="5" y="318" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(0)"/>
-					<mx:Label id="lblEtiqMovsDupAyer" x="5" y="366" text="DEPÓSITOS DUPLICADOS ANT:" fontSize="16"/>
-					<mx:Label id="lblMovsDupAyer" x="5" y="390" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(1)"/>
+					<mx:Label id="lblEtiqGarsDup" x="5" y="366" text="GARANTÍAS DUPLICADAS DÍA:" fontSize="16"/>				
+					<mx:Label id="lblGarsDup" x="5" y="389" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(2)"/>
+					<mx:Label id="lblEtiqMovsDupAyer" x="5" y="437" text="DEPÓSITOS DUPLICADOS ANT:" fontSize="16"/>
+					<mx:Label id="lblMovsDupAyer" x="5" y="460" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(1)"/>
 				</mx:Canvas>
 			</mx:AddChild>
 			<mx:AddChild position="lastChild">
@@ -136,6 +138,7 @@
 									lblGL.text = Number(_xmlRep.Table[0].GL).toString();
 									lblNoIden.text = Number(_xmlRep.Table[0].NOIDEN).toString();
 									lblMovsDup.text = Number(_xmlRep.Table[0].MOVS_DUP).toString();
+									lblGarsDup.text = Number(_xmlRep.Table[0].GARS_DUP).toString();
 									lblMovsDupAyer.text = Number(_xmlRep.Table[0].MOVS_DUP_ANT).toString();
 								}
 								else

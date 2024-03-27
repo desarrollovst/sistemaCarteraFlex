@@ -18,7 +18,7 @@
 	
 	<wsdlPdf>http://localhost/RptGenerado/default.aspx?</wsdlPdf>
 	<wsdlInf>http://localhost/ws_informes?</wsdlInf>
-	<wsdlExpXls>http://vensumat.theworkpc.com/ExpExcel/ExcelLib.aspx</wsdlExpXls>
+	<wsdlExpXls>http://localhost/ExpExcel/ExcelLib.aspx</wsdlExpXls>
 	
 	<wsdlIncR>http://localhost/ws_incentivos/Registro.asmx?wsdl</wsdlIncR>
 	<wsdlIncC>http://localhost/ws_incentivos/Consulta.asmx?wsdl</wsdlIncC>

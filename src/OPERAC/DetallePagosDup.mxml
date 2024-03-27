@@ -20,10 +20,9 @@
 			[Bindable]
 			public var _xmlInfo:XML =  new XML();
 			
-			public var wsMS:WebService;
 			public var titulo:String;
-			private var global:Globales;
 			private var du:Utils;
+			private var global:Globales;
 						
 			public function cerrar():void{
 				PopUpManager.removePopUp(this);
@@ -56,12 +55,6 @@
 				titulo = "Detalle de Pagos Duplicados";
 				this.title = titulo;
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function manejadorCerrar(e:CloseEvent):void{
 				if(e.detail == Alert.OK)

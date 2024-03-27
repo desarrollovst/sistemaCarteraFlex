@@ -257,10 +257,10 @@
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
 		<mx:Label x="18" y="10" fontSize="12" fontWeight="bold" fontStyle="italic" text="ACREDITADOS INDIVIDUALES"/>
-		<mx:Canvas x="648" y="39" width="160" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Canvas x="648" y="39" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" horizontalScrollPolicy="off">
 			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 			<mx:Button id="btnEditar" x="59" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormAcred(2)" toolTip="Editar Acreditado" width="40"/>
-			<mx:Button id="btnAgregar" x="107" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormAcred(1)" toolTip="Registrar Acreditado" width="40"/>
+			<mx:Button id="btnAgregar" x="107" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarFormAcred(1)" toolTip="Registrar Acreditado" width="40" visible="false"/>
 		</mx:Canvas>
 		<mx:Canvas x="18.5" y="39" width="607.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodAcred" x="16" y="7" text="Código:"/>

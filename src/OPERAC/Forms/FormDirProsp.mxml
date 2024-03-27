@@ -358,7 +358,7 @@
 	<mx:Label id="lblTelefono" text="Teléfono:" x="98.5" y="79"/>
 	<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="20" x="156.5" y="78"/>
 	<mx:Label id="lblCodPostal" text="Código Postal:" x="75.5" y="109"/>
-	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" focusOut="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="156.5" y="108"/>
+	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="156.5" y="108"/>
 	<mx:Label id="lblEntFed" text="Entidad Federativa:" x="51.5" y="140"/>
 	<Controls:TextGrid id="comEntGrid" height="24" x="156.5" y="138"/>
 	<mx:Label id="lblMunicipio" text="Municipio:" x="98.5" y="171"/>

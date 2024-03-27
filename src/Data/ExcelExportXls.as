@@ -6,7 +6,6 @@ package Data
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
 	import flash.net.navigateToURL;
-	import mx.controls.Alert;
 	
 	public class ExcelExportXls extends EventDispatcher{
 	    private var global:Globales;
@@ -14,8 +13,9 @@ package Data
 	 	private var urlExcelExport:String;
 	    private var titulo:String;
 	 	private var disp:ExcelExportDispatcher;
-	 	public var isXls:Boolean = false;
-	 	public var header:Boolean = false;
+	 	private var isXls:Boolean = false;
+	 	private var header:Boolean = false;
+	 	private var hideTitle:Boolean = false;
 			
 		public function ExcelExportXls():void{
 	    }
@@ -40,6 +40,7 @@ package Data
 			variables.titulo = this.titulo;
 			variables.xls = getIsXls() == true? "1":"0";	//1= xls, 0 = xlsx	
 			variables.hideHeader = this.header;	
+			variables.hideTitle = this.hideTitle;
 			u.data = variables;
 			u.method = URLRequestMethod.POST;
 			navigateToURL(u,"_self");
@@ -56,6 +57,10 @@ package Data
 		
 		public function hideHeader(header:Boolean):void{
 			this.header = header;
+		}
+		
+		public function ocultarTitulo(hideTitle:Boolean):void{
+			this.hideTitle = hideTitle;
 		}
 	}
 }
