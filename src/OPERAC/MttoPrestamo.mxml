@@ -4,7 +4,6 @@
 	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*">
 	<mx:Script>
 		<![CDATA[
-			import mx.messaging.AbstractConsumer;
 			import Data.DatosSolic;
 			import Data.EventSolic;
 			import Data.Globales;
@@ -658,7 +657,7 @@
 				<mx:columns>
 					<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="40"/>
 					<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="120"/>
-					<mx:DataGridColumn headerText="FECHA" editable="false" dataField="solicitud" width="50"/>
+					<!--<mx:DataGridColumn headerText="FECHA" editable="false" dataField="solicitud" width="50"/>-->
 					<mx:DataGridColumn headerText="M. AUTORIZADO" dataField="cantAutor" width="70" editable="false"/>	
 					<mx:DataGridColumn headerText="AUTORIZADO" textAlign="center" rendererIsEditor="true" dataField="autorizado" width="60" editorDataField="selected" editable="false">
 						<mx:itemRenderer>

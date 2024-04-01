@@ -99,15 +99,14 @@
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.utils.ObjectUtil;
-			import flash.external.ExternalInterface;
 			
 			[Bindable]
 			private var info:DatosSolic;
-			private var _xmlSolic:XML =  new XML();
-			private var _xmlAcred:XML =  new XML();
-			private var _xmlCiclo:XML =  new XML();
-			private var _xmlControl:XML =  new XML();
-			private var _xmlPres:XML =  new XML();
+			private var _xmlSolic:XML = new XML();
+			private var _xmlAcred:XML = new XML();
+			private var _xmlCiclo:XML = new XML();
+			private var _xmlControl:XML = new XML();
+			private var _xmlPres:XML = new XML();
 			[Bindable]	
 			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
 			
@@ -122,6 +121,7 @@
 			public var reporte:Array;
 			public var causaBaja:Array;
 			public var proyInv:Array;
+			public var tipoSeguro:Array;
 			public var emplGenH:Array;
 			public var emplGenM:Array;
 			public var emplSostH:Array;
@@ -249,7 +249,7 @@
 					estatusCC = acred[i].estatusCC;
 					if( cantSoli > 0 && estatusCC != "S"){
 						codAcreds[j] = acred[i].codigo.toString();			 
-						j+=1;
+						j += 1;
 					}				
 				}
 				
@@ -277,92 +277,6 @@
  					validaReporteCred(); 
 				});
 				 wsMS.setAccionAnalizaReporte.send(codAcreds,global.obtenerUsuario());	
-			}
-				
-			//FUNCION VALIDA REPORTE DE CREDITO			
-			private function validaReporteCred():void{
-				//Analizar grupo an validaciones propuestas por el usuario
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-
-				var codAcreds:Array = new Array();
-				var j:int = 0;
-				var estatusCC:String = "";
-				var noConsul:Boolean = false;
-				//Ciclo para filtrar los codigos de los clientes con monto Autorizado > 0
-				 for(var i:int = 0; i < acred.length; i++){
-				 	estatusCC = acred[i].estatusCC;
-					if( estatusCC != "S")
-						noConsul = true;
-					codAcreds[j] = acred[i].codigo.toString();			 
-				    j+=1;
-				 } 
-				
-				if (noConsul == false){
-					initConexion();
-					du.sCursor();
-	
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
-															
- 						var resEnv:String = evt.result.toString();
-						du.closeWs(wsMS);
-						du.rCursor();
-						var cods: Array = resEnv.split("|");
-						 
-						for(var i:int = 0; i < cods.length -1; i++){
-							var cod:Array = cods[i].split("-");
-							var c:String = cod[0];
-							var e:String = cod[1];
-							
-							for(var j:int = 0; j < acred.length; j++){
-								if(acred[i].codigo.toString() == c){
-								  	acred[i].codigo.toString();			 
-									acred[i].estatusRC = e;
-								}	 
-						 	}
-						} 	
-						dgAcredEv.rowColorFunction = selecColorRepCred;
-	 					Alert.show("El proceso de analisis de crédito ha terminado exitosamente."
-	 					,titulo,4,null,null,global.iInfo);
-					});
-					wsMS.getValiRepCredGpal.send(codAcreds,"CC");
-				
-				} else {
-					Alert.show("No se ha ejecutado el proceso de analisis de crédito," + 
-							" debido a que existen clientes sin consulta vigente"
-	 						,titulo,4,null,null,global.iAlert);
-				}			
-			}		
-			
-			public function selecColorRepCred(datagrid:DataGrid, rowIndex:int, color:uint):uint{
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var rColor:uint;
-				var estatus:String = acred[rowIndex].estatusRC;
-				if (estatus == '0') {
-					rColor = 0x00bfff;// AZUL: ERROR durante ejecucion;					
-				}
-				if (estatus == '1') {
-					rColor = color; // SIN COLOR, paso las validaciones
-				}
-				if (estatus == '2') {
-					rColor = 0xbef781;// VERDE, Error de RFC o mayor a 3 cuentas
-				}
-				if (estatus == '3') {
-					rColor = 0x8f999b;// GRIS: no tiene una consulta vigente
-				}
-				if (estatus == '4') {
-					rColor = 0xfa5858;// ROJO: Error de Quebranto o SDO_VENCIDO > 6000
-				}
-				return rColor;
-			}
-			
-			public function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var rColor:uint;
-				if (acred[rowIndex].estatusCC == 'N') 
-					rColor = 0xf6f694;
-				else
-					rColor = color;
-				return rColor;
 			}
 			
 			public function calculaMontoAutorizado():void{
@@ -695,6 +609,7 @@
 						oItem.rechazo = "";
 						//informacion del proyecto de inversion
 						oItem.proyecto = "";
+						oItem.tipoSeguro = false;
 						oItem.emplSostH = 0;
 						oItem.emplSostM = 0;
 						oItem.emplGenH = 0;
@@ -708,6 +623,7 @@
 						oItem.sitAcred = _xmlAcred.Table[i].SITACRED.toString(); 
 						//informacion del proyecto de inversion 
 						oItem.proyecto = _xmlAcred.Table[i].PROYECTO.toString();
+						oItem.tipoSeguro = _xmlAcred.Table[i].TIPOSEGURO.toString() == "F"? true: false;
 						oItem.emplSostH = _xmlAcred.Table[i].EMPLSOSTH;
 						oItem.emplSostM = _xmlAcred.Table[i].EMPLSOSTM;
 						oItem.emplGenH = _xmlAcred.Table[i].EMPLGENH;
@@ -760,6 +676,7 @@
 					reporte = new Array;
 					causaBaja = new Array;
 					proyInv = new Array;
+					tipoSeguro = new Array;
 					emplGenH = new Array;
 					emplGenM = new Array;
 					emplSostH = new Array;
@@ -781,6 +698,7 @@
 						if(currentState == null){
 							situacionAcred[i] = listaAcred[i].sitAcred;
 							causaBaja[i] = listaAcred[i].causaBaja;
+							tipoSeguro[i] = listaAcred[i].tipoSeguro ? "F": "I";
 							emplGenH[i] = Number(listaAcred[i].emplGenH);
 							emplGenM[i] = Number(listaAcred[i].emplGenM);
 							emplSostH[i] = Number(listaAcred[i].emplSostH);
@@ -848,7 +766,7 @@
 																 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 																 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
 																 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, info.pagoMicroSeg, 
-																 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
+																 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, tipoSeguro, emplGenH, emplGenM, 
 																 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 																 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
 																 info.cicloRel, aval);
@@ -1109,6 +1027,38 @@
 				params[1] = this.clns
 				wsCat.getInfoGeneral.send(1, params);
 			} 
+			
+			public function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
+				var rColor:uint;
+				if (acred[rowIndex].estatusCC == 'N') 
+					rColor = 0xf6f694;
+				else
+					rColor = color;
+				return rColor;
+			}
+			
+			public function selecColorRepCred(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
+				var rColor:uint;
+				var estatus:String = acred[rowIndex].estatusRC;
+				if (estatus == '0') {
+					rColor = 0x00bfff;// AZUL: ERROR durante ejecucion;					
+				}
+				if (estatus == '1') {
+					rColor = color; // SIN COLOR, paso las validaciones
+				}
+				if (estatus == '2') {
+					rColor = 0xbef781;// VERDE, Error de RFC o mayor a 3 cuentas
+				}
+				if (estatus == '3') {
+					rColor = 0x8f999b;// GRIS: no tiene una consulta vigente
+				}
+				if (estatus == '4') {
+					rColor = 0xfa5858;// ROJO: Error de Quebranto o SDO_VENCIDO > 6000
+				}
+				return rColor;
+			}
 			
 			public function selAutorizadoAcredEv(event:Event):void{
 				indAcred = dgAcredEv.selectedIndex;
@@ -1371,9 +1321,8 @@
 				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setModHorario);
 				var res:String = event.result.toString();
-				if (res.substr(0,1) == "1"){
-					cerrar();
-				}	
+				if (res.substr(0,1) == "1")
+					cerrar();	
 				else
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
@@ -1440,6 +1389,60 @@
 				}
 				return true;
 			}
+			
+			//FUNCION VALIDA REPORTE DE CREDITO			
+			private function validaReporteCred():void{
+				//Analizar grupo an validaciones propuestas por el usuario
+				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
+
+				var codAcreds:Array = new Array();
+				var j:int = 0;
+				var estatusCC:String = "";
+				var noConsul:Boolean = false;
+				//Ciclo para filtrar los codigos de los clientes con monto Autorizado > 0
+				 for(var i:int = 0; i < acred.length; i++){
+				 	estatusCC = acred[i].estatusCC;
+					if( estatusCC != "S")
+						noConsul = true;
+					codAcreds[j] = acred[i].codigo.toString();			 
+				    j += 1;
+				 } 
+				
+				if (noConsul == false){
+					initConexion();
+					du.sCursor();
+	
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
+															
+ 						var resEnv:String = evt.result.toString();
+						du.closeWs(wsMS);
+						du.rCursor();
+						var cods: Array = resEnv.split("|");
+						 
+						for(var i:int = 0; i < cods.length -1; i++){
+							var cod:Array = cods[i].split("-");
+							var c:String = cod[0];
+							var e:String = cod[1];
+							
+							for(var j:int = 0; j < acred.length; j++){
+								if(acred[i].codigo.toString() == c){
+								  	acred[i].codigo.toString();			 
+									acred[i].estatusRC = e;
+								}	 
+						 	}
+						} 	
+						dgAcredEv.rowColorFunction = selecColorRepCred;
+	 					Alert.show("El proceso de analisis de crédito ha terminado exitosamente."
+	 					,titulo,4,null,null,global.iInfo);
+					});
+					wsMS.getValiRepCredGpal.send(codAcreds,"CC");
+				
+				} else {
+					Alert.show("No se ha ejecutado el proceso de analisis de crédito," + 
+							" debido a que existen clientes sin consulta vigente"
+	 						,titulo,4,null,null,global.iAlert);
+				}			
+			}		
 			
 			public function validaSituacion():Boolean{
 				//Condicion que verifica la situacion de la solicitud
@@ -1527,12 +1530,12 @@
 		<mx:TextInput x="345" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>
 	<mx:Canvas x="10" y="311" width="824" height="209" styleName="canvasMod" id="canvas1">
-		<mx:DataGrid id="dgAcred" x="19.5" y="10" width="783" height="187" 
+		<mx:DataGrid id="dgAcred" x="10" y="10" width="802" height="187" 
 		    editable="true" sortableColumns="false" >
 			<mx:columns>
 				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="50"/>
 				<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="170"/>
-				<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>
+				<!--<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>-->
 				<mx:DataGridColumn headerText="SOLICITADO" dataField="cantSolic" width="70" editable="true" >	
 					<mx:itemEditor>
 						<mx:Component>
@@ -1551,6 +1554,13 @@
 					<mx:itemRenderer>
 						<mx:Component>
 							<mx:Label click="outerDocument.muestraDatosSolic()" width="50"/>
+		  				</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="SEGURO FAMILIAR" editable="true" rendererIsEditor="true" dataField="tipoSeguro" width="80" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:CheckBox textAlign="center" width="25" fontSize="10" verticalCenter="0"/>
 		  				</mx:Component>
 					</mx:itemRenderer>
 				</mx:DataGridColumn>

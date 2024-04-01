@@ -27,11 +27,11 @@
 			import mx.events.ValidationResultEvent;
 			import mx.formatters.SwitchSymbolFormatter;
 			import mx.formatters.NumberFormatter;
-			import mx.rpc.Fault;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
-			import mx.managers.PopUpManager;							
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;							
 			     
 			public var _xmlGrupos:XML = new XML();
 			public var _xmlSolic:XML = new XML();

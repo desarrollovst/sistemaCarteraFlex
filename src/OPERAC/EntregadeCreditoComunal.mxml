@@ -33,7 +33,6 @@
 			public var _xmlAcred:XML = new XML();
 			public var dPermisos:XML = new XML();	
 			
-			public var wsMS:WebService = new WebService();	
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
@@ -200,12 +199,6 @@
 				permisos();
 				txtCodGrupo.setFocus();
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}			
 			
 			public function mostrarFormPrn(tipo:int):void{
 				//tipo = 2 MODIFICA REGISTRO
