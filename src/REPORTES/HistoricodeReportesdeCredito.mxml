@@ -71,8 +71,10 @@
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var fecha:String = "&fecha=" + global.formatoFechaSep(global.convCadenaFecha(dgAcred.selectedItem.FECHACONS),"-");
-					var tipo:String = "&tipo=" + tipoRep;
-					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario + fecha + tipo;
+					var tipo:String = "&tipo=C";
+					var sic:String = "&sic=CC";
+						
+					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario + fecha + tipo + sic;
 					Application.application.muestraPdf(consulta);
 				}	
 				else
