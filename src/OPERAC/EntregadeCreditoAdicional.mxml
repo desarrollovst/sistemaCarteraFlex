@@ -69,7 +69,7 @@
 			}
 			
 			public function actualizarPrn(event:Event):void{
-				buscarListaPrn(1);
+				buscarListaPrn(2);
 			}
 			
 			public function buscarGrupo():void{
@@ -139,8 +139,10 @@
 				
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	if(tipo == 1)
+			 	if(tipo == 1){
 			 		global.bloquear();
+			 		iniVar();
+			 	}
 			 		
 			 	du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {	
 			 		_xmlPrn = new XML(evt.result);
@@ -183,7 +185,7 @@
 
 			private function iniVar():void{
 				this.indPrn = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{

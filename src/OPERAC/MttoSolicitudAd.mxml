@@ -12,7 +12,7 @@
 				<mx:columns>
 					<mx:DataGridColumn headerText="CODIGO" editable="false" headerWordWrap="true" dataField="codigo" width="45"/>
 					<mx:DataGridColumn headerText="ACREDITADO" editable="false" headerWordWrap="true" dataField="nombre" width="140"/>
-					<mx:DataGridColumn headerText="SOLICITUD" editable="false" headerWordWrap="true" dataField="solicitud" width="55"/>
+					<!--<mx:DataGridColumn headerText="SOLICITUD" editable="false" headerWordWrap="true" dataField="solicitud" width="55"/>-->
 					<mx:DataGridColumn headerText="MONTO SOLICITADO" headerWordWrap="true" dataField="cantSolic" width="65" editable="false"/>	
 					<mx:DataGridColumn headerText="SOLICITADO" textAlign="center" headerWordWrap="true" rendererIsEditor="true" dataField="solicitado" width="60" editorDataField="selected" editable="false">
 						<mx:itemRenderer>
@@ -117,6 +117,7 @@
 			public var reporte:Array;
 			public var causaBaja:Array;
 			public var proyInv:Array;
+			public var tipoSeguro:Array;
 			public var emplGenH:Array;
 			public var emplGenM:Array;
 			public var emplSostH:Array;
@@ -620,6 +621,7 @@
 					reporte = new Array;
 					causaBaja = new Array;
 					proyInv = new Array;
+					tipoSeguro = new Array;
 					emplGenH = new Array;
 					emplGenM = new Array;
 					emplSostH = new Array;
@@ -636,16 +638,12 @@
 						cantAutor = Number(listaAcred[i].cantAutor);
 						situacionAcred[i] = listaAcred[i].situacion;
 						montos[i] = cantSolic;
-						/*if (cantSolic == 0 || (cantSolic >= montoMin && cantSolic <= montoMax))
-							montos[i] = cantSolic;
-						else{
-							Alert.show("El acreditado " + listaAcred[i].codigo + "-" + listaAcred[i].nombre + " rebasó el límite mínimo / máximo del monto permitido para el producto.",titulo,4,null,null,global.iAlert);
-							return false;
-						}*/ 
+
 						//Asignaciones en la etapa de registro de la solicitud
 						if(currentState == null){
 							situacionAcred[i] = listaAcred[i].sitAcred;
 							causaBaja[i] = listaAcred[i].causaBaja;
+							tipoSeguro[i] = "";
 							emplGenH[i] = Number(listaAcred[i].emplGenH);
 							emplGenM[i] = Number(listaAcred[i].emplGenM);
 							emplSostH[i] = Number(listaAcred[i].emplSostH);
@@ -654,12 +652,7 @@
 						//Asignaciones en la etapa de evaluacion de la solicitud
 						else if(currentState == 'evaluacion'){
 							cantAutorAcred[i] = cantAutor;
-							/*if (cantAutor == 0 || (cantAutor >= montoMin && cantAutor <= montoMax))
-								cantAutorAcred[i] = cantAutor;
-							else{
-								Alert.show("El acreditado " + listaAcred[i].codigo + "-" + listaAcred[i].nombre + " rebasó el límite mínimo / máximo del monto permitido para el producto.",titulo,4,null,null,global.iAlert);
-								return false;
-							}*/ 
+							
 							//Asigna la situacion de la solicitud a cada cliente
 							situacionAcred[i] = listaAcred[i].sitAcred;
 		
@@ -717,7 +710,7 @@
 													 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
 													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, info.pagoMicroSeg, 
-													 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
+													 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, tipoSeguro, emplGenH, emplGenM, 
 													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 													 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
 													 info.cicloRel, aval);
@@ -1378,7 +1371,7 @@
 			<mx:columns>
 				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="50"/>
 				<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="170"/>
-				<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>
+				<!--<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>-->
 				<mx:DataGridColumn headerText="SOLICITADO" dataField="cantSolic" width="70" editable="true" >	
 					<mx:itemEditor>
 						<mx:Component>

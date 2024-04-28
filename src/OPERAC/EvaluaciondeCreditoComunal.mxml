@@ -67,7 +67,7 @@
 			}
 			
 			public function actualizarSolic(event:Event):void{
-				buscarListaSolic(1);
+				buscarListaSolic(2);
 			}
 			
 			public function buscarGrupo():void{
@@ -143,8 +143,10 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
-			 	if(tipo == 1)
+			 	if(tipo == 1){
 			 		global.bloquear();
+			 		iniVar();
+			 	}
 			 	
 			 	du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlSolic = new XML(evt.result);
@@ -173,7 +175,7 @@
 			
 			private function iniVar():void{
 				this.indSolic = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{

@@ -114,6 +114,7 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					global.bloquear();
+					iniVar();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlAcred = new XML(evt.result);
@@ -172,8 +173,11 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				if (tipo == 1)
+				
+				if (tipo == 1){
 					global.bloquear();
+					iniVar();
+				}
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);
@@ -235,9 +239,9 @@
 				dgAcred.dataProvider = acredObj;
 			}
 			
-			public function iniVar():void{
+			private function iniVar():void{
 				this.indAcred = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
