@@ -79,8 +79,10 @@
 				du.initWsCat(wsCat);
 		 		du.sCursor();
 		 	
-				if (tipo == 1)
-					global.bloquear();	
+				if(tipo == 2){
+					global.bloquear();
+					iniVar();
+				}	
 					
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 					_xmlInfo = new XML(event.result);
@@ -96,7 +98,7 @@
 							dgInfo.validateNow();
 							dgInfo.verticalScrollPosition = vScroll;
 							dgInfo.selectedIndex = ind;
-							this.accion = 0;
+							accion = 0;
 						}
 						selecciona();
 					}
@@ -139,11 +141,11 @@
 		
 		private function iniVar():void{
 			this.ind = -1;
-			this.vScroll = -1;
+			this.vScroll = undefined;
 		}
 				
 		private function manejadorEliminar(e:CloseEvent):void{
-			if(e.detail==Alert.YES){
+			if(e.detail == Alert.YES){
 				info = new DatosAseguradora();
 				info.codigo = dgInfo.selectedItem.CODIGO;
 				info.rfc = "";
@@ -280,7 +282,7 @@
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
 		<mx:Canvas x="440" y="39" width="305" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista(1)" toolTip="Buscar aseguradora"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarLista(2)" toolTip="Buscar aseguradora"/>
 			<mx:Button id="btnAgregar" x="154" y="3" icon="@Embed(source='assets/images/add.png')" click="mostrarForm(1)" toolTip="Registrar aseguradora"/>
 			<mx:Button id="btnEliminar" x="229" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminar()"  enabled="false" toolTip="Eliminar aseguradora"/>
 			<mx:Button id="btnEditar" x="82" y="3" icon="@Embed(source='assets/images/edit.png')" click="mostrarForm(2)" enabled="false" toolTip="Editar aseguradora"/>
@@ -288,8 +290,8 @@
 		<mx:Canvas x="18.5" y="39" width="413.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCod" x="14.5" y="8" text="Código:"/>
 			<mx:Label id="lblNombre" x="128.5" y="8" text="Nombre:"/>
-			<mx:TextInput id="txtNombre" x="187.5" y="5" width="216" enter="buscarLista(1)" />
-			<mx:TextInput id="txtCodigo" x="70.5" y="5" width="50" maxChars="3" enter="buscarLista(1)"/>
+			<mx:TextInput id="txtNombre" x="187.5" y="5" width="216" enter="buscarLista(2)" />
+			<mx:TextInput id="txtCodigo" x="70.5" y="5" width="50" maxChars="3" enter="buscarLista(2)"/>
 		</mx:Canvas>
 		<mx:Label x="18.5" y="10" width="413.5" fontSize="12" fontWeight="bold" fontStyle="italic" id="lblTitulo"/>
 	</mx:Canvas>

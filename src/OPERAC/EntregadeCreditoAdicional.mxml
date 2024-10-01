@@ -69,7 +69,7 @@
 			}
 			
 			public function actualizarPrn(event:Event):void{
-				buscarListaPrn(2);
+				buscarListaPrn(1);
 			}
 			
 			public function buscarGrupo():void{
@@ -112,7 +112,8 @@
 				dgAcred.dataProvider = null;
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if (tipo == 2)
 					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
@@ -139,7 +140,8 @@
 				
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	if(tipo == 1){
+			 	
+			 	if(tipo == 2){
 			 		global.bloquear();
 			 		iniVar();
 			 	}
@@ -157,7 +159,7 @@
 							dgPrn.validateNow();
 							dgPrn.verticalScrollPosition = vScroll;
 							dgPrn.selectedIndex = indPrn;
-							this.accionPrn = 0;
+							accionPrn = 0;
 						}
 					}
 					seleccionaPrn();		
@@ -243,7 +245,7 @@
 				var Params:Array;
 				var cont:int;
 			
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -316,7 +318,7 @@
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgGrupos" x="10" y="10" width="741.5" height="124" sortableColumns="false"
 				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaGrupo()" 
-				doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(1)"> 
+				doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="200"/>
@@ -353,8 +355,8 @@
 		</mx:Canvas>
 		<mx:Label x="18.5" y="260" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Label x="18.5" y="465" text="PRÉSTAMO AL ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="671" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcredPrn(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+		<mx:Canvas x="722" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcredPrn(2)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="124" sortableColumns="false"
@@ -368,13 +370,10 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Image x="725" y="19" width="57" height="57" source="assets/images/users2.png"/>
-		<mx:Image x="739" y="238" width="43" height="43" source="assets/images/notepad.png"/>
-		<mx:Image x="739" y="443" width="43" height="43" source="assets/images/user2.png"/>
-	</mx:Canvas>
-	<mx:Canvas x="576" y="244" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
-		<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
-		<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
-		<mx:Button id="btnImpEdoCta" x="106" y="3" icon="@Embed(source='assets/images/print.png')" enabled="false" click="imprimirEdoCta()" toolTip="Emitir Estado de Cuenta" width="40"/>
+		<mx:Canvas x="627" y="244" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
+			<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaPrn(2)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
+			<mx:Button id="btnImpEdoCta" x="106" y="3" icon="@Embed(source='assets/images/print.png')" enabled="false" click="imprimirEdoCta()" toolTip="Emitir Estado de Cuenta" width="40"/>
+		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

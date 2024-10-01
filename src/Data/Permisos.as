@@ -114,8 +114,7 @@ package Data
 		
 		public function permisosEvSolic(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || 
-				perfil[i].toString() == "COMIT" || perfil[i].toString() == "ANSUC")
+				if(perfil[i].toString() == "ADOF" || perfil[i].toString() == "ADMIN")
 					return true;
 			}	
 			return false;
@@ -123,7 +122,7 @@ package Data
 		
 		public function permisosLocalidades(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
+				if(perfil[i].toString() == "ADMIN")
 					return true;
 			}	
 			return false;

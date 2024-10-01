@@ -64,7 +64,7 @@
 			private var tipoMovObj:ArrayCollection = new ArrayCollection();
 			
 			//funcion que ejecuta el proceso de modificacion de prestamo
-			public function ejecuta():void{
+			private function ejecuta():void{
 				if(valida()){
 					initConexion();
 					du.sCursor();

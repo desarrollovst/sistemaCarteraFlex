@@ -163,6 +163,10 @@
 			wsMS.loadWSDL();
 		}	
 		
+		public function obtenerCausa():String{
+			return cboCausa.selectedItem.id;
+		}
+		
 		public function registraListaNegra():void{
 			tipoAccion = 1;
 			this.title = "Nuevo";

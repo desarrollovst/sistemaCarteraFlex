@@ -115,9 +115,9 @@
 											 info.codigo, "", info.nombre, info.segNombre, info.aPaterno, 
 											 info.aMaterno, info.sexo, info.fecha, info.cdgPaisNac, 
 											 info.cdgEntFedNac, info.cdgNac, info.rfc, info.curp, info.ife, 
-											 info.calle, info.entreCalles, info.telefono, info.codPostal,
-											 info.pais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
-										     info.edoCivil, info.nivelEsc, info.depend, info.marca, 
+											 info.calle, info.noExt, info.noInt, info.entreCalles, info.telefono, 
+											 info.codPostal, info.pais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, 
+											 info.cdgCol, info.edoCivil, info.nivelEsc, info.depend, info.marca, 
 										     info.causa, info.enano, info.cantEnano, "", "",info.tipoPers,
 										     info.origen, info.destino,/*, info.cdgDirEntFedNeg, info.cdgMunNeg,
 										     info.cdgLocNeg, info.coloniaNeg, info.calleNeg, info.codPostalNeg,
@@ -251,8 +251,8 @@
 				info.localidad = _xmlProsp.LOC;
 				info.cdgCol = _xmlProsp.CDGCOL;
 				info.colonia = _xmlProsp.COL;
-				//info.noExt = _xmlProsp.NOEXT;
-				//info.noInt = _xmlProsp.NOINT;
+				info.noExt = _xmlProsp.NOEXT;
+				info.noInt = _xmlProsp.NOINT;
 				
 				info.depend = 0;
 				info.cantEnano = 0;

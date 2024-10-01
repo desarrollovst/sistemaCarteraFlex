@@ -649,7 +649,7 @@
 		<mx:TextInput id="txtNoInt" maxChars="20" width="90"/>
 	</mx:FormItem>
 	<mx:FormItem label="Teléfono:" id="telefono" visible="true" x="77.5" y="144">
-		<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="20"/>
+		<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="10"/>
 	</mx:FormItem>
 	<mx:FormItem label="Código Postal:" id="codPostal" visible="true" x="54.5" y="176" width="188">
 		<mx:TextInput id="txtCodPostal" width="95" maxChars="5" restrict="0-9"/>

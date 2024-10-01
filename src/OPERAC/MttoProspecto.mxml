@@ -97,7 +97,7 @@
 				wsMS.setAccionProsp.send(tipoAccion, info.codigo, info.nombre, info.segNombre, info.aPaterno, info.aMaterno, info.sexo, 
 										 info.fecha, info.cdgPaisNac, info.cdgEntFedNac, info.cdgNac, info.curp, info.rfc, info.ife, 
 										 info.cdgPais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.calle, 
-										 info.entreCalles, /*info.noExt, info.noInt,*/ info.telefono, info.cdgco, info.cdgPr, 
+										 info.entreCalles, info.noExt, info.noInt, info.telefono, info.cdgco, info.cdgPr, 
 										 info.cdgRec, global.obtenerUsuario()); 
 			}
 			
@@ -134,8 +134,8 @@
 				//Direccion del Acreditado
 				info.calle = _xmlProsp.Table[0].CALLE;
 				info.entreCalles = _xmlProsp.Table[0].ENTRECALLES;
-				//info.noExt = _xmlProsp.Table[0].NOEXT;
-				//info.noInt = _xmlProsp.Table[0].NOINT;
+				info.noExt = _xmlProsp.Table[0].NOEXT;
+				info.noInt = _xmlProsp.Table[0].NOINT;
 				info.telefono = _xmlProsp.Table[0].TELEFONO;
 				info.codPostal = _xmlProsp.Table[0].CDGPOSTAL;
 				info.cdgPais = _xmlProsp.Table[0].CDGPAI;

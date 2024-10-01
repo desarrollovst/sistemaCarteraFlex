@@ -111,8 +111,8 @@
 				if(invalidArray.length == 0){	
 					formData.calle = StringUtil.trim(txtCalle.text);
 					formData.entreCalles = StringUtil.trim(txtEntreCalles.text);
-					//formData.noExt = StringUtil.trim(txtNoExt.text);
-					//formData.noInt = StringUtil.trim(txtNoInt.text);
+					formData.noExt = "";//StringUtil.trim(txtNoExt.text);
+					formData.noInt = "";//StringUtil.trim(txtNoInt.text);
 					formData.telefono = StringUtil.trim(txtTelefono.text);
 					formData.codPostal = txtCodPostal.text;
 					formData.cdgDirEntFed = datos.cdgDirEntFed;

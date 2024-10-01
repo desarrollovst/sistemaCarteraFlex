@@ -193,7 +193,7 @@
 				var Params:Array;
 				var cont:int;
 				
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											

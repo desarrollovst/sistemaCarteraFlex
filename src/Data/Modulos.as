@@ -31,8 +31,8 @@ package Data
 	public class Modulos
 	{
 		//Modulos
-		public var frm_1:UsuariosdelSistema;
-		public var frm_2_1:TiposdeUsuario;	
+		public var frm_1:AdministraciondeUsuarios;
+		public var frm_2_1:PerfilesdeUsuario;	
 		public var frm_9:AcreditadosdeGrupo;	
 		public var frm_10:SolicituddeCreditoSolidario;	
 		public var frm_11:formPdf;

@@ -15,8 +15,8 @@
 			import mx.effects.easing.Elastic;
 			import mx.formatters.NumberFormatter;		
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
@@ -27,12 +27,12 @@
 			private var du:Utils;
 			private var global:Globales;
 		
-			public function exportar():void{
+			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls();
 				dgE.loadDGInExcel(dgReporte,null,titulo);		
 			}
 		
-			public function generar():void{
+			private function generar():void{
 				var wsRep:WebService = new WebService;
 				
 				global.bloquear();

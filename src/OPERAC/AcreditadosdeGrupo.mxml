@@ -173,11 +173,10 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
+				global.bloquear();
 				
-				if (tipo == 1){
-					global.bloquear();
+				if(tipo == 2)
 					iniVar();
-				}
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);
@@ -195,7 +194,7 @@
 							dgAcred.validateNow();
 							dgAcred.verticalScrollPosition = vScroll;
 							dgAcred.selectedIndex = indAcred;
-							this.accionAcred = 0;
+							accionAcred = 0;
 						}
 					}
 					seleccionaAcred();
@@ -240,8 +239,8 @@
 			}
 			
 			private function iniVar():void{
-				this.indAcred = -1;
-				this.vScroll = undefined;
+				indAcred = -1;
+				vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -269,7 +268,7 @@
 			}
 			
 			public function manejadorEliminarGrupo(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var grupo:String = dgGrupos.selectedItem.CODIGO;  
 			    	initConexion();
 					du.sCursor();
@@ -346,6 +345,7 @@
 								iniVar();
 								this.indAcred = indice;
 								this.vScroll = dgAcred.verticalScrollPosition;
+								
 								var acred:String = dgAcred.selectedItem.CODIGO;
 								comMttoAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
 								comMttoAcred.cargaInfoAcred(codGrupo, nomGrupo, acred);
@@ -404,7 +404,7 @@
 				var Params:Array;
 				var cont:int;
 				
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -484,7 +484,7 @@
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1"){
 					Alert.show(res.substr(2,res.length-1),tituloAcred,4,null,null,global.iInfo);
-					buscarListaAcred(1);
+					buscarListaAcred(2);
 				}
 				else
 					Alert.show(res.substr(2,res.length-1),tituloAcred,4,null,null,global.iAlert);
@@ -543,7 +543,7 @@
 		</mx:Canvas>
 		<mx:Canvas x="534" y="282" width="248" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnBuscarAcred" x="7" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarAcred()" enabled="false" toolTip="Buscar Acreditado" width="40"/>
-			<mx:Button id="btnDatosAcred" x="55" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcred(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+			<mx:Button id="btnDatosAcred" x="55" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcred(2)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 			<mx:Button id="btnEditarAcred" x="103" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormAcred(2)" toolTip="Editar Acreditado" width="40"/>
 			<mx:Button id="btnAgregarAcred" x="148" y="3" icon="@Embed(source='assets/images/add.png')" enabled="false" click="mostrarAltaAcred()" toolTip="Agregar Acreditado" width="40"/>
 			<mx:Button id="btnEliminarAcred" x="196" y="3" icon="@Embed(source='assets/images/baja.png')" enabled="false" click="mostrarBaja()" toolTip="Baja de Acreditado" width="40"/>

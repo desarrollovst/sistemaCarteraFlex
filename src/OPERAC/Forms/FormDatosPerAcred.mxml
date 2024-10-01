@@ -163,6 +163,7 @@
 				
 				if (txtAP.text != "" && txtNombre.text != "" && txtFecha.text != "" 
 				&& (rdbMasculino.selected == true || rdbFemenino.selected == true) && cboEntidad.selectedIndex > 0){
+					var rfc:String;
 					var curp:String;
 					var nombres:String;
 					var sexo:String;
@@ -186,26 +187,37 @@
 							break;		
 						}			
 					}
+					
+					du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void {
+						rfc = ev.result.toString();
+					
+						txtRfc.text = rfc;
 						
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						curp = evt.result.toString();
-
-						du.rCursor();
-						du.closeWs(wsCat);
-						wsCat = null;
-						
-						bandCURP = true;
-						txtRfc.text = curp.substr(0,10);
-						txtCurp.text = curp;	
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							curp = evt.result.toString();
+	
+							du.rCursor();
+							du.closeWs(wsCat);
+							wsCat = null;
+							
+							bandCURP = true;
+							txtCurp.text = curp;	
+						});
+						//GENERA EL CURP DEL CLIENTE
+						params[0] = txtAP.text;
+						params[1] = txtAM.text;
+						params[2] = nombres;
+						params[3] = txtFecha.text;
+						params[4] = sexo;
+						params[5] = clave;
+						wsCat.getInfoAcred.send(2, params);
 					});
-					//GENERA EL CURP DEL CLIENTE
+					//GENERA EL RFC DEL CLIENTE
 					params[0] = txtAP.text;
 					params[1] = txtAM.text;
 					params[2] = nombres;
 					params[3] = txtFecha.text;
-					params[4] = sexo;
-					params[5] = clave;
-					wsCat.getInfoAcred.send(2, params);
+					wsCat.getInfoAcred.send(14, params);
 				}
 				else{
 					txtRfc.text = "";

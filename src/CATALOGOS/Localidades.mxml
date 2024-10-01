@@ -43,7 +43,6 @@
 			public var colObj:ArrayCollection = new ArrayCollection();
 			
 			public var wsMS:WebService = new WebService();	
-			public var ws:WebService = new WebService();
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
@@ -123,8 +122,9 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
-			 	if (tipo == 1)
+			 	if(tipo == 2)
 					global.bloquear();
+					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlColonia = new XML(evt.result.toString());
 					
@@ -160,8 +160,9 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	
-			 	if (tipo == 1)
+			 	if(tipo == 2)
 					global.bloquear();
+					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 					
@@ -194,7 +195,7 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
-			 	if (tipo == 1)
+			 	if(tipo == 2)
 					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
@@ -452,10 +453,11 @@
 			public function permisos():void{
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
+				var ws:WebService = new WebService;
 				var Params:Array;
 				var cont:int;
 				
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -548,7 +550,7 @@
 	<mx:Canvas styleName="canvasComp" width="615" height="840">
 		<mx:Canvas id="cnvEntFed" x="10" y="84" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgEntFed" dataProvider="{dpEntFed}" x="10" y="10" width="570.5" height="124"
-				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaEntFed()" doubleClickEnabled="true" itemDoubleClick="buscarListaMunic(1)"> 
+				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaEntFed()" doubleClickEnabled="true" itemDoubleClick="buscarListaMunic(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="ENTIDAD FEDERATIVA" dataField="NOMBRE" width="200"/>
@@ -565,7 +567,7 @@
 		</mx:Canvas>
 		<mx:Canvas id="cnvMunic" x="10" y="283" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgMunic" x="10" y="10" width="570.5" height="124"
-				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaMunic()" doubleClickEnabled="true" itemDoubleClick="buscarListaLoc(1)"> 
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaMunic()" doubleClickEnabled="true" itemDoubleClick="buscarListaLoc(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="codigo" width="35"/>
 					<mx:DataGridColumn headerText="MUNICIPIO" dataField="nombre" width="100"/>
@@ -574,7 +576,7 @@
 		</mx:Canvas>
 		<mx:Canvas x="445.5" y="437" width="157" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarLoc" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormLoc(2)" toolTip="Editar Localidad" width="40"/>
-			<mx:Button id="btnDatosLoc" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaLoc(1)" enabled="false" toolTip="Localidades" width="40"/>
+			<mx:Button id="btnDatosLoc" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaLoc(2)" enabled="false" toolTip="Localidades" width="40"/>
 			<mx:Button id="btnAgregarLoc" x="106" y="3" icon="@Embed(source='assets/images/add.png')" enabled="false" click="mostrarFormLoc(1)" toolTip="Agregar Localidad" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="10" y="254" text="MUNICIPIO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
@@ -594,7 +596,7 @@
 		</mx:Canvas>
 		<mx:Canvas x="397.5" y="636" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas0">
 			<mx:Button id="btnEditarCol" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormCol(2)" toolTip="Editar Colonia" width="40"/>
-			<mx:Button id="btnDatosCol" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaCol(1)" enabled="false" toolTip="Colonias" width="40"/>
+			<mx:Button id="btnDatosCol" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaCol(2)" enabled="false" toolTip="Colonias" width="40"/>
 			<mx:Button id="btnAgregarCol" x="105" y="3" icon="@Embed(source='assets/images/add.png')" enabled="false" click="mostrarFormCol(1)" toolTip="Agregar Colonia" width="40"/>
 			<mx:Button id="btnEliminarCol" x="153" y="3" icon="@Embed(source='assets/images/iconDelete.png')" click="eliminarColonia()" enabled="false" toolTip="Eliminar Colonia" width="40"/>
 		</mx:Canvas>

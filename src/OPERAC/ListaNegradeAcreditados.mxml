@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="860" height="510" xmlns:forms="forms.*" 
-	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" backgroundAlpha="1.0"
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" 
+	width="860" height="510" xmlns:forms="forms.*" xmlns:Data="Data.*" 
+	horizontalScrollPolicy="off" creationPolicy="all" backgroundAlpha="1.0"
 	backgroundColor="#FFFFFF">
 	
 	<!--Componente que permite registrar la lista negra de acreditados-->
@@ -279,9 +280,9 @@
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE" width="250"/>
 				<mx:DataGridColumn headerText="CURP" dataField="CURP" width="200"/>
 				<mx:DataGridColumn headerText="CAUSA" dataField="DESCCAUSA" width="200"/>
-				<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="110"/>
-				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
-				<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="70"/>
+				<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="110"/>-->
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO" width="200"/>
+				<!--<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="70"/>-->
 				<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
 				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>
 			</Data:columns>

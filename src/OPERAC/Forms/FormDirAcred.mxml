@@ -108,6 +108,8 @@
 				var invalidArray:Array = Validator.validateAll([calleV, entFedV, municipioV, localidadV, coloniaV]);
 				if(invalidArray.length == 0){	
 					formData.calle = StringUtil.trim(txtCalle.text);
+					formData.noExt = "";
+					formData.noInt = "";
 					formData.entreCalles = StringUtil.trim(txtEntreCalles.text);
 					formData.telefono = StringUtil.trim(txtTelefono.text);
 					formData.codPostal = txtCodPostal.text;
@@ -150,6 +152,8 @@
 					
 					if (info != null){
 						txtCalle.text = info.calle;
+						//txtNoExt.text = info.noExt;
+						//txtNoInt.text = info.noInt;
 						txtEntreCalles.text = info.entreCalles;
 						txtTelefono.text = info.telefono;
 						txtCodPostal.text = info.codPostal;
@@ -346,7 +350,7 @@
 	<mx:Label id="lblEntre" text="Entre las callles:" x="65.5" y="55"/>
 	<mx:TextInput id="txtEntreCalles" maxChars="50" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="156.5" y="54"/>
 	<mx:Label id="lblTelefono" text="Teléfono:" x="98.5" y="85"/>
-	<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="20" x="156.5" y="84"/>
+	<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="10" x="156.5" y="84"/>
 	<mx:Label id="lblCodPostal" text="Código Postal:" x="75.5" y="115"/>
 	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="156.5" y="114"/>
 	<mx:Label id="lblEntFed" text="Entidad Federativa:" x="51.5" y="146"/>

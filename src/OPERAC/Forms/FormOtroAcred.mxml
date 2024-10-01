@@ -32,7 +32,6 @@
 			public var nivelEscObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS			
 			public var causa:String;
 			private var du:Utils;
 			private var global:Globales;
@@ -41,18 +40,12 @@
 			
 			private function actualizaCausa(event:Event):void{
 				var comMttoLista:MttoListaNegra = event.currentTarget as MttoListaNegra; 
-				causa = comMttoLista.cboCausa.selectedItem.id;	
+				causa = comMttoLista.obtenerCausa();	
 			}
 			
 			private function actualizaEstado(event:Event):void{
 				chkMarca.selected = !chkMarca.selected;	
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				if(valida()){
@@ -257,8 +250,7 @@
 			<mx:RadioButton id="rdbViudo" label="Viudo" x="94" y="24"/>
 			<mx:RadioButton id="rdbUnion" label="Unión Libre" x="10" y="49"/>
 			<mx:RadioButton id="rdbSoltero" label="Soltero" x="10" y="0"/>
-		</mx:Canvas>
-		
+		</mx:Canvas>		
 	</mx:FormItem>
 	<mx:FormItem label="Nivel Escolar:" id="nivelEscolar" visible="true">
 		<mx:ComboBox id="cboNivelEsc" labelField="nombre"/>
