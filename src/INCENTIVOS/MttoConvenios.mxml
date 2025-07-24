@@ -148,8 +148,8 @@
 			openEffect.play([this]);
 			
 			var fec:Date = global.obtenerFechaSistema();
-    		dtInicio.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-			dtFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    		dtInicio.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 		}
 		
 		private function QuitaMontoFormato():void{
@@ -221,7 +221,7 @@
 		}
 		
 		private function validaFecha():void{
-    		dtInicio.selectedDate = global.validaFecha(dtInicio.selectedDate, dtFin.selectedDate, titulo);
+    		dtInicio.selectedDate = global.validarFecha(dtInicio.selectedDate, dtFin.selectedDate, titulo);
 		}
 		
 		private function validaMonto(event:Event):void{
@@ -238,7 +238,7 @@
 		}
 		
 		private function validaMontoFormato():void{
-			txtMonto.text = global.formatoDecimal(Number(txtMonto.text).toString());
+			txtMonto.text = global.formatearDecimal(Number(txtMonto.text).toString());
 		}
 	]]>
 	</mx:Script>

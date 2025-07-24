@@ -72,7 +72,7 @@ package Data
 		
 		public function permisosModFecDes(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "OIM" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "AUTC")
+				if(perfil[i].toString() == "ADMIN")
 					return true;
 			}	
 			return false;
@@ -80,9 +80,7 @@ package Data
 		
 		public function permisosModGrupos(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AMOCA" || perfil[i].toString() == "AUTC" || perfil[i].toString() == "GTOCA" 
-				|| perfil[i].toString() == "ADMIN" || perfil[i].toString() == "CMOCA" || perfil[i].toString() == "OIM"
-				|| perfil[i].toString() == "ANSUC")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "GTOCA" || perfil[i].toString() == "CMOCA")
 					return true;
 			}	
 			return false;
@@ -98,7 +96,7 @@ package Data
 		
 		public function permisosModAcredInd(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN")
+				if(perfil[i].toString() == "ADMIN")
 					return true;	
 			}
 			return false;
@@ -106,7 +104,7 @@ package Data
 		
 		public function permisosModVigencia(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AUTC" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ANSUC")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;	
 			}
 			return false;
@@ -114,7 +112,7 @@ package Data
 		
 		public function permisosEvSolic(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADOF" || perfil[i].toString() == "ADMIN")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "ADOF")
 					return true;
 			}	
 			return false;
@@ -130,7 +128,7 @@ package Data
 		
 		public function permisosRegionales(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "OIM")
+				if(perfil[i].toString() == "ADMIN")
 					return true;
 			}	
 			return false;
@@ -147,8 +145,7 @@ package Data
 		
 		public function permisosModSolic(perfil:Array):Boolean{
 			for(var i:int = 0; i < perfil.length; i++){
-				if(perfil[i].toString() == "AMOCA" || perfil[i].toString() == "ADMIN" || perfil[i].toString() == "CMOCA" 
-				|| perfil[i].toString() == "GTOCA")
+				if(perfil[i].toString() == "ADMIN" || perfil[i].toString() == "GTOCA" || perfil[i].toString() == "CMOCA")
 					return true;
 			}	
 			return false;

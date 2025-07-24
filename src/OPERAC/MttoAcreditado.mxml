@@ -118,10 +118,10 @@
 											 info.calle, info.noExt, info.noInt, info.entreCalles, info.telefono, 
 											 info.codPostal, info.pais, info.cdgDirEntFed, info.cdgMun, info.cdgLoc, 
 											 info.cdgCol, info.edoCivil, info.nivelEsc, info.depend, info.marca, 
-										     info.causa, info.enano, info.cantEnano, "", "",info.tipoPers,
-										     info.origen, info.destino,/*, info.cdgDirEntFedNeg, info.cdgMunNeg,
-										     info.cdgLocNeg, info.coloniaNeg, info.calleNeg, info.codPostalNeg,
-										     info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
+										     info.causa, info.causaDesc, info.enano, info.cantEnano, "", "",
+										     info.tipoPers, info.origen, info.destino,/*, info.cdgDirEntFedNeg, 
+										     info.cdgMunNeg, info.cdgLocNeg, info.coloniaNeg, info.calleNeg, 
+										     info.codPostalNeg, info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
 										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/ info.banco,
 										     info.clabe, info.cuenta, this.prosp);
 			}
@@ -266,9 +266,9 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				
-				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
+				if (permiso.permisosConsBuro(global.obtenerArrayPerfil())){
 					consBuro = true;	
 				}
 				btnConsBuro.visible = consBuro;	

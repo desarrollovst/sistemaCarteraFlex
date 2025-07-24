@@ -86,8 +86,8 @@
 			public function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtFechaInicial.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaInicial.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dgReporte.dataProvider = null;
 				lblTotal.text = "";
 				btnExportar.enabled = false;
@@ -95,7 +95,7 @@
 			
 			public function validaFecha():void{
 				if(dtFechaInicial.selectedDate > dtFechaFinal.selectedDate){
-					dtFechaInicial.selectedDate = global.validaFecha(dtFechaInicial.selectedDate, dtFechaFinal.selectedDate,titulo);
+					dtFechaInicial.selectedDate = global.validarFecha(dtFechaInicial.selectedDate, dtFechaFinal.selectedDate,titulo);
 				}
 			}
 		]]>

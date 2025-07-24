@@ -410,8 +410,8 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Parametros de Cheques Cobrados Mensual";
-				cbxMes.dataProvider = global.formateaMes();
-				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formatearMes();
+				cbxAnio.dataProvider = global.formatearAnio();
 			}	
 			
 			private function initConexion():void{				

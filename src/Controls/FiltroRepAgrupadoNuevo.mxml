@@ -60,8 +60,8 @@
 				ctrlFiltro.limpiar();
 				fec = global.obtenerFechaSistema();
 				if(currentState == null)
-					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-					dtfFecha1.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFecha1.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				nivel.selectedValue = 3;
 				
 			}

@@ -859,7 +859,7 @@
 			}
 			
 			public function validaFecha():void{
-				dtFechaInicio.selectedDate = global.validaFecha(dtFechaInicio.selectedDate, dtFechaFin.selectedDate,titulo);
+				dtFechaInicio.selectedDate = global.validarFecha(dtFechaInicio.selectedDate, dtFechaFin.selectedDate,titulo);
 			}
 		
 		]]>

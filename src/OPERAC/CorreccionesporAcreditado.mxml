@@ -96,7 +96,7 @@
 			private function formateaTipoMov():void{
 				var oItem:Object;
 				var item:Array = new Array;
-				var perfil:String = Application.application.cadPerfil;
+				var perfil:String = global.obtenerCadPerfil();
 				
 				oItem = new Object();
 				oItem.tipo = 0;
@@ -104,7 +104,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				if(permiso.permisosModVigencia(Application.application.PERFIL_ID)){
+				if(permiso.permisosModVigencia(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 1;
 					oItem.id = "vigencia";	

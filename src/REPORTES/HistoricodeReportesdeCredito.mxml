@@ -70,7 +70,7 @@
 					var acred:String = "&acred=" + dgAcred.selectedItem.CDGCL;
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
-					var fecha:String = "&fecha=" + global.formatoFechaSep(global.convCadenaFecha(dgAcred.selectedItem.FECHACONS),"-");
+					var fecha:String = "&fecha=" + global.formatearFechaSep(global.convCadenaFecha(dgAcred.selectedItem.FECHACONS),"-");
 					var tipo:String = "&tipo=C";
 					var sic:String = "&sic=CC";
 						

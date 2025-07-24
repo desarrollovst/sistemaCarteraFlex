@@ -171,7 +171,7 @@
 				txtEntFed.text = datos.dirEntFedNeg;
 				txtMunicipio.text = datos.municipioNeg;
 				txtLocalidad.text = datos.localidadNeg;
-				lblPoblacion.text = global.formatoNumericoMiles(datos.poblacionNeg.toString());
+				lblPoblacion.text = global.formatearNumericoMiles(datos.poblacionNeg.toString());
 				
 				obtieneMunicipio();
 				obtieneLocalidad();
@@ -352,7 +352,7 @@
 						txtLocalidad.text = info.localidadNeg;
 						txtColonia.text = info.coloniaNeg;
 						rdgTipoVivienda.selectedValue = info.tipoDomNeg;
-						lblPoblacion.text = global.formatoNumericoMiles(info.poblacionNeg.toString());
+						lblPoblacion.text = global.formatearNumericoMiles(info.poblacionNeg.toString());
 						
 						datos.cdgDirEntFedNeg = info.cdgDirEntFedNeg;
 						datos.cdgMunNeg = info.cdgMunNeg;
@@ -550,7 +550,7 @@
 					if (datos.cdgLocNeg != acLocalidad[indice].codigo){
 						txtLocalidad.text = acLocalidad[indice].nombre;
 						datos.cdgLocNeg = acLocalidad[indice].codigo;
-						lblPoblacion.text = global.formatoNumericoMiles(acLocalidad[indice].poblacion);
+						lblPoblacion.text = global.formatearNumericoMiles(acLocalidad[indice].poblacion);
 					}
 					else
 						txtLocalidad.text = acLocalidad[indice].nombre;

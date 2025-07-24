@@ -64,8 +64,8 @@
 				this.title = titulo;
 				
 				var fec:Date = global.obtenerFechaSistema();
-				fec = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				txtFecha.text = global.formatoFecha(fec);
+				fec = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				txtFecha.text = global.formatearFecha(fec);
 				
 				du.initWsCat(wsCat);
 				du.sCursor();

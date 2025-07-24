@@ -167,7 +167,7 @@
 			}
 			
 			public function actualizaFecSolic(event:CalendarLayoutChangeEvent):void{
-				var fecSolic:String = global.formatoFecha(DateField(event.currentTarget).selectedDate);
+				var fecSolic:String = global.formatearFecha(DateField(event.currentTarget).selectedDate);
 				actualizaListaAcred(fecSolic);
 			}
 			
@@ -955,7 +955,7 @@
 			//Oculta los botones de Guardado y Envio de acuerdo a los permisos asignados al perfil AAMC
 			private function ocultarBotones():void{
 				if(currentState == 'evaluacion'){
-					if(permiso.permisosEvSolic(Application.application.PERFIL_ID) == false){
+					if(permiso.permisosEvSolic(global.obtenerArrayPerfil()) == false){
 						btnAceptar.visible = false;
 						btnGuardar.visible = false;
 					}
@@ -982,7 +982,7 @@
 				init();
 				if(currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
+				var fecSolic:String = global.formatearFecha(global.obtenerFechaSistema());
 				this.suc = suc;
 				//ASIGNACION DE CODIGO DE GRUPO
 				this.grupo = cdgGrupo;

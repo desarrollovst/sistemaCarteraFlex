@@ -160,10 +160,10 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 				
-				if (global.permisosConsBuroProsp(Application.application.PERFIL_ID)){
+				if (global.permisosConsBuroProsp(global.obtenerArrayPerfil())){
 					consBuro = true;	
 				}
 				btnConsBuro.visible = consBuro;	
@@ -250,7 +250,7 @@
 			
 			public function validaFinal():void{
 				if (info.guardaDatos == true && info.guardaDir == true && info.guardaOficial ){
-					if(global.permisosModProsp(Application.application.PERFIL_ID) == true)
+					if(global.permisosModProsp(global.obtenerArrayPerfil()) == true)
 						guardaProsp();
 				}
 				else

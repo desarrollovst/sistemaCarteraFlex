@@ -68,7 +68,7 @@
 				for(var i:int = 0; i < 2; i++){
 					oItem = new Object();
 					oItem.id = (mes + 1).toString();
-					oItem.nombre = global.modificaLetraIni(global.meses[mes]);
+					oItem.nombre = global.modificarLetraIni(global.meses[mes]);
 					item.push(oItem);
 					mes++; 
 				}

@@ -54,7 +54,7 @@
 			public var acredObj:ArrayCollection = new ArrayCollection();
 							
 			public function activarControles():void{
-				if(permiso.permisosBusqAcred(Application.application.PERFIL_ID) == true){
+				if(permiso.permisosBusqAcred(global.obtenerArrayPerfil()) == true){
 					txtCodAcred.editable = true;
 					btnBusqAcred.visible = true;
 				}

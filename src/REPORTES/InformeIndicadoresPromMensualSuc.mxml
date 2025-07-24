@@ -115,8 +115,8 @@
 				titulo = "Informe - Indicadores Prom. Mensual por Sucursal";
 				lblTitulo.text = titulo.toUpperCase();
 				
-				cbxAnio.dataProvider = global.formateaAnio();
-				cbxMes.dataProvider = global.formateaMes();
+				cbxAnio.dataProvider = global.formatearAnio();
+				cbxMes.dataProvider = global.formatearMes();
 				
 				cargaRegion();
 								

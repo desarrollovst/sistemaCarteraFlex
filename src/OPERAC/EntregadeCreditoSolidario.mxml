@@ -222,8 +222,8 @@
 			
 			public function permisos():void{
 				var ws:WebService = new WebService();
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 			
@@ -239,7 +239,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (permiso.permisosEvSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosEvSolic(global.obtenerArrayPerfil())){
 									borrado = true;
 									alta = true;
 									edicion = true;

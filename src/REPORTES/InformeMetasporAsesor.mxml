@@ -118,15 +118,15 @@
     	
     	private function limpiarG():void{
     		var fec:Date = global.obtenerFechaSistema();
-    		dtInicioG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-			dtFinG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    		dtInicioG.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFinG.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
     	}
     	
     	private function limpiarS():void{
     		ctrlFiltro.init(true);
     		var fec:Date = global.obtenerFechaSistema();
-    		dtInicioS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-			dtFinS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    		dtInicioS.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFinS.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
     	}
     	
     	private function modificarEstado():void{
@@ -135,15 +135,15 @@
 			if (gnSeleccionar.selectedValue == "G"){
 				currentState = "General";
 				
-				dtInicioG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtFinG.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtInicioG.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFinG.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			else if (gnSeleccionar.selectedValue == "S"){
 				currentState = "Sucursal";
 				ctrlFiltro.init(true);
 				
-				dtInicioS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtFinS.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtInicioS.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFinS.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
     	}
     	
@@ -164,9 +164,9 @@
     	
     	private function validaFecha():void{
     		if(currentState == "General")
-    			dtInicioG.selectedDate = global.validaFecha(dtInicioG.selectedDate, dtFinG.selectedDate, titulo);
+    			dtInicioG.selectedDate = global.validarFecha(dtInicioG.selectedDate, dtFinG.selectedDate, titulo);
     		else if(currentState == "Sucursal")
-    			dtInicioS.selectedDate = global.validaFecha(dtInicioS.selectedDate, dtFinS.selectedDate, titulo);
+    			dtInicioS.selectedDate = global.validarFecha(dtInicioS.selectedDate, dtFinS.selectedDate, titulo);
 		}
 	]]>
   	</mx:Script>

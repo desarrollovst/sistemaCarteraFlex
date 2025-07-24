@@ -41,8 +41,8 @@
 			public function fecha():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
-				dtFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtFechaIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtFechaFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}
 			
 			private function genera():void{

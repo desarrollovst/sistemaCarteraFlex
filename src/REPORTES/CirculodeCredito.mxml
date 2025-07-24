@@ -73,8 +73,8 @@
 			private function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFecFin.selectedDate = global.seleccionaDiaHabil(fec);
+				dtfFecIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecFin.selectedDate = global.seleccionarDiaHabil(fec);
 			}
 				
 			private function valida():Boolean{

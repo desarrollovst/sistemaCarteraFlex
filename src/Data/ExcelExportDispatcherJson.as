@@ -77,7 +77,7 @@ package Data
 	    			if(dg.dataProvider.getItemAt(j) != undefined && dg.dataProvider.getItemAt(j) != null && dg.columns[k].visible == true) {
 	    				if(dg.columns[k].labelFunction != undefined && dg.columns[k].labelFunction != null && dg.columns[k].visible == true) {
 	    					texto = dg.columns[k].labelFunction(dg.dataProvider[j],dg.columns[k]).toString();
-	    					texto = global.modificaTextoFecha(texto);
+	    					texto = global.modificarTextoFecha(texto);
 	    				 	if(texto.indexOf('"',0) > 0){
 	    				 		do{
     				 				ind = texto.indexOf('"',ind);
@@ -95,7 +95,7 @@ package Data
 	    				} else {
 	    					if(dg.dataProvider.getItemAt(j)[dg.columns[k].dataField] != undefined){
 	    						texto = dg.dataProvider.getItemAt(j)[dg.columns[k].dataField].toString();
-	    						texto = global.modificaTextoFecha(texto);
+	    						texto = global.modificarTextoFecha(texto);
 	    						if(texto.indexOf('"',0) > 0){
 	    				 			do{
 	    				 				ind = texto.indexOf('"',ind);

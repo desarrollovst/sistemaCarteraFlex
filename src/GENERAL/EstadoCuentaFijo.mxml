@@ -44,7 +44,7 @@
 						var monto:String = Pagos[i].MONTO 
 						pagado += Number(monto.replace(myPattern, "")); 
 					}
-					lblSaldo.text = "PAGADO: " + global.formatoMoneda(pagado.toString()); 	
+					lblSaldo.text = "PAGADO: " + global.formatearMoneda(pagado.toString()); 	
 					
 					/*du.initWsCat(wsCat);
 					du.sCursor();
@@ -113,7 +113,7 @@
 					oItem.NUMERO = i + 1;
 					oItem.FECHA = _xmlCuenta.Table[i].FECHA;
 					oItem.DESCRIPCION = _xmlCuenta.Table[i].DESCRIPCION;
-					oItem.MONTO = global.formatoDecimal(_xmlCuenta.Table[i].CANTIDAD);
+					oItem.MONTO = global.formatearDecimal(_xmlCuenta.Table[i].CANTIDAD);
 					oItem.IND = false;
 					item.push(oItem);
 				}

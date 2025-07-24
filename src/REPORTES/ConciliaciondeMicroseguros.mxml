@@ -72,7 +72,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Conciliación de Microseguros";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/01/2023", global.formatoFecha(global.obtenerFechaSistema()), "rango");
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/01/2023", global.formatearFecha(global.obtenerFechaSistema()), "rango");
 				//comFiltroFecha.lblFecha.text = "Fecha:";
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);

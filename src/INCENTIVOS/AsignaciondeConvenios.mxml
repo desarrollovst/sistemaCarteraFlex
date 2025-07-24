@@ -40,10 +40,10 @@
                 cellObject.NOMINA = cellValue;
             else if(index == 1)
             	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
-                cellObject.FINICIO = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FINICIO = global.formatearFechaExcel(Number(cellValue));
             else if(index == 2)
             	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
-                cellObject.FFIN = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FFIN = global.formatearFechaExcel(Number(cellValue));
             else if(index == 3)
                 cellObject.MONTO = cellValue;
             else if(index == 4)
@@ -163,7 +163,7 @@
 	                    } 
 	                    filas--;
 	                    totalConv = calcularTotalConv();
-	                    lblResultado.text = "Total Convenios: " + global.formatoMoneda(totalConv.toString()) + " - " + filas + " Registro(s) Encontrado(s)";
+	                    lblResultado.text = "Total Convenios: " + global.formatearMoneda(totalConv.toString()) + " - " + filas + " Registro(s) Encontrado(s)";
 	                }    
 	            } 
 	            dgInfo.includeInLayout = true;

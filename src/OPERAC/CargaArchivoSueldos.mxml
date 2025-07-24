@@ -156,7 +156,7 @@
             else if(index == 2)
                 cellObject.SUELDO = cellValue;
             else if(index == 3)
-                cellObject.FECACT = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FECACT = global.formatearFechaExcel(Number(cellValue));
         }
       
       	private function initApp():void{ 

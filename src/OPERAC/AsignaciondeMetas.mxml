@@ -175,7 +175,7 @@
 	                    } 
 	                    filas--;
 	                    totalMeta = calcularTotalMetas();
-	                    lblResultado.text = "Total Metas: " + global.formatoMoneda(totalMeta.toString()) + " - " + filas + " Registro(s) Encontrado(s)";
+	                    lblResultado.text = "Total Metas: " + global.formatearMoneda(totalMeta.toString()) + " - " + filas + " Registro(s) Encontrado(s)";
 	                }    
 	            } 
 	            dgInfo.includeInLayout = true;

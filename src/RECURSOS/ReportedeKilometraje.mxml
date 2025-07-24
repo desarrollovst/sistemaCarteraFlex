@@ -88,7 +88,7 @@
 				lblTotal.text = "";
 				btnExportar.enabled = false;
 				fec = global.obtenerFechaSistema();
-				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtFechaIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}	
 			
 			private function valida():Boolean{

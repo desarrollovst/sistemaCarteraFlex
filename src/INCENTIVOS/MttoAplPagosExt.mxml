@@ -110,7 +110,7 @@
 			txtCiclo.text = pXmlInfo.CICLO;
 			txtObservaciones.text = pXmlInfo.OBSERVACION;
 			
-			var acMes:ArrayCollection = global.formateaMes();
+			var acMes:ArrayCollection = global.formatearMes();
 			cbxMes.dataProvider = acMes;
 			for(var i:int = 0; i < acMes.length; i++){   
 				if (acMes[i].id.toString() == pXmlInfo.MES){
@@ -119,7 +119,7 @@
 				}
 			}
 			
-			var acAnio:ArrayCollection = global.formateaAnio();
+			var acAnio:ArrayCollection = global.formatearAnio();
 			cbxAnio.dataProvider = acAnio;
 			for(var j:int = 0; j < acAnio.length; j++){   
 				if (acAnio[j].id.toString() == pXmlInfo.ANIO){
@@ -303,8 +303,8 @@
 			openEffect.duration = 1000;
 			openEffect.play([this]);
 			
-			cbxAnio.dataProvider = global.formateaAnio();
-			cbxMes.dataProvider = global.formateaMes();
+			cbxAnio.dataProvider = global.formatearAnio();
+			cbxMes.dataProvider = global.formatearMes();
 		}
 		
 		public function seleccionaPago(event:Event):void{

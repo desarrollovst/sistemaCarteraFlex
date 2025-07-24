@@ -15,20 +15,20 @@
 					<mx:Label id="lblGL" x="5" y="175" width="253" height="40" textAlign="center" fontSize="32"/>
 					<mx:Label id="lblEtiqNoIden" x="5" y="223" text="NO IDENTIFICADOS:" fontSize="16"/>
 					<mx:Label id="lblNoIden" x="5" y="246" width="253" height="40" textAlign="center" fontSize="32"/>
-					<mx:Label id="lblEtiqMovsDup" x="5" y="294" text="DEPÓSITOS DUPLICADOS DÍA:" fontSize="16"/>
-					<mx:Label id="lblMovsDup" x="5" y="318" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(0)"/>
+					<mx:Label id="lblEtiqPagosDup" x="5" y="294" text="PAGOS DUPLICADOS DÍA:" fontSize="16"/>
+					<mx:Label id="lblPagosDup" x="5" y="318" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(0)"/>
 					<mx:Label id="lblEtiqGarsDup" x="5" y="366" text="GARANTÍAS DUPLICADAS DÍA:" fontSize="16"/>				
 					<mx:Label id="lblGarsDup" x="5" y="389" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(2)"/>
-					<mx:Label id="lblEtiqMovsDupAyer" x="5" y="437" text="DEPÓSITOS DUPLICADOS ANT:" fontSize="16"/>
-					<mx:Label id="lblMovsDupAyer" x="5" y="460" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(1)"/>
+					<mx:Label id="lblEtiqMovsDupAnt" x="5" y="437" text="DEPÓSITOS DUPLICADOS ANT:" fontSize="16"/>
+					<mx:Label id="lblMovsDupAnt" x="5" y="460" width="253" height="40" textAlign="center" fontSize="32" doubleClickEnabled="true" doubleClick="mostrarPagosDup(1)"/>
 				</mx:Canvas>
 			</mx:AddChild>
 			<mx:AddChild position="lastChild">
 				<mx:Label x="296" y="11" text="Resultado" width="124.25"/>
 			</mx:AddChild>
-			<mx:RemoveChild target="{button1}"/>
-			<mx:SetProperty target="{button2}" name="x" value="115.5"/>
-			<mx:SetProperty target="{button2}" name="y" value="101.5"/>
+			<mx:RemoveChild target="{btnRegistrar}"/>
+			<mx:SetProperty target="{btnLimpiar}" name="x" value="115.5"/>
+			<mx:SetProperty target="{btnLimpiar}" name="y" value="101.5"/>
 		</mx:State>
 	</mx:states>
 	<mx:transitions>
@@ -90,7 +90,7 @@
 				if (currentState == "resultado")
 					currentState = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
 			private function mostrarPagosDup(tipo:int):void{
@@ -133,13 +133,13 @@
 									currentState = "resultado";
 									movimientos = Number(_xmlRep.Table[0].MOVIMIENTOS);
 									montoMovs = Number(_xmlRep.Table[0].MONTO_MOVS);
-									lblNumero.text = movimientos.toString() + ' - ' + global.formatoMoneda(montoMovs.toString());
+									lblNumero.text = movimientos.toString() + ' - ' + global.formatearMoneda(montoMovs.toString());
 									lblPagos.text = Number(_xmlRep.Table[0].PAGOS).toString();
 									lblGL.text = Number(_xmlRep.Table[0].GL).toString();
 									lblNoIden.text = Number(_xmlRep.Table[0].NOIDEN).toString();
-									lblMovsDup.text = Number(_xmlRep.Table[0].MOVS_DUP).toString();
+									lblPagosDup.text = Number(_xmlRep.Table[0].PAGOS_DUP).toString();
 									lblGarsDup.text = Number(_xmlRep.Table[0].GARS_DUP).toString();
-									lblMovsDupAyer.text = Number(_xmlRep.Table[0].MOVS_DUP_ANT).toString();
+									lblMovsDupAnt.text = Number(_xmlRep.Table[0].MOVS_DUP_ANT).toString();
 								}
 								else
 									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
@@ -169,7 +169,7 @@
 		<mx:Label x="55.5" y="8.5" text="Fecha:" textAlign="right" id="label1"/>
 		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
 	</mx:Canvas>
-	<mx:Button x="73.5" y="105" label="Registrar" click="registrar()" id="button1"/>
-	<mx:Button x="158.5" y="105" label="Limpiar" click="limpiar()" id="button2"/>
+	<mx:Button x="73.5" y="105" label="Registrar" click="registrar()" id="btnRegistrar"/>
+	<mx:Button x="158.5" y="105" label="Limpiar" click="limpiar()" id="btnLimpiar"/>
 	<mx:Label x="18" y="34" text="Criterios de Selección" id="label2"/>
 </mx:Canvas>

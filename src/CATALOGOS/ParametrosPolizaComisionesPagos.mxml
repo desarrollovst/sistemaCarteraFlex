@@ -88,7 +88,7 @@
 							formateaDatos();
 							dgDatos.dataProvider = acDatos;
 							lblRegistros.text = _xmlDatos.elements().length() + " Registro(s)";
-							lblImpGua.text = global.formatoMoneda(impGua.toString()); 
+							lblImpGua.text = global.formatearMoneda(impGua.toString()); 
 							btnExportar.enabled = true;
 							
 							calcula();
@@ -193,8 +193,8 @@
 				titulo = "Parámetros de Póliza Comisiones Pagos";
 				lblTitulo.text = titulo.toUpperCase();
 				
-				cbxMes.dataProvider = global.formateaMes();
-                cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formatearMes();
+                cbxAnio.dataProvider = global.formatearAnio();
 			}
 			
 			private function initConexion():void{				
@@ -212,7 +212,7 @@
 					impCap += Number(aDatos[i].INTERES);
 				}
 				
-				lblImpCap.text = global.formatoMoneda(impCap.toString());
+				lblImpCap.text = global.formatearMoneda(impCap.toString());
 			}
 			
 			public function validaMonto(event:Event):void{	

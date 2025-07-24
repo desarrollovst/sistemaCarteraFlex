@@ -296,7 +296,7 @@
 			private function limpiar():void{
 				ctrlFiltro.limpiar();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));	
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));	
 			}
 			
 			private function limpiarAcuerdo():void{

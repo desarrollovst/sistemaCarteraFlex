@@ -86,7 +86,7 @@
 				if (currentState == "resultado")
 					currentState = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
 			private function registrar():void{
@@ -120,7 +120,7 @@
 									currentState = "resultado";
 									movimientos = Number(_xmlRep.Table[0].MOVIMIENTOS);
 									montoMovs = Number(_xmlRep.Table[0].MONTO_MOVS);
-									lblNumero.text = movimientos.toString() + ' - ' + global.formatoMoneda(montoMovs.toString());
+									lblNumero.text = movimientos.toString() + ' - ' + global.formatearMoneda(montoMovs.toString());
 									lblPagos.text = Number(_xmlRep.Table[0].PAGOS).toString();
 									lblGL.text = Number(_xmlRep.Table[0].GL).toString();
 									lblNoIden.text = Number(_xmlRep.Table[0].NOIDEN).toString();

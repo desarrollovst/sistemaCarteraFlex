@@ -68,7 +68,7 @@
 			public function generar():void{
 				if(valida()){
 					var id:String = "&id=" + rep;
-					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
+					var fecha:String = "&fecha=" + global.formatearFechaSep(dtfFecha.selectedDate,"-");
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var consulta:String = global.urlPdf + id + fecha + usuario + nomUsuario;
@@ -102,9 +102,9 @@
 			public function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date-1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date-1));
 				if(currentState == "rango")
-					dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date-1));
+					dtfFecFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date-1));
 				dispatchEvent(new Event("limpiar")); 
 			}
 				

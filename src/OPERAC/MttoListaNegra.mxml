@@ -8,10 +8,18 @@
 			<mx:SetProperty target="{lblCausa}" name="y" value="13"/>
 			<mx:SetProperty target="{cboCausa}" name="x" value="123.25"/>
 			<mx:SetProperty target="{cboCausa}" name="y" value="10"/>
-			<mx:SetProperty target="{canvas1}" name="height" value="50"/>
-			<mx:SetProperty target="{btnAceptar}" name="y" value="68"/>
-			<mx:SetProperty target="{btnCancelar}" name="y" value="68"/>
-			<mx:SetProperty name="height" value="140"/>
+			<mx:SetProperty target="{cnvCont}" name="height" value="212.7"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="230.7"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="230.7"/>
+			<mx:SetProperty name="height" value="304"/>
+			<mx:SetProperty target="{btnCancelar}" name="x" value="340"/>
+			<mx:SetProperty target="{btnAceptar}" name="x" value="292"/>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Label id="lblDesc" x="18.25" y="41" text="Descripción:"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:TextArea id="txtDesc" x="18" y="63" width="335.75" height="131.7" maxChars="1000"/>
+			</mx:AddChild>
 		</mx:State>
 	</mx:states>
 	
@@ -167,6 +175,10 @@
 			return cboCausa.selectedItem.id;
 		}
 		
+		public function obtenerDescripcion():String{
+			return txtDesc.text;
+		}
+		
 		public function registraListaNegra():void{
 			tipoAccion = 1;
 			this.title = "Nuevo";
@@ -209,7 +221,7 @@
 			
 		]]>
 	</mx:Script>
-	<mx:Canvas x="10" y="10" width="374" height="80" styleName="canvasMod" id="canvas1">
+	<mx:Canvas id="cnvCont" x="10" y="10" width="374" height="80" styleName="canvasMod">
 		<mx:Label id="lblCURP" x="72" y="12" text="CURP:"/>
 		<mx:TextInput id="txtCURP" x="115" y="10" width="160.5"/>
 		<mx:ComboBox id="cboCausa" x="115" y="44" width="230.5" labelField="desc"/>

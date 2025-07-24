@@ -16,19 +16,19 @@
 			private var du:Utils;
 			
 			public function asignaMeses(meses:ArrayCollection):void{
-				cboMes.dataProvider = global.formateaMes(meses);
+				cboMes.dataProvider = global.formatearMes(meses);
 			}
 			
 			public function asignaAnios(anios:ArrayCollection):void{
-				cboAnio.dataProvider = global.formateaAnio(anios);
+				cboAnio.dataProvider = global.formatearAnio(anios);
 			}
 			
 			public function init(titulo:String=null):void{
 				global = new Globales();
 				du = new Utils();
 				this.titulo = titulo;
-				cboAnio.dataProvider = global.formateaAnio();
-				cboMes.dataProvider = global.formateaMes();
+				cboAnio.dataProvider = global.formatearAnio();
+				cboMes.dataProvider = global.formatearMes();
 			}			
 						
 			public function limpiar():void{

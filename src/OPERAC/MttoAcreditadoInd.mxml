@@ -132,11 +132,11 @@
 											 info.curp, info.ife, info.calle, info.noExt, info.noInt, info.entreCalles, 
 											 info.telefono, info.codPostal, info.pais, info.cdgDirEntFed, info.cdgMun, 
 											 info.cdgLoc, info.cdgCol, info.edoCivil, info.nivelEsc, info.depend, 
-											 info.marca, info.causa, info.enano, info.cantEnano, info.cdgPr, info.cdgRec, 
-											 info.tipoPers, info.origen, info.destino/*, info.cdgDirEntFedNeg, info.cdgMunNeg,
-										     info.cdgLocNeg, info.coloniaNeg, info.calleNeg, info.codPostalNeg,
-										     info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
-										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/);
+											 info.marca, info.causa, info.causaDesc, info.enano, info.cantEnano, 
+											 info.cdgPr, info.cdgRec, info.tipoPers, info.origen, info.destino/*, 
+											 info.cdgDirEntFedNeg, info.cdgMunNeg, info.cdgLocNeg, info.coloniaNeg, 
+											 info.calleNeg, info.codPostalNeg, info.entreCallesNeg, info.telefonoNeg, 
+											 info.tipoVivienda, info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/);
 			}
 			
 			public function initApp():void{
@@ -245,10 +245,10 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 				
-				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
+				if (permiso.permisosConsBuro(global.obtenerArrayPerfil())){
 					consBuro = true;	
 				}
 				//btnConsBuro.visible = consBuro;	
@@ -360,7 +360,7 @@
 				if (info.guardaDatos == true && info.guardaDir == true && 
 					info.guardaOtros == true && info.guardaOficial == true &&
 					info.guardaPLD == true/* && info.guardaDirNeg == true*/){
-					/*if(permiso.permisosModRegAcred(Application.application.PERFIL_ID) == true)
+					/*if(permiso.permisosModRegAcred(global.obtenerArrayPerfil()) == true)
 						guardaAcred();
 					else{*/	
 					validaSituacionAcred();

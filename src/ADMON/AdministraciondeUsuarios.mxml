@@ -108,8 +108,8 @@
 					ws.ES_Admin_Usuarios.send(4,null);					
 			/*});
 			Params = new Array();
-			Params[0] = Application.application.PERFIL_ID;
-			Params[1] = Application.application._Current_Mod_Id;
+			Params[0] = global.obtenerArrayPerfil();
+			Params[1] = global.obtenerModulo();
 			ws.ESLoginMethods.send(6,Params);*/
 		}
 		

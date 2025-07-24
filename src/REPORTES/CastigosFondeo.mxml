@@ -78,7 +78,7 @@
 			private function limpiar():void{				 
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				btnExportar.enabled = false;
 				dgReporte.dataProvider = null;
 			}

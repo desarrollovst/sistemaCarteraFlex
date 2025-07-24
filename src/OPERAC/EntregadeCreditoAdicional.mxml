@@ -141,10 +141,8 @@
 				du.initWsCat(wsCat);
 			 	du.sCursor();
 			 	
-			 	if(tipo == 2){
+			 	if(tipo == 2)
 			 		global.bloquear();
-			 		iniVar();
-			 	}
 			 		
 			 	du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {	
 			 		_xmlPrn = new XML(evt.result);
@@ -166,6 +164,12 @@
 				});
 				params[0] = grupo;
 				wsCat.getListado.send(9, params);
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+				result = global.formatearMoneda(item[column.dataField]);
+				return result;					
 			}
 			
 			private function imprimirEdoCta():void{
@@ -240,8 +244,8 @@
 			
 			public function permisos():void{
 				var ws:WebService = new WebService();
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 			
@@ -344,8 +348,8 @@
 			  	doubleClickEnabled="true" itemDoubleClick="mostrarFormPrn(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="35"/>
-					<mx:DataGridColumn headerText="CANT. AUTORIZADA" dataField="CANTAUTOR" width="100"/>
-					<mx:DataGridColumn headerText="CANT. ENTREGADA" dataField="CANTENTRE" width="100"/>
+					<mx:DataGridColumn headerText="CANT. AUTORIZADA" dataField="CANTAUTOR" width="100" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="CANT. ENTREGADA" dataField="CANTENTRE" width="100" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="DEVOLUCIONES" dataField="CANTDEVOL" width="80"/>
 					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="80"/>
@@ -364,8 +368,8 @@
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="90"/>
-					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="90"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="90" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="90" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACIONC" width="65"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>

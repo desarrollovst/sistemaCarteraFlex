@@ -151,8 +151,8 @@
 				titulo = "Parámetros de Cheques Cobrados Mensual";
 				lblTitulo.text = titulo.toUpperCase();;
 				permisos();
-				cbxMes.dataProvider = global.formateaMes();
-                cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formatearMes();
+                cbxAnio.dataProvider = global.formatearAnio();
 			}
 			
 			private function initConexion():void{				
@@ -238,8 +238,8 @@
 			
 			private function permisos():void{
 				var ws:WebService = new WebService();
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				

@@ -414,7 +414,7 @@
 			}	
 			
 			public function permisos():void{
-				if(global.permisosModProsp(Application.application.PERFIL_ID)){
+				if(global.permisosModProsp(global.obtenerArrayPerfil())){
 					txtRfc.editable = true;
 					txtCurp.editable = true;
 				}

@@ -203,7 +203,7 @@
 			private function formateaTipoMov():void{
 				var oItem:Object;
 				var item:Array = new Array;
-				var perfil:String = Application.application.cadPerfil;
+				var perfil:String = global.obtenerCadPerfil();
 				
 				oItem = new Object();
 				oItem.tipo = 0;
@@ -211,35 +211,35 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				if(permiso.permisosDesautoriza(Application.application.PERFIL_ID)){
+				if(permiso.permisosDesautoriza(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 1;
 					oItem.id = "desautoriza";	
 					oItem.nombre = "Desautorización";
 					item.push(oItem);
 				}
-				if(permiso.permisosModFecDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModFecDes(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 2;
 					oItem.id = "desembolso";	
 					oItem.nombre = "Modificación Fecha";
 					item.push(oItem);
 				}
-				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 3;
 					oItem.id = "cuenta";	
 					oItem.nombre = "Modificación de Cuenta";
 					item.push(oItem);
 				}
-				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 4;
 					oItem.id = "plazo";	
 					oItem.nombre = "Modificación de Plazo";
 					item.push(oItem);
 				}
-				if(permiso.permisosModCtaDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModCtaDes(global.obtenerArrayPerfil())){
 					oItem = new Object();
 					oItem.tipo = 5;
 					oItem.id = "desentrega";	

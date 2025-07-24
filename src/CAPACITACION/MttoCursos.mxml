@@ -134,7 +134,7 @@
 																txtTotHrs.text = pxmlInfo.HORAS;
 																txtTotPart.text = pxmlInfo.PARTICIPANTES;
 																
-																txtCosto.text = global.formatoDecimal(Number(pxmlInfo.COSTO).toString());
+																txtCosto.text = global.formatearDecimal(Number(pxmlInfo.COSTO).toString());
 																rbgPagado.selectedValue = pxmlInfo.PAGADO;
 																
 																if(pxmlInfo.ACTIVO == "S")
@@ -963,7 +963,7 @@
 		}
 		
 		private function validaMontoFormato():void{
-			txtCosto.text = global.formatoDecimal(Number(txtCosto.text).toString());
+			txtCosto.text = global.formatearDecimal(Number(txtCosto.text).toString());
 		}
 	]]>
 	</mx:Script>

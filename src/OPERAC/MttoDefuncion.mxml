@@ -101,7 +101,7 @@
 		private function calculaEdad():void{
 			if(dtFechaNac.text != ""){
 				if(dtFechaDefun.text != ""){
-					txtEdad.text = (global.calculaEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"))).toString();
+					txtEdad.text = (global.calcularEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"))).toString();
 					return;
 				}
 			}
@@ -324,7 +324,7 @@
 				info.observaciones = txtObservaciones.text;
 				info.cdgpms = _xmlMicro.CDGPMS;
 				info.iniciopms = _xmlMicro.INICIO;
-				info.edad = global.calculaEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"));
+				info.edad = global.calcularEdad(DateField.stringToDate(dtFechaNac.text, "DD/MM/YYYY"), DateField.stringToDate(dtFechaDefun.text, "DD/MM/YYYY"));
 				info.cdgco = _xmlMicro.CDGCO;
 				info.cdgclns = _xmlMicro.CDGCLNS;
 				info.ciclo = _xmlMicro.CICLO;

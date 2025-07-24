@@ -200,8 +200,8 @@
 											dgDatos.dataProvider = null;
 											dgDatos.dataProvider = acInteres;
 										
-											cbxAnio.dataProvider = global.formateaAnio();
-											cbxMes.dataProvider = global.formateaMes();
+											cbxAnio.dataProvider = global.formatearAnio();
+											cbxMes.dataProvider = global.formatearMes();
 										
 											cbxORF.enabled = false;
 											cbxFideicomiso.enabled = false;
@@ -391,8 +391,8 @@
 					formateaORF();
 					cbxORF.dataProvider = acORF;
 					
-					cbxAnio.dataProvider = global.formateaAnio();
-					cbxMes.dataProvider = global.formateaMes();
+					cbxAnio.dataProvider = global.formatearAnio();
+					cbxMes.dataProvider = global.formatearMes();
 				});
 				//Obtiene informacion de las Organizaciones Fondeadoras
 				wsCat.getCatalogoGral.send(29);	

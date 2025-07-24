@@ -116,7 +116,7 @@
 						ciclo = _xmlParamSic.Table[0].CICLO;
 						todos = _xmlParamSic.Table[0].TODOS;
 						
-						txtMonto.text = global.formatoMoneda(monto.toString());
+						txtMonto.text = global.formatearMoneda(monto.toString());
 						txtVigencia.text = vigencia.toString();
 						txtCiclo.text = ciclo;
 						chkTodos.selected= todos=="S"? true: false;							 
@@ -158,8 +158,8 @@
 			 
 			ExternalInterface.call("console.log",txtMonto.text.replace(",","").replace("$",""));
 			if(id != "" && id != "0"){
-				if (validaCampos()!=0){
-					var mtoSinFto:String = global.formatoDecimalSinSep(txtMonto.text);
+				if (validaCampos() != 0){
+					var mtoSinFto:String = global.formatearNumerico(txtMonto.text);
 					params[0] = id;
 					params[1] = mtoSinFto != ""? mtoSinFto: "0.0";
 					params[2] = txtVigencia.text !=""? txtVigencia.text: "0";
@@ -215,9 +215,9 @@
 			<mx:Label id="lblMonto" x="94" y="98.25" text="Monto:" textAlign="right"/>
 			<mx:Label id="lblCiclo" x="94" y="130.25" text="Ciclo:"  textAlign="right" width="37"/>
 			<mx:Label id="lblTodos" x="44" y="38.25" text="Consultar Todos:" textAlign="right"/>
-			<mx:ComboBox id="cboSIC" x="139" y="9" change="cargaDatosSIC()"   labelField="nombre" width="187"></mx:ComboBox>
+			<mx:ComboBox id="cboSIC" x="139" y="9" change="cargaDatosSIC()"   labelField="nombre" width="187"/>
 			<mx:TextInput id="txtVigencia" x="139" y="64.25" width="35"/>
-			<mx:TextInput id="txtMonto" x="139" y="96.25" width="80" change="{global.validaMonto(event)}"  />
+			<mx:TextInput id="txtMonto" x="139" y="96.25" width="80" restrict="0-9;.;," maxChars="12" focusOut="{global.formatearMonto(event)}"/>
 			<mx:TextInput id="txtCiclo" x="139" y="128.25" width="80"/>
 			<mx:CheckBox id="chkTodos"   x="139" y="38.25"/>
 		</mx:Canvas>

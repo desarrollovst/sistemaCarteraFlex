@@ -33,6 +33,7 @@
 			public var datos:DatosAcred = new DatosAcred();
 			
 			public var causa:String;
+			public var causaDesc:String;
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
@@ -40,7 +41,8 @@
 			
 			private function actualizaCausa(event:Event):void{
 				var comMttoLista:MttoListaNegra = event.currentTarget as MttoListaNegra; 
-				causa = comMttoLista.obtenerCausa();	
+				causa = comMttoLista.obtenerCausa();
+				causaDesc = comMttoLista.obtenerDescripcion();
 			}
 			
 			private function actualizaEstado(event:Event):void{
@@ -71,6 +73,7 @@
 					}
 					formData.marca = Number(chkMarca.selected);
 					formData.causa = causa;
+					formData.causaDesc = causaDesc;
 					formData.enano = Number(chkEnano.selected);
 					formData.cantEnano = Number(txtEnano.text); 
 					formData.guardaOtros = true;
@@ -202,14 +205,13 @@
 			
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
-				var cont:int;
+				var perfil_id:String = global.obtenerCadPerfil();
 				
-				if (permiso.permisosListaNegra(Application.application.PERFIL_ID)){
+				if (permiso.permisosListaNegra(global.obtenerArrayPerfil())){
 					marca.visible = true;	
 				}
 				
-				if (permiso.permisosMarcaEnano(Application.application.PERFIL_ID)){
+				if (permiso.permisosMarcaEnano(global.obtenerArrayPerfil())){
 					enano.visible = true;
 					cantEnano.visible = true;	
 				}
@@ -265,7 +267,7 @@
 		<mx:CheckBox id="chkMarca" width="150" label="Lista Negra" change="mostrarFormLista()"/>
 	</mx:FormItem>
 	<mx:FormItem id="enano" visible="false">
-		<mx:CheckBox id="chkEnano" width="150" label="Monto Máximo de Crédito"/>
+		<mx:CheckBox id="chkEnano" label="Monto Máximo de Crédito"/>
 	</mx:FormItem>
 	<mx:FormItem id="cantEnano" label="Cantidad:" visible="false">
 		<mx:TextInput id="txtEnano" width="80" restrict="0-9;." change="validaMonto(event)"/>

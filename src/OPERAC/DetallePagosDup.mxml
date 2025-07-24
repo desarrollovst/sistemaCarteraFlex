@@ -17,7 +17,6 @@
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 			
-			[Bindable]
 			public var _xmlInfo:XML =  new XML();
 			
 			public var titulo:String;

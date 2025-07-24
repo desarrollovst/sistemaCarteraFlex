@@ -95,9 +95,9 @@
 							saldoCap = Number(_xmlGrupo.Table[0].CAPITAL);
 							saldoInt = Number(_xmlGrupo.Table[0].INTERES);
 							total = saldoCap + saldoInt;
-							lblSdoCapital.text = global.formatoMoneda(saldoCap.toString());
-							lblSdoInteres.text = global.formatoMoneda(saldoInt.toString());
-							lblSdoTotal.text = global.formatoMoneda(total.toString());
+							lblSdoCapital.text = global.formatearMoneda(saldoCap.toString());
+							lblSdoInteres.text = global.formatearMoneda(saldoInt.toString());
+							lblSdoTotal.text = global.formatearMoneda(total.toString());
 							calculaNuevoSaldo();
 						}		
 						else
@@ -115,12 +115,12 @@
 				var nvoCap:Number;
 				var nvoInt:Number;
 				var nvoTotal:Number;
-				nvoCap = saldoCap + Number((txtCapital.text == "" ? "0": txtCapital.text));
-				nvoInt = saldoInt + Number((txtInteres.text == "" ? "0": txtInteres.text));
+				nvoCap = saldoCap + Number((txtCapital.text == "" ? "0": global.formatearNumerico(txtCapital.text)));
+				nvoInt = saldoInt + Number((txtInteres.text == "" ? "0": global.formatearNumerico(txtInteres.text)));
 				nvoTotal = nvoCap + nvoInt; 
-				lblNvoSdoCap.text = global.formatoMoneda(nvoCap.toString());
-				lblNvoSdoInt.text = global.formatoMoneda(nvoInt.toString());
-				lblNvoSdoTotal.text = global.formatoMoneda(nvoTotal.toString());
+				lblNvoSdoCap.text = global.formatearMoneda(nvoCap.toString());
+				lblNvoSdoInt.text = global.formatearMoneda(nvoInt.toString());
+				lblNvoSdoTotal.text = global.formatearMoneda(nvoTotal.toString());
 			}
 			
 			public function enviar():void{
@@ -133,8 +133,8 @@
 					var codigoDest:String;
 					var cicloDest:String;
 					
-					capital = Number((txtCapital.text == "" ? "0": txtCapital.text));
-					interes = Number((txtInteres.text == "" ? "0": txtInteres.text));
+					capital = Number((txtCapital.text == "" ? "0": global.formatearNumerico(txtCapital.text)));
+					interes = Number((txtInteres.text == "" ? "0": global.formatearNumerico(txtInteres.text)));
 					fecha = dtfFecha.text;
 					justifica = cboJustifica.selectedItem.id;
 					observaciones = txtObs.text;
@@ -192,6 +192,11 @@
 				justObj = new ArrayCollection(item);
 			}
 			
+			private function formatearMonto(event:Event):void{
+				global.formatearMonto(event);
+				calculaNuevoSaldo();
+			}
+			
 			public function initApp():void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
@@ -239,7 +244,7 @@
 				lblNvoSdoInt.text = "";
 				lblNvoSdoTotal.text = "";
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				cboJustifica.selectedIndex = 0;
 				txtCapital.text = "";
 				txtInteres.text = "";
@@ -263,8 +268,8 @@
 					Alert.show("Debe capturar la fecha del ajuste.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
-				if((txtCapital.text == "" || txtCapital.text == "-" || Number(txtCapital.text) == 0) &&
-				   (txtInteres.text == "" || txtInteres.text == "-" || Number(txtInteres.text) == 0)){
+				if((txtCapital.text == "" || txtCapital.text == "-" || Number(global.formatearNumerico(txtCapital.text)) == 0) &&
+				   (txtInteres.text == "" || txtInteres.text == "-" || Number(global.formatearNumerico(txtInteres.text)) == 0)){
 					Alert.show("Debe capturar información válida al menos en alguno de los campos correspondientes.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
@@ -273,23 +278,9 @@
 					return false;
 				}
 				return true;
-			}
-			
-			public function validaMonto(event:Event):void{
-				if(TextInput(event.currentTarget).text != "-"){
-					numVal.source = TextInput(event.currentTarget);
-					vResult = numVal.validate();
-			
-					if(vResult.type!=ValidationResultEvent.VALID)
-			           	TextInput(event.currentTarget).text = "";
-			    }
 			}	
 		]]>
 	</mx:Script>
-	
-	<mx:NumberValidator id="numVal" property="text" precision="2" allowNegative="true"   
-		 decimalSeparator="." thousandsSeparator="," domain="real" required="false"/>
-	
 	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="490" height="480" id="canvas1">
 		<mx:Canvas id="cnvDetalle" x="10" y="92" width="470" height="348" styleName="canvasMod" visible="true" enabled="true">
 			<mx:Label id="lblFecha" x="87.8" y="90" text="Fecha:" textAlign="right"/>
@@ -312,8 +303,8 @@
 			<mx:HRule x="10" y="268" width="448" id="hrule1"/>
 			<mx:Label id="lblObs" x="43.8" y="182" text="Observaciones:" textAlign="right"/>
 			<mx:DateField id="dtfFecha" x="133.8" y="89" width="100"/>
-			<mx:TextInput id="txtCapital" x="133.8" y="119" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
-			<mx:TextInput id="txtInteres" x="349.3" y="119" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
+			<mx:TextInput id="txtCapital" x="133.8" y="119" width="100" maxChars="12" restrict="0-9;.;\-;," focusOut="formatearMonto(event)"/>
+			<mx:TextInput id="txtInteres" x="349.3" y="119" width="100" maxChars="12" restrict="0-9;.;\-;," focusOut="formatearMonto(event)"/>
 			<mx:ComboBox id="cboJustifica" labelField="descripcion" x="133.8" y="149" width="315.5" change="modificaEstado()"/>
 			<mx:TextArea id="txtObs" x="133.8" y="181" width="315.5" height="79" maxChars="256"/>
 		</mx:Canvas>

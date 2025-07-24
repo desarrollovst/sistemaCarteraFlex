@@ -72,8 +72,8 @@
 				var fec:Date;
 				ctrlFiltro.limpiar();	
 				fec = global.obtenerFechaSistema();
-				dtfSolDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfSolHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfSolDesde.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfSolHasta.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfIniDesde.selectedDate = null;
 				dtfIniHasta.selectedDate = null;
 				chkSolic.selected = true;

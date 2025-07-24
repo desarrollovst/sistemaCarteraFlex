@@ -139,7 +139,7 @@
 						txtPrimape.text = _xmlAcred.Table[0].PRIMAPE;
 						txtSegape.text = _xmlAcred.Table[0].SEGAPE;
 						dtFechaNac.selectedDate = DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY");
-						txtEdad.text = (global.calculaEdad(DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY"), global.obtenerFechaSistema())).toString();
+						txtEdad.text = (global.calcularEdad(DateField.stringToDate(_xmlAcred.Table[0].NACIMIENTO,"DD/MM/YYYY"), global.obtenerFechaSistema())).toString();
 						var a:String = _xmlAcred.Table[0].SEXO;
 					});
 					wsCat.getCatalogoGral.send(50, params);				

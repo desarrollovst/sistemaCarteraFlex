@@ -282,7 +282,7 @@
 	      	
 	      	var fec:Date;
 			fec = global.obtenerFechaSistema();
-			dtfFMarcado.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtfFMarcado.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 					
 	      	var wsCatCap:WebService = new WebService;
 			var params:Array = new Array;
@@ -419,7 +419,7 @@
 			
 			var fec:Date;
 			fec = global.obtenerFechaSistema();
-			dtfFMarcado.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtfFMarcado.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			
 			lblResultado.text = "";
 			txtPart.text = "";

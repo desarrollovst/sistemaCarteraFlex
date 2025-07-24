@@ -178,7 +178,7 @@
 				cboAsesor.dataProvider = asesorObj;
 				cargaRegion();		
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				tipoCart.selectedValue = 0;
 			}
 			

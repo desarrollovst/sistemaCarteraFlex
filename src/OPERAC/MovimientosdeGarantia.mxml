@@ -90,7 +90,7 @@
 							codGrupo = txtCodGrupo.text;
 							txtGrupo.text = _xmlGrupo.Table[0].NOMBRE;
 							
-							lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
+							lblInfoGL.text = global.formatearMoneda(_xmlGrupo.Table[0].SALDOGL);
 							
 							activarControles();
 							
@@ -131,7 +131,7 @@
 					var grupo:String = txtCodGrupo.text;
 					var fecha:String = dtfFecha.text;
 					var mov:String = cboMov.selectedItem.id;
-					var monto:Number = Number(txtMonto.text);
+					var monto:Number = Number(global.formatearNumerico(txtMonto.text));
 					var grupoDest:String
 					
 					if(vDestino == "S")
@@ -173,6 +173,12 @@
      			var data:Object = decoder.decodeXML(xml);  
 				array = ArrayUtil.toArray(data.NewDataSet.Table);   
 				listaObj = new ArrayCollection(array);	
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+				result = global.formatearMoneda(item[column.dataField]);
+				return result;					
 			}
 			
 			private function formateaMovsGL():void{
@@ -234,7 +240,7 @@
 			
 			private function limpiar():void{
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				txtCodGrupo.text = "";
 				txtGrupo.text = "";
 				lblInfoGL.text = "";
@@ -297,7 +303,7 @@
 			<mx:Label id="lblInfoGL" x="155.65" y="8" width="247.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 			<mx:ComboBox id="cboMov" x="155.3" y="104" width="411.6" labelField="descripcion" change="seleccionarDestino()"/>		
 			<mx:DateField id="dtfFecha" x="155.3" y="40" width="100"/>
-			<mx:TextInput id="txtMonto" x="155.3" y="72" width="100" maxChars="9" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:TextInput id="txtMonto" x="155.3" y="72" width="100" maxChars="12" restrict="0-9;.;," focusOut="{global.formatearMonto(event)}"/>
 			<Data:RowColorDataGrid id="dgMovsGL" x="21.05" y="144" width="545.85" height="170"
 				resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on"> 
 				<Data:columns>
@@ -305,7 +311,7 @@
 					<mx:DataGridColumn headerText="FECHA MOV." dataField="FECHA" width="90"/>
 					<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA" width="90"/>
 					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
-					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="80" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="300"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>

@@ -168,7 +168,7 @@
              else if(index == 4)
             	cellObject.NOMCL = cellValue;
             else if(index == 5)
-				cellObject.FEC_CIERRE = cellValue? global.formatoFechaExcel(Number(cellValue)): null;
+				cellObject.FEC_CIERRE = cellValue? global.formatearFechaExcel(Number(cellValue)): null;
         }
       
       	private function initApp():void{ 

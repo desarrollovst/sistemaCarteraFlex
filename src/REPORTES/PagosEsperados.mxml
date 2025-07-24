@@ -81,7 +81,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			public function valida():Boolean{

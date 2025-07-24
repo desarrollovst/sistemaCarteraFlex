@@ -91,8 +91,8 @@
 				oItem = new Object();
 				oItem.NO_NOMINA = "";
 				oItem.NOM_ASESOR = "TOTAL:";
-				oItem.MSVENDIDOS =  global.formatoDecimal(totalMicsgs.toString());
-				oItem.BONO = global.formatoDecimal(totalBono.toString());
+				oItem.MSVENDIDOS =  global.formatearDecimal(totalMicsgs.toString());
+				oItem.BONO = global.formatearDecimal(totalBono.toString());
 				item.push(oItem);			
 					
 				Arr = new ArrayCollection(item);

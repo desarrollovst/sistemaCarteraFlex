@@ -81,8 +81,8 @@
 				comFiltroRS.init(false);
 				
 				var fec:Date = global.obtenerFechaSistema();
-				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}		
 			
 			private function initConexion():void{				
@@ -98,8 +98,8 @@
 				comFiltroRS.limpiar();
 				
 				var fec:Date = global.obtenerFechaSistema();
-				dtFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFechaFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}	
 			
 			private function valida():Boolean{
@@ -108,7 +108,7 @@
 			}
 			
 			private function validaFecha():void{
-    			dtFechaIni.selectedDate = global.validaFecha(dtFechaIni.selectedDate, dtFechaFin.selectedDate, titulo);
+    			dtFechaIni.selectedDate = global.validarFecha(dtFechaIni.selectedDate, dtFechaFin.selectedDate, titulo);
 			}
 		]]>
 	</mx:Script>

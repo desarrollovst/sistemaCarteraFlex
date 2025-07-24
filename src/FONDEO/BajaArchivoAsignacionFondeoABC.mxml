@@ -134,7 +134,7 @@
 			wsMS = null;
 			
         	var res:String = event.result.toString();
-        	lblMonto.text = "Monto asignado: " + global.formatoMoneda(res.toString());
+        	lblMonto.text = "Monto asignado: " + global.formatearMoneda(res.toString());
         }
         
         private function valida():Boolean{
@@ -246,7 +246,7 @@
                 cellObject.CDGDISP = cellValue;
             else if(index == 3)
             	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
-                cellObject.FREPSDO = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FREPSDO = global.formatearFechaExcel(Number(cellValue));
             else if(index == 4)
                 cellObject.CDGNS = cellValue;
             else if(index == 5)

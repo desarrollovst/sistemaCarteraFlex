@@ -44,7 +44,7 @@
 				this.info = item;
 				
 				var fec:Date = global.obtenerFechaSistema();
-				fec = global.seleccionaDiaHabil(new Date(fec.fullYear, fec.month, fec.date - 1));
+				fec = global.seleccionarDiaHabil(new Date(fec.fullYear, fec.month, fec.date - 1));
 				dtfFecha.selectedDate = fec;
 			}
 			
@@ -88,6 +88,6 @@
 		<mx:Label id="lblFecha" textAlign="right" x="55.75" y="21" width="50.5" text="Fecha:"/>
 		<mx:Label id="lblKm" textAlign="left" x="33.25" y="51" text="Kilometraje:"/>
 		<mx:DateField id="dtfFecha" x="114" y="19" width="105"/>
-		<mx:TextInput id="txtKm" x="114.25" y="49" width="89" restrict="0-9;." change="{global.validaMonto(event)}"/>
+		<mx:TextInput id="txtKm" x="114.25" y="49" width="89" restrict="0-9;.;," focusOut="{global.formatearMonto(event)}"/>
 	</mx:Canvas>
 </mx:TitleWindow>

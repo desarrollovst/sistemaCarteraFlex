@@ -200,8 +200,8 @@
 											dgDatos.dataProvider = null;
 											dgDatos.dataProvider = acInteres;
 										
-											cbxAnio.dataProvider = global.formateaAnio();
-											cbxMes.dataProvider = global.formateaMes();
+											cbxAnio.dataProvider = global.formatearAnio();
+											cbxMes.dataProvider = global.formatearMes();
 										
 											cbxBanco.enabled = false;
 											cbxCuenta.enabled = false;
@@ -397,8 +397,8 @@
 							cbxCuenta.dataProvider = acCuentas;
 							cbxCuenta.selectedIndex = 0;
 							
-							cbxAnio.dataProvider = global.formateaAnio();
-							cbxMes.dataProvider = global.formateaMes();
+							cbxAnio.dataProvider = global.formatearAnio();
+							cbxMes.dataProvider = global.formatearMes();
 							
 						});
 						params[0] = _xmlDatos.CDGIB;

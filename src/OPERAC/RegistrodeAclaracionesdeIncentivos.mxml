@@ -54,10 +54,10 @@
 						global.desbloquear();
 				
 						if (_xmlInc.elements().length() > 0){
-							txtColMod.text = _xmlInc.Table[0].COLOCACION;
+							txtColMod.text = global.formatearDecimal(_xmlInc.Table[0].COLOCACION);
 							txtCtesMod.text = _xmlInc.Table[0].CLIENTES;
-							txtDesMod.text = _xmlInc.Table[0].DESERCION;
-							txtMoraMod.text = _xmlInc.Table[0].MORA;
+							txtDesMod.text = global.formatearDecimal(_xmlInc.Table[0].DESERCION);
+							txtMoraMod.text = global.formatearDecimal(_xmlInc.Table[0].MORA);
 							txtGruposMod.text = _xmlInc.Table[0].GRUPOS;
 							txtObs.text = _xmlInc.Table[0].OBSERVACIONES;
 						}		
@@ -83,10 +83,10 @@
 				mes = cboMes.selectedItem.id;
 				anio = cboAnio.selectedItem.id;
 				asesor = cboAsesor.selectedItem.id;
-				colocacion = Number(txtColMod.text);
+				colocacion = Number(global.formatearNumerico(txtColMod.text));
 				clientes = Number(txtCtesMod.text);
-				desercion = Number(txtDesMod.text);
-				mora = Number(txtMoraMod.text);
+				desercion = Number(global.formatearNumerico(txtDesMod.text));
+				mora = Number(global.formatearNumerico(txtMoraMod.text));
 				grupos = Number(txtGruposMod.text);
 				observaciones = txtObs.text;
 				
@@ -139,8 +139,8 @@
 				du = new Utils();
 				titulo = "Registro de Aclaraciones de Incentivos";
 				lblTitulo.text = titulo.toUpperCase();
-				cboMes.dataProvider = global.formateaMes();
-				cboAnio.dataProvider = global.formateaAnio();
+				cboMes.dataProvider = global.formatearMes();
+				cboAnio.dataProvider = global.formatearAnio();
 				limpiar();
 				
 				du.initWsCat(wsCat);
@@ -204,16 +204,16 @@
 	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="420" height="451">
 		<mx:Canvas id="cnvDetalle" x="10" y="127" width="398" height="284" styleName="canvasMod" visible="true" enabled="true">
 			<mx:Label id="lblColocacion" x="56.3" y="13" text="Colocación:" textAlign="right"/>
-			<mx:TextInput id="txtColMod" x="125.3" y="11" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:TextInput id="txtColMod" x="125.3" y="11" width="68" maxChars="12" restrict="0-9;.;," focusOut="{global.formatearMonto(event)}"/>
 			<mx:Label id="lblColOri" x="213.3" y="13" width="90"/>
 			<mx:Label id="lblClientes" x="71.3" y="45" text="Clientes:" textAlign="right"/>
 			<mx:TextInput id="txtCtesMod" x="125.3" y="43" width="68" restrict="0-9"/>
 			<mx:Label id="lblCtesOri" x="213.3" y="45" width="90"/>
 			<mx:Label id="lblDesercion" x="60.3" y="77" text="Deserción:" textAlign="right"/>
-			<mx:TextInput id="txtDesMod" x="125.3" y="75" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:TextInput id="txtDesMod" x="125.3" y="75" width="68" maxChars="12" restrict="0-9;.;," focusOut="{global.formatearMonto(event)}"/>
 			<mx:Label id="lblDesOri" x="213.3" y="77" width="90"/>
 			<mx:Label id="lblMora" x="85.3" y="109" text="Mora:" textAlign="right"/>
-			<mx:TextInput id="txtMoraMod" x="125.3" y="107" width="68" restrict="0-9;." change="{global.validaMonto(event)}"/>
+			<mx:TextInput id="txtMoraMod" x="125.3" y="107" width="68" maxChars="12" restrict="0-9;.;," focusOut="{global.formatearMonto(event)}"/>
 			<mx:Label id="lblMoraOri" x="213.3" y="109" width="90"/>
 			<mx:Label id="lblGrupos" x="73.3" y="141" text="Grupos:" textAlign="right"/>
 			<mx:TextInput id="txtGruposMod" x="125.3" y="139" width="68" restrict="0-9"/>

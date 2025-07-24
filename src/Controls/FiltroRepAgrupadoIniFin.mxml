@@ -45,8 +45,8 @@
 				ctrlFiltro.limpiar();
 				fec = global.obtenerFechaSistema();
 				if(currentState == null)
-					dtfFechaIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-					dtfFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFechaIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFechaFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			public function valida():Boolean{			

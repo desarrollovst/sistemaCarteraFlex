@@ -130,7 +130,7 @@
 				var fecha:Date = global.obtenerFechaSistema();
 				formDGGrupo.cboSucursal.addEventListener(ListEvent.CHANGE, selecSucursal);
 		
-				info.fecha = global.formatoFecha(fecha);
+				info.fecha = global.formatearFecha(fecha);
 					
 				formDGGrupo.init(info, tipoAccion);	
 				formOficialGrupo.init(info, tipoAccion);

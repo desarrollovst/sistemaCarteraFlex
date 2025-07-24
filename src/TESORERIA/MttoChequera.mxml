@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" 
-	width="390" height="350" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*">
+	width="390" height="355" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*">
 	
 	<mx:Script>
 		<![CDATA[
@@ -26,8 +26,8 @@
 		
 			public var tipoAccion:int;
 			public var wsMS:WebService;	
-			public var du:Utils;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 			
 			private var factiva:String;
@@ -103,7 +103,7 @@
 				if(chkEstatus.selected == true){
 					estatus = "A";
 					if(factiva == ""){
-						factiva = global.formatoFecha(global.obtenerFechaSistema());
+						factiva = global.formatearFecha(global.obtenerFechaSistema());
 					}
 				}
 				else{
@@ -140,14 +140,13 @@
 			}	
 			
 			public function llenaRegistros():void{
-				var i:int;
 				txtCodigo.text = _xmlChq.Table[0].CODIGO;
 				txtChqIni.text = _xmlChq.Table[0].CHEQUEINICIAL;
 				txtChqFin.text = _xmlChq.Table[0].CHEQUEFINAL;
 				txtFecha.text = _xmlChq.Table[0].FECALTA;
 				factiva = _xmlChq.Table[0].FECACTIVA;
 				
-				for(i = 0; i < coordObj.length; i++){
+				for(var i:int = 0; i < coordObj.length; i++){
 					if(_xmlChq.Table[0].CDGCO.toString() == coordObj[i].id.toString()){
 						cboCoordinacion.selectedIndex = i;
 						break;
@@ -169,7 +168,7 @@
 			public function registraInfoChq():void{
 				tipoAccion = 1;
 				this.title = "Nuevo";
-				txtFecha.text = global.formatoFechaSep(global.obtenerFechaSistema(),"/");
+				txtFecha.text = global.formatearFechaSep(global.obtenerFechaSistema(),"/");
 				chkEstatus.selected = false;
 				chkEstatus.enabled = true;
 				factiva = "";

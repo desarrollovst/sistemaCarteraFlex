@@ -352,8 +352,8 @@
 	        titulo = "Carga Archivo de Crecimiento";
 	      	lblTitulo.text = titulo.toUpperCase();
 	      	
-	      	cbxAnio.dataProvider = global.formateaAnio();
-			cbxMes.dataProvider = global.formateaMes();
+	      	cbxAnio.dataProvider = global.formatearAnio();
+			cbxMes.dataProvider = global.formatearMes();
 	      	
 	      	var oItem:Object;
 			var item:Array = new Array();

@@ -228,7 +228,7 @@
 				cboTipoCred.selectedIndex = 1;
 				lblNombre.text = "";
 				lblInfoExc.text = "";
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				txtMonto.text = "";
 				cboDev.selectedIndex = 0;
 				listaObj.removeAll();

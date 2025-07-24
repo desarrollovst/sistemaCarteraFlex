@@ -147,8 +147,8 @@
 		
 		private function limpiar():void{
 			var fec:Date = global.obtenerFechaSistema();
-    		dtInicio.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-			dtFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+    		dtInicio.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			
 			txtNombre.text = "";
 			dgInfo.dataProvider = null;
@@ -238,7 +238,7 @@
 		}
 		
 		private function validaFecha():void{
-    		dtInicio.selectedDate = global.validaFecha(dtInicio.selectedDate, dtFin.selectedDate, titulo);
+    		dtInicio.selectedDate = global.validarFecha(dtInicio.selectedDate, dtFin.selectedDate, titulo);
 		}
 	]]>
 	</mx:Script>

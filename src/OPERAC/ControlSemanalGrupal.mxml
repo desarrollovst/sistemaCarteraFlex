@@ -252,9 +252,9 @@
 			
 			public function calculaAport():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var aport:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					aport += Number(acred[i].aport);
 				}
 				txtAport.text = aport.toString();	
@@ -266,16 +266,15 @@
 				var vScroll:Number = dgAcred.verticalScrollPosition;
 				
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var pagoTeo:Number;
 				var pagoReal:Number;
 				var dif:Number = 0;
 				
-				for (i = 0; i < acred.length; i++){
+				for(var i:int = 0; i < acred.length; i++){
 					pagoTeo = Number(acred[i].pagoTeo);
 					pagoReal = Number(acred[i].pagoReal);
 					dif = pagoTeo - pagoReal;
-					acredObj[i].diferencia = global.formatoDecimalSinSep(dif.toString());
+					acredObj[i].diferencia = global.formatearNumerico(dif.toString());
 				}
 				dgAcred.validateNow();
 				dgAcred.selectedItem = indAcred;
@@ -284,9 +283,9 @@
 			
 			public function calculaDev():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var devolucion:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					devolucion += Number(acred[i].devolucion);
 				}
 				txtDev.text = devolucion.toString();	
@@ -295,7 +294,7 @@
 			public function calculaMora():void{
 				var mora:Number = 0;
 				mora = Number(txtPagoTeo.text) - Number(txtPagoReal.text) - Number(txtAport.text);
-				txtMora.text = global.formatoDecimalSinSep(mora.toString());	
+				txtMora.text = global.formatearNumerico(mora.toString());	
 			}
 			
 			public function calculaPagoReal():void{
@@ -311,19 +310,19 @@
 						
 			public function calculaPagoTeorico():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var pagoTeo:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					pagoTeo += Number(acred[i].pagoTeo);
 				}
-				txtPagoTeo.text = global.formatoDecimalSinSep(pagoTeo.toString());
+				txtPagoTeo.text = global.formatearNumerico(pagoTeo.toString());
 			}
 			
 			public function calculaAhorro():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var ahorro:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					ahorro += Number(acred[i].ahorro);
 				}
 				txtAhorro.text = ahorro.toString();	
@@ -347,14 +346,13 @@
 			
 			//funcion que realiza la carga de datos 
 			public function formateaAcred():void{
-				var i:int;
 				var cont:int = _xmlAcred.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
 				acredObj.removeAll();
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.numero = i + 1;
 					oItem.puesto = _xmlAcred.Table[i].PUESTO;
@@ -400,10 +398,8 @@
 
 					var cont:int = listaAcred.length;
 					var contAux:int;
-					var i:int;
-					var j:int; 
 						
-					for(i = 0; i < cont; i++){
+					for(var i:int = 0; i < cont; i++){
 						acred[i] = listaAcred[i].codigo;
 						pagoTeo[i] = Number(listaAcred[i].pagoTeo);
 						pagoReal[i] = Number(listaAcred[i].pagoReal);
@@ -412,7 +408,7 @@
 						ahorro[i] = Number(listaAcred[i].ahorro);
 						
 						contAux = asistObj.length;
-						for(j = 0; j < contAux; j++){
+						for(var j:int = 0; j < contAux; j++){
 		   					if (asistObj[j].descripcion.toString() == listaAcred[i].asistencia)
 		   						asist[i] = asistObj[j].id.toString();
 		   				}

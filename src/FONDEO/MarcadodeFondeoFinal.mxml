@@ -31,7 +31,7 @@
 			private var global:Globales;
 			
 			private function cargaComboAnio():void{									
-				acAnio = global.formateaAnio();
+				acAnio = global.formatearAnio();
 				cbxAnio.dataProvider = acAnio;
 				
 				var Fecha:Date = new Date();
@@ -46,7 +46,7 @@
 			}
 			
 			private function cargaComboMes():void{
-				acMes = global.formateaMes();
+				acMes = global.formatearMes();
 				cbxMes.dataProvider = acMes;
 				
 				var Fecha:Date = new Date();

@@ -448,9 +448,9 @@
         private function addProperty(cellObject:Object,index:int,cellValue:String):void{
             if(currentState == "banorte"){
 	            if(index == 0)
-	                cellObject.FECOPE = global.formatoFechaExcel(Number(cellValue));
+	                cellObject.FECOPE = global.formatearFechaExcel(Number(cellValue));
 	            else if(index == 1)
-	                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+	                cellObject.FECHA = global.formatearFechaExcel(Number(cellValue));
 	            else if(index == 2)
 	                cellObject.REFERENCIA = cellValue;
 	            else if(index == 3)
@@ -472,7 +472,7 @@
             }
             else if(currentState == "banamex"){
             	if(index == 0)
-	                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+	                cellObject.FECHA = global.formatearFechaExcel(Number(cellValue));
 	            else if(index == 1)
 	            	cellObject.DESCRIPCION = cellValue;
 	            else if(index == 2)
@@ -484,7 +484,7 @@
             }
             else if(currentState == "bancomer"){
             	if(index == 0)
-	                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+	                cellObject.FECHA = global.formatearFechaExcel(Number(cellValue));
 	            else if(index == 1)
 	                cellObject.DESCRIPCION = cellValue;
 	            else if(index == 2)
@@ -498,7 +498,7 @@
             	if(index == 0)
 	                cellObject.NUMERO = cellValue;
 	            else if(index == 1)
-	                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+	                cellObject.FECHA = global.formatearFechaExcel(Number(cellValue));
 	            else if(index == 2)
 	                cellObject.REFERENCIA = cellValue;
 	            else if(index == 3)

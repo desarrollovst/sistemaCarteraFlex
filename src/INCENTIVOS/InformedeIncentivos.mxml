@@ -52,8 +52,8 @@
 				rep = "1";
 				titulo = "Informe - Incentivos";
 				lblTitulo.text = titulo.toUpperCase();
-				cbxAnio.dataProvider = global.formateaAnio();
-				cbxMes.dataProvider = global.formateaMes();
+				cbxAnio.dataProvider = global.formatearAnio();
+				cbxMes.dataProvider = global.formatearMes();
 			}		
 			
 			private function initConexion():void{				

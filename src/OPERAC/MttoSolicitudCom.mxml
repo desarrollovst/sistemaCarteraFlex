@@ -39,7 +39,7 @@
 					<mx:DataGridColumn headerText="MONTO AUTORIZADO" headerWordWrap="true" editable="true" dataField="cantAutor" width="85">
 						<mx:itemEditor>
 							<mx:Component>
-			  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMontoAutorizado()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+			  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMontoAutorizado()" change="outerDocument.validarMonto(event)" restrict="0-9;."/> 
 			  				</mx:Component>
 						</mx:itemEditor>
 					</mx:DataGridColumn>
@@ -165,7 +165,7 @@
 			}
 			
 			public function actualizaFecSolic(event:CalendarLayoutChangeEvent):void{
-				var fecSolic:String = global.formatoFecha(DateField(event.currentTarget).selectedDate);
+				var fecSolic:String = global.formatearFecha(DateField(event.currentTarget).selectedDate);
 				actualizaListaAcred(fecSolic);
 			}
 			
@@ -247,7 +247,7 @@
 				for(var i:int = 0; i < acred.length; i++){
 					cantSoli = Number(acred[i].cantSolic);//SOLICITADO
 					estatusCC = acred[i].estatusCC;
-					if( cantSoli > 0 && estatusCC != "S"){
+					if(cantSoli > 0 && estatusCC != "S"){
 						codAcreds[j] = acred[i].codigo.toString();			 
 						j += 1;
 					}				
@@ -282,19 +282,21 @@
 			public function calculaMontoAutorizado():void{
 				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
 				var autorizado:Number = 0;
+				
 				for(var i:int = 0; i < acred.length; i++){
 					autorizado += Number(acred[i].cantAutor);
 				}
-				formDatosGralSolic.txtAutorizado.text = autorizado.toString();
+				formDatosGralSolic.asignarAutorizado(global.formatearDecimal(autorizado.toString()));
 			}
 						
 			public function calculaMonto():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
 				var solicitado:Number = 0;
+				
 				for(var i:int = 0; i < acred.length; i++){
 					solicitado += Number(acred[i].cantSolic);
 				}
-				formDatosGralSolic.txtSolicitado.text = solicitado.toString();
+				formDatosGralSolic.asignarSolicitado(global.formatearDecimal(solicitado.toString()));
 			}
 		
 			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
@@ -421,7 +423,7 @@
 						cargaAcred(cdgGrupo, ciclo, fecSolic);
 					}
 					else{
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						Alert.show("Error en la carga de Datos.",titulo,4,null,null,global.iAlert);
 					}
 				});
 				params = new Array();
@@ -954,7 +956,7 @@
 			//Oculta los botones de Guardado y Envio de acuerdo a los permisos asignados al perfil AAMC
 			private function ocultarBotones():void{
 				if(currentState == 'evaluacion'){
-					if(permiso.permisosEvSolic(Application.application.PERFIL_ID) == false){
+					if(permiso.permisosEvSolic(global.obtenerArrayPerfil()) == false){
 						btnAceptar.visible = false;
 						btnGuardar.visible = false;
 					}
@@ -981,7 +983,7 @@
 				init();
 				if(currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
+				var fecSolic:String = global.formatearFecha(global.obtenerFechaSistema());
 				this.suc = suc;
 				//ASIGNACION DE CODIGO DE GRUPO
 				this.grupo = cdgGrupo;
@@ -1236,6 +1238,12 @@
 										resultado += "\n\nINTEGRACIÓN\n" + integ;
 										resultado += "\n\nREPORTE DE CRÉDITO\n" + reporte;
 									
+										/*resultado += "\n\n" + global.rellenarCadena("-", 224);
+										resultado += "\n" + "| " + "NOMBRE ACREDITADO" + global.rellenarCadena(" ", 179) + " | " + "CANT SOLICITADA" + " | " + "CANT ENTREGADA" + " |"; 
+										resultado += "\n" + global.rellenarCadena("-", 122);
+									
+										Alert.show(destino + "|" + emailOri);*/
+									
 										initConexionReg();
 										du.sCursor();
 									
@@ -1371,11 +1379,11 @@
 			}
 			
 			//Funcion que valida que el monto capturado tiene un formato adecuado
-			public function validaMonto(event:Event):void{	
+			public function validarMonto(event:Event):void{	
 				numVal.source = TextInput(event.currentTarget);
 				vResult = numVal.validate();
 
-				if (vResult.type!=ValidationResultEvent.VALID)
+				if (vResult.type != ValidationResultEvent.VALID)
                 	TextInput(event.currentTarget).text = "";
 			}
 			
@@ -1489,7 +1497,6 @@
 			}
 		]]>
 	</mx:Script>
-
 	 <mx:NumberValidator id="numVal" property="text" precision="2"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
 
@@ -1539,7 +1546,7 @@
 				<mx:DataGridColumn headerText="SOLICITADO" dataField="cantSolic" width="70" editable="true" >	
 					<mx:itemEditor>
 						<mx:Component>
-		  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMonto()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+		  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" change="outerDocument.validarMonto(event)" focusOut="outerDocument.calculaMonto()" restrict="0-9;."/> 
 		  				</mx:Component>
 					</mx:itemEditor>
 				</mx:DataGridColumn>

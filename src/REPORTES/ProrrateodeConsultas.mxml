@@ -191,7 +191,7 @@
 			}
 		
 			private function validaMontoFormato():void{
-				txtRedondeo.text = global.formatoDecimal(Number(txtRedondeo.text).toString());
+				txtRedondeo.text = global.formatearDecimal(Number(txtRedondeo.text).toString());
 			}
 		]]>
 	</mx:Script>

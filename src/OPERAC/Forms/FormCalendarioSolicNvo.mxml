@@ -160,8 +160,8 @@
 				
 				for (i = horaMin; i <= horaMax; i++){
 					oItem = new Object();
-					oItem.id = global.insertaCaracter(i.toString(),"0",2 - i.toString().length,1); 
-					oItem.hora = global.insertaCaracter(i.toString(),"0",2 - i.toString().length,1);  	
+					oItem.id = global.insertarCaracter(i.toString(),"0",2 - i.toString().length,1); 
+					oItem.hora = global.insertarCaracter(i.toString(),"0",2 - i.toString().length,1);  	
 					itemHr.push(oItem);
 				}
 				horaObj = new ArrayCollection(itemHr);
@@ -173,8 +173,8 @@
 				
 				for (i = 0; i < 60; i++){
 					oItem = new Object();
-					oItem.id = global.insertaCaracter(i.toString(),"0",2 - i.toString().length,1); 
-					oItem.min = global.insertaCaracter(i.toString(),"0",2 - i.toString().length,1);  	
+					oItem.id = global.insertarCaracter(i.toString(),"0",2 - i.toString().length,1); 
+					oItem.min = global.insertarCaracter(i.toString(),"0",2 - i.toString().length,1);  	
 					itemMin.push(oItem);
 				}
 				minObj = new ArrayCollection(itemMin);

@@ -231,7 +231,7 @@
 					var ciclo:String = dgGrupos.selectedItem.CICLO;
 					var coord:String = dgGrupos.selectedItem.CDGCO;
 					var cuenta:String = txtCodCuenta.text;
-					var fecha:String = global.formatoFecha(global.obtenerFechaSistema());
+					var fecha:String = global.formatearFecha(global.obtenerFechaSistema());
 					var chqIni:String = txtChqIni.text;
 					var chqFin:String = txtChqFin.text;
 					formateaRegAcred();
@@ -352,7 +352,7 @@
 				titulo = "Impresión de Cheques";
 				lblTitulo.text = titulo.toUpperCase();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
 			}
 			
 			public function initConexion():void{				
@@ -374,9 +374,9 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				
-				if (permiso.permisosSelecCuenta(Application.application.PERFIL_ID)){
+				if (permiso.permisosSelecCuenta(global.obtenerArrayPerfil())){
 					txtCodCuenta.editable = true;
 					txtCodCuenta.addEventListener(FlexEvent.ENTER, manejaBusqCuenta);
 					btnBusqCta.visible = true;		

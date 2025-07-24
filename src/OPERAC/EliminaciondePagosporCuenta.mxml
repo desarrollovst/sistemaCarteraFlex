@@ -129,7 +129,7 @@
 				                 
 				           if(_xmlPag.elements().length() > 0){                                         
 				                 lblTotalPagos.text = _xmlPag.Table[0].TOT_PAGOS;
-				                 lblSumaTotal.text = global.formatoMoneda(_xmlPag.Table[0].SUMA_TOTAL);                                         
+				                 lblSumaTotal.text = global.formatearMoneda(_xmlPag.Table[0].SUMA_TOTAL);                                         
 				                 if(lblTotalPagos.text != "" && lblSumaTotal.text != ""){
 				                       btnEliminar.enabled = true;
 				                 } else {
@@ -219,7 +219,7 @@
 				titulo = "Eliminación de pagos por cuenta";
 				lblTitulo.text = titulo.toUpperCase();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				cargaBanco();
 			}
 			

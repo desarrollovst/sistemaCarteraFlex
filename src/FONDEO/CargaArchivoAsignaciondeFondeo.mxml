@@ -167,7 +167,7 @@
                 cellObject.CDGDISP = cellValue;
             else if(index == 3)
             	//se utiliza la funcion formatoFechaExcel para transformar el valor numerico de fecha
-                cellObject.FECSDO = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FECSDO = global.formatearFechaExcel(Number(cellValue));
             else if(index == 4)
                 cellObject.CDGNS = cellValue;
             else if(index == 5)

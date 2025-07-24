@@ -381,6 +381,9 @@ package Data
 		
 		public var frm_348:ReporteSaldos;
 		public var frm_349:Prospectos;
+		
+		public var frm_350:PolizadeSegurosFecha;
+		public var frm_351:PolizadeDevengoFecha;
 
 		public function Modulos()
 		{

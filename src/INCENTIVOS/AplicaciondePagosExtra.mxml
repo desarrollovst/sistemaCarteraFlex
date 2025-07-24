@@ -163,8 +163,8 @@
 		}
 		
 		private function limpiar():void{
-			cbxAnio.dataProvider = global.formateaAnio();
-			cbxMes.dataProvider = global.formateaMes();
+			cbxAnio.dataProvider = global.formatearAnio();
+			cbxMes.dataProvider = global.formatearMes();
 			txtGrupo.text = "";
 			txtCiclo.text = "";
 			dgInfo.dataProvider = null;

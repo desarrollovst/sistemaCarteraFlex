@@ -6,8 +6,7 @@
             fault="httpService_fault(event);"
             result="httpService_result(event)" />
 	
-	<!--<mx:Style source="css/orangeMin.css"/>-->      
-	 
+	<mx:Style source="assets/css/vistaremix/vistaremix.css"/>
     <mx:Script>
 	<![CDATA[
 		import Data.Globales;
@@ -17,12 +16,12 @@
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
 		
-		private var du:Utils;
-		private var global:Globales
 		public var wsMS:WebService;
 		public var titulo:String;
 		public var wsStr:XML = new XML();
-        
+        private var du:Utils;
+		private var global:Globales;
+		
         public function enviar():void{
 			if(txtDesc.text != ""){
 				var desc:String = txtDesc.text;
@@ -49,12 +48,12 @@
 				Alert.show("Debe capturar la descripción de la denuncia.",titulo,4,null,null,global.iAlert);
 		}
         
-        private function httpService_fault(evt:FaultEvent):void {
+        private function httpService_fault(evt:FaultEvent):void{
             var title:String = evt.type + " (" + evt.fault.faultCode + ")";
             var text:String = evt.fault.faultString;                             
         }
 
-        private function httpService_result(evt:ResultEvent):void {                                
+        private function httpService_result(evt:ResultEvent):void{                                
             wsStr = new XML(evt.result.toString());                          
         }
         
@@ -68,7 +67,7 @@
         
         public function initConexion():void{				
 			wsMS = new WebService();			
-			wsMS.wsdl = wsStr.wsdlServ.toString();
+			wsMS.wsdl = wsStr.wsdlReg.toString();
 			wsMS.loadWSDL();
 		}
         
@@ -81,9 +80,9 @@
 		<mx:Panel width="746" height="400" layout="absolute" id="pnlLogin" title="Denuncia Anónima" alpha="0.7" horizontalCenter="0" verticalCenter="-2" 
 			horizontalScrollPolicy="off" verticalScrollPolicy="off">
 			<mx:TextArea id="txtDesc" x="26" y="31" width="694" height="281"/>
-			<mx:Button x="341" y="320" label="Enviar" click="enviar()"/>
-			<mx:Label x="26" y="8" text="Escriba los detalles de la denuncia:"/>
+			<mx:Button id="btnEnviar" x="341" y="320" label="Enviar" click="enviar()"/>
+			<mx:Label id="lblDesc" x="26" y="8" text="Escriba los detalles de la denuncia:"/>
 		</mx:Panel>
-		<mx:Image x="10" y="10" source="images/mini.png" scaleContent="true" width="181" height="128"/>
+		<mx:Image x="10" y="10" source="assets/images/logo.png"/>
 	</mx:Canvas>
 </mx:Application>

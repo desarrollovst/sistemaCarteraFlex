@@ -138,7 +138,7 @@
 					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
 					var asesor:String = "&asesor=000000";  
 					var fec:Date = global.obtenerFechaSistema();
-					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					fecha = "&fecha=" + global.formatearFechaSep(fec, "-");
 					
 					consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;
 					Application.application.muestraPdf(consulta);

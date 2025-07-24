@@ -54,7 +54,7 @@
 				
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
 			private function initConexion():void{				

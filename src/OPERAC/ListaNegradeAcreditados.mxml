@@ -33,12 +33,12 @@
 			public var _xmlAcred:XML = new XML();
 			[Bindable]
 			public var dPermisos:XML = new XML();	
-			
-			public var wsMS:WebService;	
+				
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			public var titulo:String;
+			public var wsMS:WebService;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -128,7 +128,7 @@
 			
 			public function iniVar():void{
 				this.indAcred = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -155,7 +155,7 @@
 			}
 			
 			public function manejadorBajaAcred(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var tipo:int;
 					var comMttoLista:MttoListaNegra = new MttoListaNegra();
 					comMttoLista = MttoListaNegra(PopUpManager.createPopUp(this,MttoListaNegra,true)); 
@@ -201,12 +201,12 @@
 			
 			public function permisos():void{
 				var ws:WebService = new WebService();
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -218,7 +218,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (permiso.permisosModAcredInd(Application.application.PERFIL_ID)){
+								if (permiso.permisosModAcredInd(global.obtenerArrayPerfil())){
 									borrado = true;
 									alta = true;
 									edicion = true;

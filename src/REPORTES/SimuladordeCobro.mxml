@@ -72,10 +72,10 @@
 						currentState = "resultado";
 						capital = Number(_xmlRep.Table[0].SALDO_CAP);
 						interes = Number(_xmlRep.Table[0].SALDO_INT);
-						lblTotal.text = global.formatoMoneda((capital + interes).toString());
-						lblCapital.text = global.formatoMoneda(capital.toString());
-						lblInteres.text = global.formatoMoneda(interes.toString());
-						lblCond.text = global.formatoMoneda(_xmlRep.Table[0].COND_INT);	
+						lblTotal.text = global.formatearMoneda((capital + interes).toString());
+						lblCapital.text = global.formatearMoneda(capital.toString());
+						lblInteres.text = global.formatearMoneda(interes.toString());
+						lblCond.text = global.formatearMoneda(_xmlRep.Table[0].COND_INT);	
 					}
 					else
 						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);

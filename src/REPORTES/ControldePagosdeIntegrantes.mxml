@@ -67,7 +67,7 @@
 				if(valida() == true){
 					var consulta:String;
 					var id:String = "&id=" + rep;
-					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
+					var fecha:String = "&fecha=" + global.formatearFechaSep(dtfFecha.selectedDate,"-");
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 					var puesto:String = "&puesto=" + Application.application.PUESTO;
@@ -97,7 +97,7 @@
 				var fec:Date;
 				dgReporte.dataProvider = null;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				txtGrupo.text = "";
 				txtCiclo.text = "";
 			}

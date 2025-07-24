@@ -46,6 +46,7 @@ package Data
 		public var nivelRiesgo:String;
 		public var marca:Number;
 		public var causa:String;
+		public var causaDesc:String;
 		public var enano:Number;
 		public var cantEnano:Number;
 		public var guardaOtros:Boolean;

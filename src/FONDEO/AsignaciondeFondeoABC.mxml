@@ -550,7 +550,7 @@
 	<mx:Script>
 		<![CDATA[
 		private function validaFecha():void{
-			dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+			dtfFecIni.selectedDate = global.validarFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
 		}
 		
 		private function validaMonto(event:Event):void{
@@ -561,7 +561,7 @@
                	TextInput(event.currentTarget).text = "";
 		}
 		private function validaMontoFormato():void{
-			txtImporte.text = global.formatoDecimal(Number(txtImporte.text).toString());
+			txtImporte.text = global.formatearDecimal(Number(txtImporte.text).toString());
 		}
 		
 		]]>
@@ -632,7 +632,7 @@
 										if(Number(creditos) > 0){
 											vg_BajaFondeo = true;
 											mensaje = "Se han encontrado " + creditos + " credito(s) cuyo monto asciende a " + 
-											global.formatoMoneda(montocreditos) + 
+											global.formatearMoneda(montocreditos) + 
 											" que ya no se encuentran dentro de los parametros para el marcado de ABC." +
 											" .\n\n¿Desea iniciar el proceso de eliminación? ";
 											Alert.show(mensaje,titulo,Alert.YES|Alert.NO,null,manejaEliminaFondeoABC,global.iQuest);
@@ -770,13 +770,13 @@
 							if(Number(saldoStr) > monto){
 								var diferencia:Number = Number(saldoStr) - monto; 
 								mensaje = "Se han encontrado " + cont.toString() + " credito(s) cuyo monto asciende a " 
-								+ global.formatoMoneda(monto.toString()) 
-								+ ".\n\nFaltan " + global.formatoMoneda(diferencia.toString()) + " para lograr el saldo requerido."
+								+ global.formatearMoneda(monto.toString()) 
+								+ ".\n\nFaltan " + global.formatearMoneda(diferencia.toString()) + " para lograr el saldo requerido."
 								+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
 							}
 							else{
 								mensaje = "Se han encontrado " + cont.toString() + " creditos(s) cuyo monto asciende a " 
-								+ global.formatoMoneda(monto.toString()) 
+								+ global.formatearMoneda(monto.toString()) 
 								+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
 							}
 							
@@ -938,19 +938,19 @@
 			var porcImp:Number = porcImp = (porc * impDis) / 100; 
 			var cant:Number = Number(_xmlInfo.Table[0].AFORO);
 			
-			lblImpDisp.text = global.formatoMoneda(Number(impDis).toString());
-			lblImpMarc.text = global.formatoMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
-			lblSaldo.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
-			txtImporte.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+			lblImpDisp.text = global.formatearMoneda(Number(impDis).toString());
+			lblImpMarc.text = global.formatearMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
+			lblSaldo.text = global.formatearDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+			txtImporte.text = global.formatearDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
 			
 			if(vg_States == "0005"){ //ABC
 				if(_xmlInfo.Table[0].FAFORO == "P"){
 					lblAforo.text = porc + " %";
-					lblTotDisp.text = global.formatoMoneda((impDis + porcImp).toString());  
+					lblTotDisp.text = global.formatearMoneda((impDis + porcImp).toString());  
 				}
 				else if (_xmlInfo.Table[0].FAFORO == "E"){					
 					lblAforo.text = cant.toString();
-					lblTotDisp.text = global.formatoMoneda((cant + impDis).toString());
+					lblTotDisp.text = global.formatearMoneda((cant + impDis).toString());
 				}
 			}
 			
@@ -1002,7 +1002,7 @@
 				Alert.show("Debe capturar el importe que debe asignarse.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-			if(Number(txtImporte.text) > Number(global.formatoNumerico(lblSaldo.text))){
+			if(Number(txtImporte.text) > Number(global.formatearNumerico(lblSaldo.text))){
 				Alert.show("El importe capturado no puede ser mayor que el saldo disponible.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
@@ -1047,8 +1047,8 @@
 						
 					if(_xmlParamABC.elements().length() > 0){
 						lblPeriodicidad.text = _xmlParamABC.Table[0].PERIODICIDADSTR;
-						lblMontoMin.text = global.formatoMoneda(Number(_xmlParamABC.Table[0].MONTOMIN).toString());
-						lblMontoMax.text = global.formatoMoneda(Number(_xmlParamABC.Table[0].MONTOMAX).toString());
+						lblMontoMin.text = global.formatearMoneda(Number(_xmlParamABC.Table[0].MONTOMIN).toString());
+						lblMontoMax.text = global.formatearMoneda(Number(_xmlParamABC.Table[0].MONTOMAX).toString());
 						lblDiasMin.text = _xmlParamABC.Table[0].MORAMIN;
 						lblDiasMax.text = _xmlParamABC.Table[0].MORAMAX;
 						lblEdadMin.text = _xmlParamABC.Table[0].EDADMIN;

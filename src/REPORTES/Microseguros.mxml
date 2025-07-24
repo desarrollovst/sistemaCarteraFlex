@@ -105,6 +105,7 @@
 				<mx:DataGridColumn headerText="FIN" dataField="FECFIN" width="80"/>
 				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="110"/>
 				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="120"/>
+				<mx:DataGridColumn headerText="TOTAL PAGAR" dataField="TOTAL_PAGAR" width="120"/>
 				<mx:DataGridColumn headerText="SALDO DEUDOR" dataField="SALDO" width="110"/>
 				<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="80"/>
 				<mx:DataGridColumn headerText="ASESOR" dataField="NOMPE" width="210"/>

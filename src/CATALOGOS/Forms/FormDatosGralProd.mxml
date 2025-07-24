@@ -65,9 +65,9 @@
 					formData.moneda = cboMoneda.selectedItem.id;
 					formData.tipoCred = cboTipoCred.selectedItem.id;
 					formData.valido = dtfValido.text;
-					formData.montoMin = Number(txtMinimo.text);
-					formData.montoMax = Number(txtMaximo.text);
-					formData.montoMinGrupal = Number(txtMinGrupal.text);
+					formData.montoMin = Number(global.formatearNumerico(txtMinimo.text));
+					formData.montoMax = Number(global.formatearNumerico(txtMaximo.text));
+					formData.montoMinGrupal = Number(global.formatearNumerico(txtMinGrupal.text));
 					formData.guarda = true;
 				}
 				else
@@ -166,9 +166,9 @@
 							}
 							txtCodigo.text = info.cdgProd;
 							txtNombre.text = info.nombreProd;
-							txtMinimo.text = info.montoMin.toString();
-							txtMaximo.text = info.montoMax.toString();
-							txtMinGrupal.text = info.montoMinGrupal.toString();
+							txtMinimo.text = global.formatearDecimal(info.montoMin.toString());
+							txtMaximo.text = global.formatearDecimal(info.montoMax.toString());
+							txtMinGrupal.text = global.formatearDecimal(info.montoMinGrupal.toString());
 							dtfValido.selectedDate = global.convCadenaFecha(info.valido);						
 						}	
 					});
@@ -182,14 +182,6 @@
 				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
 				wsMS.loadWSDL();
 			}
-			
-			private function validaMonto(event:Event):void{
-				numVal.source = TextInput(event.currentTarget);
-				vResult = numVal.validate();
-
-				if (vResult.type!=ValidationResultEvent.VALID)
-                	TextInput(event.currentTarget).text = "";
-			}	
 				
 		]]>
 	</mx:Script>
@@ -202,22 +194,21 @@
 		<mx:Label id="lblNombre" x="173" y="12" text="Nombre:"/>
 		<mx:TextInput id="txtNombre" x="226" y="10" width="271"/>
 		<mx:Label id="lblMoneda" x="23" y="47" text="Moneda:"/>
-		<mx:ComboBox id="cboMoneda" x="77" y="44" width="153" labelField="nombre"></mx:ComboBox>
+		<mx:ComboBox id="cboMoneda" x="77" y="44" width="153" labelField="nombre"/>
 		<mx:Label id="lblTipoCred" x="248" y="47" text="Tipo de Crédito:" width="88"/>
-		<mx:ComboBox id="cboTipoCred" x="344" y="44" width="153" labelField="nombre"></mx:ComboBox>
+		<mx:ComboBox id="cboTipoCred" x="344" y="44" width="153" labelField="nombre"/>
 		<mx:Canvas x="23" y="99" width="200" height="80" styleName="canvasMod">
 			<mx:Label id="lblMinimo" x="32" y="12" text="Mínimo:"/>
 			<mx:Label id="lblMaximo" x="28" y="44" text="Máximo:"/>
-			<mx:TextInput id="txtMinimo" x="80" y="10" width="90" restrict="0-9;." change="validaMonto(event)"/>
-			<mx:TextInput id="txtMaximo" x="80" y="42" width="90" restrict="0-9;." change="validaMonto(event)"/>
+			<mx:TextInput id="txtMinimo" x="80" y="10" width="90" restrict="0-9;.;," maxChars="12" focusOut="{global.formatearMonto(event)}"/>
+			<mx:TextInput id="txtMaximo" x="80" y="42" width="90" restrict="0-9;.;," maxChars="12" focusOut="{global.formatearMonto(event)}"/>
 		</mx:Canvas>
 		<mx:Label id="lblMonto" x="23" y="80" text="Monto Individual"/>
-		
 		<mx:DateField id="dtfValido" x="344" y="78" width="109"/>
 		<mx:Label id="lblValido" x="256" y="80" text="Válido hasta:" width="80"/>
 		<mx:Canvas x="256" y="128" width="200" height="50" styleName="canvasMod">
 			<mx:Label id="lblMinGrupal" x="32" y="12" text="Monto:"/>
-			<mx:TextInput id="txtMinGrupal" x="80" y="10" width="90" restrict="0-9;." change="validaMonto(event)"/>
+			<mx:TextInput id="txtMinGrupal" x="80" y="10" width="90" restrict="0-9;.;," maxChars="12" focusOut="{global.formatearMonto(event)}"/>
 		</mx:Canvas>
 		<mx:Label id="lblMontoGrupal" x="256" y="109" text="Factor Mensual de Ingreso"/>
 	</mx:Canvas>

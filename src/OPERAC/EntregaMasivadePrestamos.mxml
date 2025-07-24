@@ -51,7 +51,7 @@
 					var wsCat:WebService = new WebService;
 					var params:Array = new Array;
 					var fec:Date = dtfFecha.selectedDate;
-					fecha = global.formatoFechaSep(fec, "/");
+					fecha = global.formatearFechaSep(fec, "/");
 					limpiar();
 					dtfFecha.selectedDate = fec;
 					
@@ -195,7 +195,7 @@
 			public function limpiar():void{
 				band = false;
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				grupoObj.removeAll();
 				grupoObj.refresh();
 				dgGrupo.dataProvider = null;

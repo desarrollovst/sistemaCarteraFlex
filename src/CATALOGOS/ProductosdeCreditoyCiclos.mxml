@@ -160,7 +160,7 @@
 							dgProducto.validateNow();
 							dgProducto.verticalScrollPosition = vScroll;
 							dgProducto.selectedIndex = indProd;
-							this.accionProd = 0;
+							accionProd = 0;
 						}
 					}
 					seleccionaProd();
@@ -196,7 +196,7 @@
 								dgTipoProd.validateNow();
 								dgTipoProd.verticalScrollPosition = vScroll;
 								dgTipoProd.selectedIndex = indTipoProd;
-								this.accionTipoProd = 0;
+								accionTipoProd = 0;
 							}
 						}
 						seleccionaTipoProd();
@@ -219,11 +219,17 @@
 				Alert.show("¿Desea eliminar el Tipo de Producto seleccionado?", titulo, Alert.YES|Alert.NO,null, manejadorEliminarTipoProd,global.iQuest);
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+				result = global.formatearMoneda(item[column.dataField]);
+				return result;					
+			}
+			
 			public function iniVar():void{
 				this.indTipoProd = -1;
 				this.indProd = -1;
 				this.indCiclo = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -384,8 +390,8 @@
 			}
 			
 			private function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -567,7 +573,7 @@
 					<mx:DataGridColumn headerText="MINIMO INTEGRANTES" dataField="MININTEG" width="80"/>
 					<mx:DataGridColumn headerText="MAXIMO INTEGRANTES" dataField="MAXINTEG" width="80"/>
 					<mx:DataGridColumn headerText="PLAZO" dataField="DURACION" width="50"/>
-					<mx:DataGridColumn headerText="MONTO MAXIMO" dataField="MONTOMAX" width="80"/>
+					<mx:DataGridColumn headerText="MONTO MAXIMO" dataField="MONTOMAX" width="80" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>

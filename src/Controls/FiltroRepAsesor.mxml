@@ -87,7 +87,7 @@
 					var coord:String = "&coord=" + ctrlFiltro.obtieneSucursal();
 					var asesor:String = "&asesor=" + ctrlFiltro.obtieneAsesor();
 					var fec:Date = global.obtenerFechaSistema();
-					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					fecha = "&fecha=" + global.formatearFechaSep(fec, "-");
 					
 					if(currentState == null)
 						consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;
@@ -103,8 +103,8 @@
 							diaSem = 7;
 						fecIni = new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() - (diaSem - 1));
 						fecFin = new Date(fecIni.getFullYear(),fecIni.getMonth(),fecIni.getDate() + 4);
-						fecha = "&fecha=" + global.formatoFechaSep(fecIni, "-");
-						fechaFin = "&fechaFin=" + global.formatoFechaSep(fecFin, "-"); 
+						fecha = "&fecha=" + global.formatearFechaSep(fecIni, "-");
+						fechaFin = "&fechaFin=" + global.formatearFechaSep(fecFin, "-"); 
 						consulta = global.urlPdf + id + fecha + fechaFin + usuario + nomUsuario + coord + asesor;
 						ExternalInterface.call("console.log", consulta );
 					}
@@ -136,7 +136,7 @@
 				dispatchEvent(new Event("limpiar"));	
 				if(currentState == "fecha"){
 					fec = global.obtenerFechaSistema();
-					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				}
 			}
 			

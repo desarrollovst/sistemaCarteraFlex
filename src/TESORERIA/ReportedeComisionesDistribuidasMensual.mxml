@@ -209,8 +209,8 @@
 				du = new Utils();
 				titulo = "Reporte de Comisiones Distribuidas";
 				lblTitulo.text = titulo.toUpperCase(); 
-				cbxMes.dataProvider = global.formateaMes();
-				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formatearMes();
+				cbxAnio.dataProvider = global.formatearAnio();
 				formateaReporte();
 			}		
 			

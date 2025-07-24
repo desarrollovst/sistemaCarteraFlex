@@ -174,13 +174,13 @@
             else if(index == 1)
                 cellObject.NO_CRED_BCO = cellValue;
             else if(index == 2)
-                cellObject.FOPERACION = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FOPERACION = global.formatearFechaExcel(Number(cellValue));
             else if(index == 3)
                 cellObject.CURP = cellValue;
             else if(index == 4)
                 cellObject.RFC = cellValue;
             else if(index == 5)
-                cellObject.INICIO = global.formatoFechaExcel(Number(cellValue));                
+                cellObject.INICIO = global.formatearFechaExcel(Number(cellValue));                
         }
 		
 		private function formateaDisp():void{

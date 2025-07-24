@@ -156,8 +156,8 @@
 		}
 		
 		private function limpiar():void{
-			cbxAnio.dataProvider = global.formateaAnio();
-			cbxMes.dataProvider = global.formateaMes();
+			cbxAnio.dataProvider = global.formatearAnio();
+			cbxMes.dataProvider = global.formatearMes();
 			txtNombre.text = "";
 			dgInfo.dataProvider = null;
 			lblRegistros.text = "";

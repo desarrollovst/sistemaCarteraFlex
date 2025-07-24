@@ -192,7 +192,7 @@
 			}
 			control = cantMarc;
 			lblCtrlReg.text = cont.toString() + " Registro(s) seleccionado(s)"; 
-			lblCtrlMonto.text = "Monto Marcado: " + global.formatoMoneda(control.toString());
+			lblCtrlMonto.text = "Monto Marcado: " + global.formatearMoneda(control.toString());
 		}
 
 		private function enviar():void{
@@ -257,7 +257,7 @@
 									}
 									
 									mensaje = "Se han encontrado " + cont.toString() + " creditos(s) cuyo monto asciende a " 
-									+ global.formatoMoneda(monto.toString()) 
+									+ global.formatearMoneda(monto.toString()) 
 									+ ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
 										
 									formateaRegistro(ev.result.toString());
@@ -465,18 +465,18 @@
 			
 			if(_xmlInfo.Table[0].FAFORO == "P"){
 				lblAforo.text = porc + " %";
-				lblTotDisp.text = global.formatoMoneda((impDis + porcImp).toString());
-				lblSaldo.text = global.formatoDecimal(((impDis + porcImp) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());  
+				lblTotDisp.text = global.formatearMoneda((impDis + porcImp).toString());
+				lblSaldo.text = global.formatearDecimal(((impDis + porcImp) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());  
 			}
 			else if (_xmlInfo.Table[0].FAFORO == "E"){					
 				lblAforo.text = cant.toString();
-				lblTotDisp.text = global.formatoMoneda((cant + impDis).toString());
-				lblSaldo.text = global.formatoDecimal(((cant + impDis) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());
+				lblTotDisp.text = global.formatearMoneda((cant + impDis).toString());
+				lblSaldo.text = global.formatearDecimal(((cant + impDis) - Number(_xmlInfo.Table[0].MARCADO.toString())).toString());
 			}
 			
-			lblImpDisp.text = global.formatoMoneda(Number(impDis).toString());
-			lblImpMarc.text = global.formatoMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
-			txtImporte.text = global.formatoDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
+			lblImpDisp.text = global.formatearMoneda(Number(impDis).toString());
+			lblImpMarc.text = global.formatearMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
+			txtImporte.text = global.formatearDecimal(Number((impDis + porcImp) - _xmlInfo.Table[0].MARCADO).toString());
 
 			if(_xmlInfo.Table[0].FFIN.toString() != ""){
 				lblFecEnvio.text = "ÚLTIMO REPORTE ENVIADO EL " + _xmlInfo.Table[0].FFIN.toString(); 	
@@ -617,7 +617,7 @@
 				var monto:Number = _xmlRes.Table[cont].SALDO;
 				
 				if(tipoAccion == 1){
-					if(monto < Number(global.formatoNumerico(lblTotDisp.text)))
+					if(monto < Number(global.formatearNumerico(lblTotDisp.text)))
 						Alert.show("¿Desea completar el proceso realizando la Asignación Individual de Fondeo?",titulo,Alert.YES|Alert.NO,null,asignaFondeoAcred,global.iQuest);
 					else{
 						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -663,11 +663,11 @@
 		}
 		
 		private function validaMontoFormato():void{
-			txtImporte.text = global.formatoDecimal(Number(txtImporte.text).toString());
+			txtImporte.text = global.formatearDecimal(Number(txtImporte.text).toString());
 		}
 		
 		public function validaRegAcred():Boolean{
-			if(control > Number(global.formatoNumerico(lblTotDisp.text))){
+			if(control > Number(global.formatearNumerico(lblTotDisp.text))){
 				Alert.show("El importe marcado no puede ser mayor que el importe de la disposición.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
