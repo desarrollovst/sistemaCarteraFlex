@@ -26,4 +26,5 @@
     
     <wsdlPcr>http://vensumat.theworkpc.com/ws_paycash_vst/Service.asmx?wsdl</wsdlPcr>
     <wsdlCC>http://localhost:52845/service.asmx?wsdl</wsdlCC>
+    <wsdlEmail>http://localhost/ws_servicioMail/service.asmx?wsdl</wsdlEmail>
 </Configuration>

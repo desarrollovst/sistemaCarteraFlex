@@ -138,6 +138,7 @@
 			private var estatus:String;
 			private var tipoProdRel:String;
 			private var wsMS:WebService;
+			private var wsEmail:WebService;
 			private var wsReg:WebService;
 			private var wsPayCash:WebService;
 			public var bandMod:Boolean;	
@@ -758,6 +759,12 @@
 				wsMS.loadWSDL();
 			}	
 			
+			private function initConexionEmail():void{				
+				wsEmail = new WebService();			
+				wsEmail.wsdl = Application.application.wsStr.wsdlEmail.toString();
+				wsEmail.loadWSDL();
+			}
+			
 			private function initConexionReg():void{				
 				wsReg = new WebService();			
 				wsReg.wsdl = Application.application.wsStr.wsdlReg.toString();
@@ -1073,6 +1080,7 @@
 				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolic);
 				var res:String = event.result.toString();
+				
 				if (res.substr(0,1) == "1"){
 					var wsCat:WebService = new WebService;
 					var params:Array = new Array;
@@ -1088,7 +1096,7 @@
 						if(_xmlEv.elements().length() > 0){
 							var destino:String;
 							var asunto:String = _xmlEv.Table[0].ASUNTO;
-							var resultado:String = _xmlEv.Table[0].RESULTADO;
+							var resultado:String = "<br>" + _xmlEv.Table[0].RESULTADO;
 							var emailOri:String = _xmlEv.Table[0].EMAILORI;
 							var emailAse:String = _xmlEv.Table[0].EMAILASE;
 							//var emailCoord:String = _xmlEv.Table[0].EMAILCOORD;
@@ -1096,9 +1104,9 @@
 							var emailReg:String = _xmlEv.Table[0].EMAILREG;
 							//var emailDir:String = _xmlEv.Table[0].EMAILDIR;
 							var insDoc:String = _xmlEv.Table[0].INSDOC.toString() != ""? _xmlEv.Table[0].INSDOC: "SIN INCIDENCIAS";
-							var integ:String = _xmlEv.Table[0].INTEGRACION.toString() != ""? _xmlEv.Table[0].INTEGRACION + "\n": "";
+							var integ:String = _xmlEv.Table[0].INTEGRACION.toString() != ""? _xmlEv.Table[0].INTEGRACION + "<br>": "";
 							
-							resultado += "\n\nINCIDENCIAS DOCUMENTALES\n" + insDoc;
+							resultado += "<br><br>INCIDENCIAS DOCUMENTALES:<br>" + insDoc;
 							
 							destino = emailAse != ""? emailAse : "";
 							//destino += (emailCoord != ""? ((destino != ""? ",": "") + emailCoord) : "");
@@ -1109,15 +1117,32 @@
 							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 								var _xmlEvAc:XML = new XML(evt.result);
 								var reporte:String = "";
+								var tabla:String = "";
 								
 								var cont:int = _xmlEvAc.elements().length();
 								
 								if(cont > 0){
-									for(var i:int = 0; i < cont; i++)
-										reporte += _xmlEvAc.Table[i].REPACRED + "\n";
+									for(var i:int = 0; i < cont; i++){
+										if(_xmlEvAc.Table[i].REPACRED)
+											reporte += _xmlEvAc.Table[i].REPACRED + "<br>";
+									}
 								}
 								if(reporte == "")
 									reporte = "SIN INCIDENCIAS";
+									
+								if(cont > 0){
+									for(var i:int = 0; i < cont; i++){
+										if(_xmlEvAc.Table[i].NOMBRE){
+										tabla += "<tr>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].NOMBRE+"</td>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTSOLIC+"</td>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTAUTOR +"</td>" + 
+												"</tr>";
+										}
+									}
+								}
+								if(tabla == "")
+									tabla = "SIN INFORMACIÓN";
 									
 								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 									var _xmlEvExc:XML = new XML(evt.result);
@@ -1127,32 +1152,56 @@
 									du.closeWs(wsCat);
 									
 									var contExc:int = _xmlEvExc.elements().length();
+									var contenido:String = "";
 								
 									if(contExc > 0){
 										for(var j:int = 0; j < contExc; j++)
-											repExc += (repExc != ""? "\n": "") + _xmlEvExc.Table[j].ACRED + " " + _xmlEvExc.Table[j].NOMBRE + " " + _xmlEvExc.Table[j].DESCRIPCION + " " + _xmlEvExc.Table[j].OBSERVACION;
+											repExc += (repExc != ""? "<br>": "") + _xmlEvExc.Table[j].ACRED + " " + _xmlEvExc.Table[j].NOMBRE + " " + _xmlEvExc.Table[j].DESCRIPCION + " " + _xmlEvExc.Table[j].OBSERVACION;
 									}
 									
 									integ = integ + repExc;
 									if(integ == "")
 										integ = "SIN INCIDENCIAS";
 									
-									resultado += "\n\nINTEGRACIÓN\n" + integ;
-									resultado += "\n\nREPORTE DE CRÉDITO\n" + reporte;
+									//Se incorpora la cadena de enanos de grupo
+									resultado += "<br><br>INTEGRACIÓN:<br>" + integ;
+									resultado += "<br><br>REPORTE DE CRÉDITO:<br>" + reporte;
+									
+									contenido = "<tr>" + 
+													"<td style='color: #000000;  font-size: 18px; font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif; padding: 10px 20px 40px 20px; text-align: center;'>" + 
+														"<p style='text-align: left'><span>"+ resultado +"</span></p>" + 
+													"</td>" + 
+												"</tr>" + 
+												"<tr>" + 
+													"<td>" + 
+														"<table style='width:100%; border-collapse: collapse; font-size: 18px; font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif; text-align: center;'>" + 
+															"<tr>" + 
+																"<th style='border-style:solid;'>NOMBRE ACREDITADO</th>" + 
+																"<th style='border-style:solid;'>CANT SOLICITADA</th>" + 
+																"<th style='border-style:solid;'>CANT ENTREGADA</th>" + 
+															"</tr>" + 
+															tabla + 
+															
+														"</table>" + 
+													"</td>" + 
+												"</tr>";
 							
-									initConexionReg();
+									initConexionEmail();
 									du.sCursor();
 								
-									du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
+									du.ejecutaWsMethod(wsEmail,function(evt:ResultEvent):void {											
 										var resEnv:String = evt.result.toString();
 										
 										du.rCursor();
-										du.closeWs(wsReg);
+										du.closeWs(wsEmail);
 										
+										//PENDIENTE IMPLEMENTAR EVALUACION DE NIVEL DE RIESGO
+										//DE FORMA SINCRONA INVOCANDO EL METODO EVALUANIVELRIESGO()
 										global.desbloquear();
 										cerrar();
 									});
-									wsReg.setEnviaEmail.send(emailOri,destino,asunto,resultado);
+									//Envio de correo electronico correspondiente al resultado de la evaluacion de credito
+									wsEmail.setEnviaEmail.send(emailOri,destino,asunto,contenido);
 								});
 								//Metodo que obtiene el resultado de las excepciones de la evaluacion de credito
 								params[0] = grupo;
