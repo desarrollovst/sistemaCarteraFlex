@@ -46,22 +46,21 @@
 			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
 
-			private var _xmlDatos:XML =  new XML();
-			private var _xmlPais:XML =  new XML();
-			private var _xmlEntFed:XML =  new XML();
+			private var _xmlDatos:XML = new XML();
+			private var _xmlPais:XML = new XML();
+			private var _xmlEntFed:XML = new XML();
 			
 			public var paisObj:ArrayCollection = new ArrayCollection();
 			public var entFedObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
+			public var f:Date;
+			public var fecMin:Date;
+			public var fecMax:Date;
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			private var bandCURP:Boolean;
-			public var f:Date;
-			public var fecMin:Date;
-			public var fecMax:Date;
 			private var vResult:ValidationResultEvent;
 			
 			//Ejemplo de metodo sincrono
@@ -301,7 +300,9 @@
 						obtieneEntidad(info.cdgPaisNac);
 					}		
 					else{
-						initConexion();
+						var wsMS:WebService = new WebService;
+						
+						du.initWsMS(wsMS);
 						du.sCursor();
 				
 						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -321,12 +322,6 @@
 				});
 				//CONSULTA LOS PAISES DISPONIBLES
 				wsCat.getCatalogoGral.send(1);
-			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
 			}	
 			
 			private function modificaFecha():void{

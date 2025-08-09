@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="370" creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			
+			public var datos:DatosAcred = new DatosAcred();
+			
+			private var global:Globales;
+			private var wsMS:WebService;
+			private var du:Utils;
+			
+			public function enviarDatosAcred(formData:DatosAcred):void{
+				//var invalidArray:Array = Validator.validateAll([clabeV, cuentaV]);
+				//if(invalidArray.length == 0){	
+				if(valida()){
+					formData.banco = cboBanco.selectedItem.id;
+					formData.clabe = StringUtil.trim(txtClabe.text);
+					formData.cuenta = StringUtil.trim(txtCuenta.text);
+					formData.guardaBanco = true;
+				}
+				else
+					formData.guardaBanco = false;
+					
+				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosAcred):void{
+				var wsCat:WebService = new WebService();
+				
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlBanco = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlBanco = new XML(evt.result.toString());
+					
+					if(_xmlBanco.elements().length() > 0){
+						formateaBanco();
+						cboBanco.dataProvider = bancoObj;
+					}
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+					
+					if (info != null){
+						for(var i:int = 0; i < bancoObj.length; i++){
+							if (bancoObj[i].id == info.banco)
+								cboBanco.selectedIndex = i;
+						}
+						txtClabe.text = info.clabe;
+						txtCuenta.text = info.cuenta;
+					}	
+				});
+				//Obtiene informacion de los bancos de dispersion
+				wsCat.getCatalogoGral.send(70);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function modificaFecha():void{
+				vResult = valFec.validate(txtFecha.text);
+                if (vResult.type != ValidationResultEvent.VALID)
+                    txtFecha.text = "";
+			}
+			
+			private function valida():Boolean{
+				return true;
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:FormItem label="Banco:" id="banco" x="81.5" y="22" width="280">
+		<Data:CustomComboBox id="cboBanco" labelField="nombre" width="225"/>
+	</mx:FormItem>
+	<mx:FormItem label="Vigencia Formato:" id="vigencia" x="21" y="52" width="368.5">
+		<mx:Canvas id="cnvFecha" width="220">
+			<mx:DateField id="txtFecha" width="109" yearNavigationEnabled="true" focusOut="modificaFecha()" editable="true"/>
+			<mx:Label id="formatoFecha" text="(DD/MM/AAAA)" x="117" y="2"/>
+		</mx:Canvas>
+	</mx:FormItem>
+</mx:Canvas>

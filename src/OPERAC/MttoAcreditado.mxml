@@ -374,7 +374,9 @@
 			public function validaSituacionAcred():void{
 				if(tipoAccion == 2){
 					var band:Boolean;
-					initConexion();
+					var wsMS:WebService = new WebService;
+					
+					du.initWsMS(wsMS);
 					du.sCursor();
 						
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
@@ -414,6 +416,9 @@
 		<mx:Canvas label="Banco" width="100%" height="100%">
 			<Forms:FormBanco id="formBanco" x="19.5" width="455" y="10"/>
 		</mx:Canvas>
+		<!--<mx:Canvas label="Reporte CC" width="100%" height="100%">
+			<Forms:FormReporteCC id="formReporte" x="19.5" width="455" y="10"/>
+		</mx:Canvas>-->
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="462" y="478" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="414" y="478" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
@@ -421,8 +426,5 @@
 		<mx:Label x="31.5" y="7" text="Grupo:"/>
 		<mx:TextInput id="txtGrupo" x="77.5" y="6" width="199" editable="false"/>
 	</mx:Canvas>
-	<mx:Image x="430" y="10" width="57" height="57" scaleContent="true">
-		<mx:source>assets/images/user2.png</mx:source>
-	</mx:Image>
 	<mx:Button id="btnConsBuro" x="10" y="478" click="consultaRepCredito()" label="Consulta Rep Crédito" visible="false"/>
 </mx:TitleWindow>

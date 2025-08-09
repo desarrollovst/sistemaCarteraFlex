@@ -374,7 +374,9 @@
 			//registrado en una solicitud o prestamo vigente 
 			public function validaSituacionAcred():void{
 				if(tipoAccion == 2){
-					initConexion();
+					var wsMS:WebService = new WebService;
+					
+					du.initWsMS(wsMS);
 					du.sCursor();
 						
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											

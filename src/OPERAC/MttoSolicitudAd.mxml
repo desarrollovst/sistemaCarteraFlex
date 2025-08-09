@@ -1106,6 +1106,8 @@
 							var insDoc:String = _xmlEv.Table[0].INSDOC.toString() != ""? _xmlEv.Table[0].INSDOC: "SIN INCIDENCIAS";
 							var integ:String = _xmlEv.Table[0].INTEGRACION.toString() != ""? _xmlEv.Table[0].INTEGRACION + "<br>": "";
 							
+							resultado = resultado.replace(/-/g,"<br>");
+							
 							resultado += "<br><br>INCIDENCIAS DOCUMENTALES:<br>" + insDoc;
 							
 							destino = emailAse != ""? emailAse : "";
@@ -1123,8 +1125,8 @@
 								
 								if(cont > 0){
 									for(var i:int = 0; i < cont; i++){
-										if(_xmlEvAc.Table[i].REPACRED)
-											reporte += _xmlEvAc.Table[i].REPACRED + "<br>";
+										if(_xmlEvAc.Table[i].REPACRED && _xmlEvAc.Table[i].REPACRED.toString() != "")
+											reporte += _xmlEvAc.Table[i].CDGCL + " " + _xmlEvAc.Table[i].NOMCL + " " + _xmlEvAc.Table[i].REPACRED + "<br>";
 									}
 								}
 								if(reporte == "")
@@ -1134,7 +1136,7 @@
 									for(var i:int = 0; i < cont; i++){
 										if(_xmlEvAc.Table[i].NOMBRE){
 										tabla += "<tr>" + 
-													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].NOMBRE+"</td>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].NOMCL+"</td>" + 
 													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTSOLIC+"</td>" + 
 													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTAUTOR +"</td>" + 
 												"</tr>";
