@@ -36,7 +36,7 @@ package Data
 			xmlResult = Application.application.wsStr;
 			xmlL = xmlResult.child("wsdl");
 			xmlAdmin = xmlResult.child("wsdlAdmin");
-			xmlMS = xmlResult.child("wsdlReg");
+			xmlMS = xmlResult.child("wsdlServ");
 			xmlCat = xmlResult.child("wsdlCat");
 			xmlCatCap = xmlResult.child("wsdlCatCap");
 			xmlCC = xmlResult.child("wsdlCC");

@@ -31,7 +31,8 @@ package Data
  
  		public var urlServ:String;
  		public var urlServCap:String;
-		public var urlExp:String;
+		public var urlServUp:String;
+		public var urlServDocs:String;
 		public var urlExpTxt:String;
 		public var urlExpXls:String;
 		public var urlExpXlsJson:String;
@@ -41,12 +42,14 @@ package Data
 		public var urlIntr:String;
 		public var urlInf:String;
 		public var urlIncI:String;
+		public var urlDocs:String;
 		public var xmlResult:XML = new XML();
 				
 		public function Globales(){
 			var xmlServ:XMLList = new XMLList();
 			var xmlServCap:XMLList = new XMLList();
-			var xmlExp:XMLList = new XMLList();
+			var xmlServUp:XMLList = new XMLList();
+			var xmlServDocs:XMLList = new XMLList();
 			var xmlExpTxt:XMLList = new XMLList();
 			var xmlExpXls:XMLList = new XMLList();
 			var xmlExpXlsJson:XMLList = new XMLList();
@@ -56,11 +59,13 @@ package Data
 			var xmlIntr:XMLList = new XMLList();
 			var xmlInf:XMLList = new XMLList();
 			var xmlIncI:XMLList = new XMLList();
+			var xmlDocs:XMLList = new XMLList();
 			xmlResult = Application.application.wsStr;
 			
 			xmlServ = xmlResult.child("wsdlServ");
 			xmlServCap = xmlResult.child("wsdlServCap");
-			xmlExp = xmlResult.child("wsdlExp");
+			xmlServUp = xmlResult.child("wsdlServUp");
+			xmlServDocs = xmlResult.child("wsdlServDocs");
 			xmlExpTxt = xmlResult.child("wsdlExpTxt");
 			xmlExpXls = xmlResult.child("wsdlExpXls");
 			xmlExpXlsJson = xmlResult.child("wsdlExpXlsJson");
@@ -70,11 +75,13 @@ package Data
 			xmlIntr = xmlResult.child("urlIntranet");
 			xmlInf = xmlResult.child("wsdlInf");
 			xmlIncI = xmlResult.child("wsdlIncI");
+			xmlDocs = xmlResult.child("urlDocs");
 
 			this.idEmpresa = "1";
 			this.urlServ = xmlServ.toString();
 			this.urlServCap = xmlServCap.toString();
-			this.urlExp = xmlExp.toString();
+			this.urlServUp = xmlServUp.toString();
+			this.urlServDocs = xmlServDocs.toString();
 			this.urlExpTxt = xmlExpTxt.toString();
 			this.urlExpXls = xmlExpXls.toString();
 			this.urlExpXlsJson = xmlExpXlsJson.toString();
@@ -84,6 +91,7 @@ package Data
 			this.urlIntr = xmlIntr.toString();
 			this.urlInf = xmlInf.toString();
 			this.urlIncI = xmlIncI.toString();
+			this.urlDocs = xmlDocs.toString();
 		}
 		
 		public function bloquear():void{

@@ -2,6 +2,17 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="512" height="580" 
 	title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
 	creationPolicy="all">
+	<mx:states>
+		<mx:State name="edicion">
+			<mx:AddChild relativeTo="{tabNav}" position="lastChild">
+				<mx:Canvas label="Autorización" width="100%" height="100%">
+					<Forms:FormAutorizacionCC id="formAutorizacion" x="37" y="10"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{tabNav}" name="x" value="6"/>
+			<mx:SetProperty target="{tabNav}" name="y" value="50"/>
+		</mx:State>
+	</mx:states>
 	
 	<mx:Script>
 		<![CDATA[
@@ -41,7 +52,10 @@
 			public function cargaInfoProsp(prosp:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
+				
 				tipoAccion = 2;
+				currentState = "edicion";
+				
 				this.prosp = prosp;
 				permisos();
 
@@ -156,7 +170,9 @@
 			
 				formDPProsp.init(info,false);
 				formDPProsp.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
-				formDirProsp.init(info);formOficialProsp.init(info);
+				formDirProsp.init(info);
+				formOficialProsp.init(info);
+				formAutorizacion.init(info.codigo, "P");
 			}
 			
 			public function permisos():void{

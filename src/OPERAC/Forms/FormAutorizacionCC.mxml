@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="370" creationPolicy="all" xmlns:Data="Data.*">
+	
+	<mx:DateValidator id="valFec" property="text" inputFormat="dd/mm/yyyy" allowedFormatChars="/" 
+	formatError="Formato de Fecha Incorrecto"/>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;			
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlArchivo:XML = new XML();
+			
+			private var archivoObj:ArrayCollection = new ArrayCollection();
+			
+			private var archivo:FileReference;
+			
+			private var du:Utils;
+			private var global:Globales;
+			private var codigo:String;
+		 	private var tipo:String;
+			private var secMax:String;
+			private var secSig:String;
+			private var titulo:String;
+			private var vResult:ValidationResultEvent;
+			
+			private function __fileSelectionHandler(_e:Event):void{  
+	    		btnCargar.enabled = true;   
+	              
+	    		txtArchivo.text = archivo.name;             
+	  		}
+			
+			private function __uploadDataHandler(evt:DataEvent):void{
+	    		var myResult:XML = new XML(evt.data);
+	    		
+	    		if(myResult.status.toString() == "Success"){
+		    		var wsMS:WebService = new WebService;
+		    		
+		    		var archivo:String = txtArchivo.text;
+		    		var vigencia:String = txtFecha.text;
+		    		
+		    		du.initWsMS(wsMS);
+		    		du.sCursor();
+		    		
+		    		du.ejecutaWsMethod(wsMS,function(ev:ResultEvent):void {											
+						var res:String = ev.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						global.desbloquear();
+														
+						if(res.substr(0,1) == "1"){
+							txtArchivo.text = "";
+			    			txtFecha.text = "";
+			    			archivo = null;
+			    			btnCargar.enabled = false;
+			    			cargarListado();
+							
+							Alert.show("Carga de archivo completa", titulo, 4, null, null, global.iInfo);
+						}
+						else{
+							Alert.show(res,titulo,4,null,null,global.iAlert);
+						}
+					});
+					//Registro de informacion de archivo
+					wsMS.setRegistroAutorizacionCC.send(codigo, tipo, secSig, archivo, vigencia, global.obtenerUsuario());
+		    	}
+		    	else{
+		    		Alert.show("Error en el proceso de carga", titulo, 4, null, null, global.iAlert);
+		    		global.desbloquear();
+		    	}
+	    	}
+			
+			private function buscar():void{
+				var tipoArchivo:FileFilter = new FileFilter("Archivo PDF", "*.pdf"); 
+				var filtro:Array = [tipoArchivo];
+				archivo = new FileReference();
+				
+				archivo.addEventListener(Event.SELECT, __fileSelectionHandler); 
+				archivo.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, __uploadDataHandler);
+		        
+		        try{    
+		          	var success:Boolean = archivo.browse(filtro);   
+		        }  
+		        catch (error:Error){
+		        	Alert.show("No es posible abrir el cuadro de selección de archivos", titulo, 4, null, null, global.iAlert);             
+		        }
+			}
+			
+			private function cargar():void{
+				if(valida()){
+					var myRequest:URLRequest = new URLRequest(global.urlServUp);
+			    	var variables:URLVariables = new URLVariables();
+			    	var valor:String = (int(global.formatearNumerico(secMax)) + 1).toString();
+				
+					secSig = global.insertarCaracter(valor, "0", 3 - valor.length, 1); 
+			    	
+			    	variables.codigo = codigo;
+			    	variables.tipo = tipo;
+			    	variables.directorio = secSig;
+			    	myRequest.data = variables;
+			    	myRequest.method = URLRequestMethod.POST;
+			     
+			    	try{       
+			    		global.bloquear();
+			      		archivo.upload(myRequest);      
+			    	}  
+			    	catch (error:Error){         
+		      			Alert.show("Error de carga " + archivo.name, titulo, 4, null, null, global.iAlert);
+			    	}
+		  		}
+			}
+			
+			private function cargarListado():void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlArchivo = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlArchivo = new XML(evt.result.toString());
+					
+					if(_xmlArchivo.elements().length() > 0){
+						secMax = _xmlArchivo.Table[0].SECUENCIA;
+						
+						formatearArchivo();
+						dgArchivo.dataProvider = archivoObj;
+					}
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+				});
+				params[0] = codigo;
+				params[1] = tipo;
+				//Obtiene el listado de los archivos de autorizacion
+				wsCat.getListado.send(87, params);
+			}
+			
+			private function consultar():void{
+				var secuencia:String = dgArchivo.selectedItem.secuencia;
+				var archivo:String = dgArchivo.selectedItem.archivo;
+				var strTipo:String;
+				
+				if(tipo == "P")
+					strTipo = "prospecto";
+				else if(tipo == "A")
+					strTipo = "acreditado";
+				
+				var url:String = global.urlDocs + strTipo + "/" + codigo + "/" + secuencia + "/" + archivo;
+				navigateToURL(new URLRequest(url), "_blank");
+			}
+			
+			private function formatearArchivo():void{
+				var cont:int = _xmlArchivo.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.secuencia = _xmlArchivo.Table[i].SECUENCIA;
+					oItem.archivo = _xmlArchivo.Table[i].ARCHIVO;	
+					oItem.vigencia = _xmlArchivo.Table[i].VIGENCIA;
+					item.push(oItem);
+				}
+				
+				archivoObj = new ArrayCollection(item);
+			}
+			
+			public function init(codigo:String, tipo:String):void{
+				du = new Utils();
+				global = new Globales();
+				titulo = "Mantenimiento de Acreditado";
+				
+				if (codigo != null){
+					this.codigo = codigo;
+					this.tipo = tipo; 
+					cargarListado();
+				}
+			}
+			
+			private function limpiar():void{
+				txtArchivo.text = "";
+				txtFecha.text = "";
+				btnCargar.enabled = false;
+			}
+			
+			private function modificarFecha():void{
+				vResult = valFec.validate(txtFecha.text);
+                if (vResult.type != ValidationResultEvent.VALID)
+                    txtFecha.text = "";
+			}
+			
+			private function valida():Boolean{
+				if(txtArchivo.text == ""){
+					Alert.show("Debe seleccionar el archivo que se desea cargar.", titulo, 4, null, null, global.iAlert);
+					return false;
+				}
+				if(txtFecha.text == ""){
+					Alert.show("Debe capturar la fecha de vigencia del documento.", titulo, 4, null, null, global.iAlert);
+					return false;
+				}
+				return true;
+			}
+	]]>
+	</mx:Script>
+	<mx:Label id="lblArchivo" text="Archivo:" x="77" y="26"/>
+	<mx:Label id="lblVigencia" text="Vigencia Formato:" x="31" y="56"/>
+	<mx:DateField id="txtFecha" width="109" yearNavigationEnabled="true" focusOut="modificarFecha()" editable="true" x="131" y="55"/>
+	<mx:Label id="formatoFecha" text="(DD/MM/AAAA)" x="248" y="56"/>
+	<mx:TextInput id="txtArchivo" editable="false" enabled="true" width="185" x="131" y="25"/>
+	<mx:Button id="btnBuscar" label="Buscar" click="buscar()" x="324" y="22"/>
+	<mx:Button id="btnCargar" label="Cargar" enabled="false" click="cargar()" x="139.5" y="97"/>
+	<mx:Button id="btnLimpiar" label="Limpiar" click="limpiar()" x="212.5" y="97"/>
+	<mx:DataGrid id="dgArchivo" x="35" y="145" width="350" height="140" doubleClickEnabled="true" doubleClick="consultar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="ARCHIVO" dataField="archivo" width="250"/>
+			<mx:DataGridColumn headerText="VIGENCIA" dataField="vigencia" width="100"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnConsultar" label="Consultar" click="consultar()" x="170" y="303"/>
+</mx:Canvas>

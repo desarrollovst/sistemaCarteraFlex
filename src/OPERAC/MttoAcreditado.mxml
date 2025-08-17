@@ -2,9 +2,19 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="518" 
 	height="550" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*"
 	creationComplete="initApp()" creationPolicy="all">
+	<mx:states>
+		<mx:State name="edicion">
+			<mx:AddChild relativeTo="{tabNav}" position="lastChild">
+				<mx:Canvas label="Autorización" width="100%" height="100%">
+					<Forms:FormAutorizacionCC id="formAutorizacion" x="37" y="10"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
 	
 	<mx:Script>
 		<![CDATA[
+			import flash.net.navigateToURL;
 			import Data.EventAcred;
 			import Data.DatosAcred;
 			import Data.Globales;
@@ -23,8 +33,9 @@
 			
 			[Bindable]
 			private var info:DatosAcred;
+			
 			private var _xmlAcred:XML = new XML();
-			private var _xmlInegiEqu:XML = new XML();
+			private var _xmlArchivo:XML = new XML();
 			
 			public var wsMS:WebService;
 			public var tipoAccion:int;
@@ -44,7 +55,10 @@
 			public function cargaInfoAcred(cdgGrupo:String, nomGrupo:String, acred:String):void{
 				var wsCat:WebService = new WebService();
 				var Params:Array = new Array();
+				
 				tipoAccion = 2;
+				currentState = "edicion";
+				
 				this.acred = acred;
 				txtGrupo.text = cdgGrupo + " " + nomGrupo;
 				permisos();
@@ -216,6 +230,7 @@
 				formOtroAcred.init(info);
 				formPLDAcred.init(info);
 				formBanco.init(info);
+				formAutorizacion.init(info.codigo, "A");
 			}
 			
 			private function llenaRegistrosProsp(_xmlProsp:XML):void{
@@ -263,6 +278,7 @@
 				formOtroAcred.init(info);
 				formPLDAcred.init(info);
 				formBanco.init(info);
+				formAutorizacion.init(prosp, "P");
 			}
 			
 			public function permisos():void{
@@ -336,7 +352,9 @@
 						if(tipoAccion == 1){
 							var arr:Array = res.split("|");
 							var codigo:String = arr[1].toString();
-							Alert.show("Acreditado registrado exitosamente con el código - " + codigo,titulo,4,null,null,global.iInfo); 
+							Alert.show("Acreditado registrado exitosamente con el código - " + codigo,titulo,4,null,null,global.iInfo);
+							
+							trasladarDocumento(codigo);				
 						}
 						else
 							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -354,6 +372,52 @@
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 				}		
+			}
+			
+			private function trasladarDocumento(acred:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var secuencia:String;
+				var archivo:String;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {
+					_xmlArchivo = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+					
+					if(_xmlArchivo.elements().length() > 0){
+						secuencia = _xmlArchivo.Table[0].SECUENCIA;
+						archivo = _xmlArchivo.Table[0].ARCHIVO;
+						
+						var myRequest:URLRequest = new URLRequest(global.urlServDocs);
+				    	var variables:URLVariables = new URLVariables();
+				    	var loader:URLLoader = new URLLoader();
+				    	variables.codOri = prosp;
+				    	variables.codDes = acred;
+				    	variables.tipoOri = "P";
+				    	variables.tipoDes = "A";
+				    	variables.dirOri = secuencia;
+				    	variables.dirDes = "001";
+				    	variables.archivo = archivo;
+				    	myRequest.data = variables;
+				    	myRequest.method = URLRequestMethod.POST;
+				    	
+				    	try{       
+				      		loader.load(myRequest);
+				      	}  
+					    catch (error:Error){         
+				      		Alert.show("Error en el proceso " + archivo, titulo, 4, null, null, global.iAlert);
+					    }
+					}
+				});
+				params[0] = prosp;
+				params[1] = "P";
+				wsCat.getListado.send(87, params);
 			}
 			
 			public function validaDatosAcred(event:EventAcred):void{
@@ -416,9 +480,6 @@
 		<mx:Canvas label="Banco" width="100%" height="100%">
 			<Forms:FormBanco id="formBanco" x="19.5" width="455" y="10"/>
 		</mx:Canvas>
-		<!--<mx:Canvas label="Reporte CC" width="100%" height="100%">
-			<Forms:FormReporteCC id="formReporte" x="19.5" width="455" y="10"/>
-		</mx:Canvas>-->
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="462" y="478" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="414" y="478" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
