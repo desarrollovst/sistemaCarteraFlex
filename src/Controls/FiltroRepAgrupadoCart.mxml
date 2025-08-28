@@ -386,8 +386,8 @@
 			<mx:DataGridColumn headerText="REGIONAL" dataField="REGIONAL"/>
 			<mx:DataGridColumn headerText="COD_SUCURSAL" dataField="COD_SUCURSAL"/>
 			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL"/>
-			<mx:DataGridColumn headerText="COD_COORDINADOR" dataField="COD_COORD"/>
-			<mx:DataGridColumn headerText="COORDINADOR" dataField="COORDINADOR"/>
+			<!--<mx:DataGridColumn headerText="COD_COORDINADOR" dataField="COD_COORD"/>
+			<mx:DataGridColumn headerText="COORDINADOR" dataField="COORDINADOR"/>-->
 			<mx:DataGridColumn headerText="COD_ASESOR" dataField="COD_ASESOR"/>
 			<mx:DataGridColumn headerText="ASESOR" dataField="OF_CREDITO"/>
 			<mx:DataGridColumn headerText="CODIGO" dataField="COD_GRUPO"/>
@@ -411,6 +411,8 @@
 			<mx:DataGridColumn headerText="INTEGRANTES" dataField="NUM_INTEG"/>
 			<mx:DataGridColumn headerText="TIPO CARTERA" dataField="TIPO_CART"/>
 			<mx:DataGridColumn headerText="DIAS_ATRASO" dataField="DIAS_ATRASO"/>
+			<mx:DataGridColumn headerText="DIA PAGO" dataField="DIA_PAGO"/>
+			<mx:DataGridColumn headerText="FORMA ENTREGA" dataField="FORMA_ENTREGA"/>
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:DataGrid id="dgRepBandas" dataProvider="{_xmlRep.dtBandas}" x="310" y="22" width="548" visible="false" horizontalScrollPolicy="on">
@@ -419,8 +421,8 @@
 			<mx:DataGridColumn headerText="REGIONAL" dataField="REGIONAL"/>
 			<mx:DataGridColumn headerText="COD_SUCURSAL" dataField="COD_SUCURSAL"/>
 			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL"/>
-			<mx:DataGridColumn headerText="COD_COORDINADOR" dataField="COD_COORD"/>
-			<mx:DataGridColumn headerText="COORDINADOR" dataField="COORDINADOR"/>
+			<!--<mx:DataGridColumn headerText="COD_COORDINADOR" dataField="COD_COORD"/>
+			<mx:DataGridColumn headerText="COORDINADOR" dataField="COORDINADOR"/>-->
 			<mx:DataGridColumn headerText="COD_ASESOR" dataField="COD_ASESOR"/>
 			<mx:DataGridColumn headerText="ASESOR" dataField="OF_CREDITO"/>
 			<mx:DataGridColumn headerText="COD_GRUPO" dataField="COD_GRUPO"/>

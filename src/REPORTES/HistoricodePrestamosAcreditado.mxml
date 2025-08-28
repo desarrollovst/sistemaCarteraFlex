@@ -93,7 +93,7 @@
 	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="763.05" visible="true" height="187" horizontalScrollPolicy="on">
 		<mx:columns>
 			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
-			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="200"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="220"/>
 			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="100"/>
 			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
@@ -104,7 +104,13 @@
 			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="180"/>		
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
 			<mx:DataGridColumn headerText="DIAS ATRASO" dataField="DIASATRASO" width="100"/>
-			<mx:DataGridColumn headerText="AUTORIZO" dataField="NOMAUT" width="180"/>		
+			<mx:DataGridColumn headerText="TELEFONO" dataField="TELEFONO" width="90"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="90"/>
+			<mx:DataGridColumn headerText="CLABE" dataField="CLABE" width="120"/>
+			<mx:DataGridColumn headerText="PUESTO" dataField="PUESTO" width="120"/>
+			<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD" width="110"/>
+			<mx:DataGridColumn headerText="FORMA ENTREGA" dataField="FORMA_ENTREGA" width="220"/>
+			<mx:DataGridColumn headerText="AUTORIZO" dataField="NOMAUT" width="220"/>		
 			<mx:DataGridColumn headerText="COMENTARIOS" dataField="COMENTARIOS" width="250"/>					
 		</mx:columns>
 	</mx:DataGrid>

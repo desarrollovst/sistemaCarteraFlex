@@ -337,6 +337,8 @@
 				<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NOMINA_ASESOR"/>
 				<mx:DataGridColumn headerText="REFERENCIA INS PAGO" dataField="REFINSPAG"/>
 				<mx:DataGridColumn headerText="REFERENCIA INS GARANTIA" dataField="REFINSGAR"/>
+				<mx:DataGridColumn headerText="DIA PAGO" dataField="DIA_PAGO"/>
+				<mx:DataGridColumn headerText="FORMA ENTREGA" dataField="FORMA_ENTREGA"/>
 			</mx:columns>
 		</mx:DataGrid>
 	<mx:Label x="18.05" y="477" text="Tipo de Producto" id="lblproducto"/>
