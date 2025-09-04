@@ -19,9 +19,8 @@
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
-			private var _xmlRep:XML =  new XML();
+			private var _xmlRep:XML = new XML();
 			
-			public var wsMS:WebService;
 			public var titulo:String;
 			public var rep:String;
 			private var du:Utils;
@@ -33,17 +32,19 @@
 			}
 		
 			private function generar(event:Event):void{	
-				if(comFiltroGrupoCiclo.valida() == true){
+				if(comFiltroGrupoCiclo.valida()){
+					var wsRep:WebService = new WebService;
 					var grupo:String = comFiltroGrupoCiclo.txtGrupo.text;
 					var ciclo:String = comFiltroGrupoCiclo.txtCiclo.text;
-					initConexion();
+					
+					du.initWsRep(wsRep);
 					du.sCursor();
 							
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsRep);
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -61,7 +62,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepHistPrnAcred.send(grupo, ciclo);	
+					wsRep.getRepHistPrnAcred.send(grupo, ciclo);	
 				}
 			}			
 						
@@ -75,12 +76,6 @@
 				comFiltroGrupoCiclo.addEventListener("limpiar",limpiar);
 			}		
 			
-			private function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			private function limpiar(event:Event):void{
 				dgReporte.dataProvider = null;
 				lblTotal.text = "";
