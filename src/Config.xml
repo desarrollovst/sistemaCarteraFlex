@@ -7,7 +7,7 @@
 	
 	<wsdlServ>http://localhost/ws_servicios/registro.asmx?wsdl</wsdlServ>
 	<wsdlReg>http://localhost/ws_servicios/service.asmx?wsdl</wsdlReg>
-	<wsdlAdCred>http://localhost/ws_servicios_vst/servicioAdmonCred.asmx?wsdl</wsdlAdCred>
+	<wsdlAdCred>http://vensumat.cloud/ws_servicios_vst/servicioAdmonCred.asmx?wsdl</wsdlAdCred>
 	<wsdlCat>http://localhost/ws_catalogos/service.asmx?wsdl</wsdlCat>
 	<wsdlInc>http://localhost/ws_incentivos/ServicioIncentivos.asmx?wsdl</wsdlInc>
 	

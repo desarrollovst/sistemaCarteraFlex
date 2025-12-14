@@ -51,7 +51,6 @@
 			
 			private var vResult:ValidationResultEvent;
 			
-			public var wsMS:WebService;	
 			public var tipoAccion:int;
 			private var global:Globales;
 			private var du:Utils;
@@ -175,12 +174,6 @@
 					wsCat.getCatalogoGral.send(14);
 				});
 				wsCat.getCatalogoGral.send(16);	
-			}	
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
 			}
 				
 		]]>

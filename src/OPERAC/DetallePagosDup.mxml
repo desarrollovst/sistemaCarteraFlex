@@ -17,7 +17,7 @@
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 			
-			public var _xmlInfo:XML =  new XML();
+			public var _xmlInfo:XML = new XML();
 			
 			public var titulo:String;
 			private var du:Utils;
@@ -38,6 +38,8 @@
 			 	
 			 	du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {		
 			 		_xmlInfo = new XML(event.result);
+					
+					dgInfo.dataProvider = _xmlInfo.Table;
 					
 					du.closeWs(wsCat);
 					du.rCursor();
@@ -62,7 +64,7 @@
 		]]>
 	</mx:Script>
 	<mx:Button id="btnCerrar" x="396" y="178" icon="@Embed(source='assets/images/iconCancel.png')" width="40" click="cerrar()"/>
-	<mx:DataGrid id="dgInfo" x="16" y="10" width="418" height="160" dataProvider="{_xmlInfo.Table}" sortableColumns="false">
+	<mx:DataGrid id="dgInfo" x="16" y="10" width="418" height="160" sortableColumns="false">
 		<mx:columns>
 			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE"/>

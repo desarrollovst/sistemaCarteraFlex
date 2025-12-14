@@ -160,7 +160,7 @@
 			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 			wsMS.setAccionSucBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.nombre, info.gerente, info.ejecutivo, info.calle, 
-										   info.colonia, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.telefono, info.labora);	 
+										   info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.telefono, info.labora);	 
 		}
 	
 		public function init(tipo:int, codIB:String, instBanc:String, codSB:String = null):void{
@@ -473,8 +473,8 @@
 		<mx:TextInput id="txtTelefono" x="146.5" y="202" width="120" maxChars="10" restrict="0-9"/>
 	</mx:Canvas>
 	<mx:Label id="lblDom" x="21" y="211" text="Domicilio"/>
-	<mx:Button id="btnAceptar" x="158" y="552" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="240" y="552" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="185.25" y="550" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="238.45" y="550" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
 	<mx:Label id="lblLabora" x="136" y="480" text="Labora Sábados"/>
 	<mx:Canvas id="cnvLabora" x="136" y="499" width="190" height="40" styleName="canvasMod">
 		<mx:RadioButtonGroup id="labora"/>
