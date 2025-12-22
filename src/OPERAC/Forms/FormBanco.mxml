@@ -33,9 +33,8 @@
 			
 			public var datos:DatosAcred = new DatosAcred();
 			
-			private var global:Globales;
-			private var wsMS:WebService;
 			private var du:Utils;
+			private var global:Globales;
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				//var invalidArray:Array = Validator.validateAll([clabeV, cuentaV]);
@@ -44,6 +43,7 @@
 					formData.banco = cboBanco.selectedItem.id;
 					formData.clabe = StringUtil.trim(txtClabe.text);
 					formData.cuenta = StringUtil.trim(txtCuenta.text);
+					formData.clabeValidada = chkClabeValidada.selected ? "S": "N";
 					formData.guardaBanco = true;
 				}
 				else
@@ -103,17 +103,12 @@
 						}
 						txtClabe.text = info.clabe;
 						txtCuenta.text = info.cuenta;
+						chkClabeValidada.selected = info.clabeValidada == "S" ? true: false;
 					}	
 				});
 				//Obtiene informacion de los bancos de dispersion
 				wsCat.getCatalogoGral.send(70);
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			private function valida():Boolean{
 				if(cboBanco.selectedIndex > 0 && (txtClabe.text == "")){
@@ -142,5 +137,8 @@
 	</mx:FormItem>
 	<mx:FormItem label="Cuenta:" id="cuenta" x="77.5" y="82" width="180">
 		<mx:TextInput id="txtCuenta" restrict="0-9" maxChars="15" width="120"/>
+	</mx:FormItem>
+	<mx:FormItem label="Validada:" id="clabeValidada" x="70.5" y="112" width="180">
+		<mx:CheckBox id="chkClabeValidada"/>
 	</mx:FormItem>
 </mx:Canvas>

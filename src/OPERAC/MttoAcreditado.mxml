@@ -137,7 +137,7 @@
 										     info.cdgMunNeg, info.cdgLocNeg, info.coloniaNeg, info.calleNeg, 
 										     info.codPostalNeg, info.entreCallesNeg, info.telefonoNeg, info.tipoVivienda,
 										     info.noExt, info.noInt, info.noExtNeg, info.noIntNeg*/ info.banco,
-										     info.clabe, info.cuenta, this.prosp);
+										     info.clabe, info.cuenta, info.clabeValidada, this.prosp);
 			}
 			
 			public function initApp():void{
@@ -223,6 +223,7 @@
 				info.banco = _xmlAcred.Table[0].CDGBANCO;
 				info.clabe = _xmlAcred.Table[0].CLABE;
 				info.cuenta = _xmlAcred.Table[0].NOCTABANCO;
+				info.clabeValidada = _xmlAcred.Table[0].CLABEVALIDADA;
 			
 				formDPAcred.init(info);
 				formDirAcred.init(info);

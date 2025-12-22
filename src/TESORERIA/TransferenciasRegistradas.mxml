@@ -128,6 +128,7 @@
 				<mx:DataGridColumn headerText="CICLO ACREDITADO" dataField="CICLO_ACRED" width="120"/>
 				<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="90"/>
 				<mx:DataGridColumn headerText="CLABE" dataField="CLABE" width="130"/>
+				<mx:DataGridColumn headerText="VALIDADA" dataField="VALIDADA" width="90"/>
 				<!--<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="100"/>-->
 				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="90"/>
 				<!--<mx:DataGridColumn headerText="ASESOR" dataField="CDGOCPE" width="70"/>

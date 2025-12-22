@@ -85,6 +85,7 @@ package Data
 		public var banco:String;
 		public var clabe:String;
 		public var cuenta:String;
+		public var clabeValidada:String;
 		public var guardaBanco:Boolean;	
 		
 		public function DatosAcred()
