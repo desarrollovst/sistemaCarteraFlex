@@ -37,7 +37,6 @@
 			
 			public var datos:DatosSolic = new DatosSolic();
 			
-			private var wsMS:WebService;		//variable utilizada para las llamadas asincronas de WS	
 			private var du:Utils;
 			private var codigo:String;
 			private var ciclo:String;
@@ -128,7 +127,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlTipoProd.Table[i].CODIGO.toString();	
 					oItem.nombre = _xmlTipoProd.Table[i].NOMBRE;
@@ -151,7 +150,7 @@
 				oItem.fecVal = DateField.dateToString(global.obtenerFechaSistema(),"DD/MM/YYYY");
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){		
+				for(var i:int = 0; i < cont; i++){		
 					oItem = new Object();
 					oItem.id = _xmlProdCred.Table[i].CODIGO;	
 					oItem.nombre = _xmlProdCred.Table[i].NOMBRE;
@@ -165,8 +164,8 @@
 				//tipo indica el tipo de Tipo de Producto que puede visualizarse, si el dato esta ausente significa que puede consultar cualquier tipo
 				var wsCat:WebService = new WebService();
 				var params:Array = new Array();
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				this.codigo = codigo;
 				this.ciclo = ciclo;
 				this.clns = clns;

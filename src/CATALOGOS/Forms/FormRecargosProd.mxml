@@ -22,10 +22,9 @@
 			
 			public var datos:DatosProd = new DatosProd();
 			
-			public var wsMS:WebService;	
 			public var tipoAccion:int;
-			private var global:Globales;
 			private var du:Utils;
+			private var global:Globales;
 			
 			public function cambiaContTasa():void{
 				tasaFija.enabled = false;
@@ -71,8 +70,9 @@
 			}
 			
 			public function init(info:DatosProd, tipoAccion:int):void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				
 				this.tipoAccion = tipoAccion;
 				
 				if (info != null){
@@ -103,14 +103,7 @@
 					else if(info.fijaRec == "N")
 						chkRec.selected = false;																			
 				}		
-			}	
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
-				
+			}
 		]]>
 	</mx:Script>
 	<mx:Canvas id="cnvTipoTasa" x="16.5" y="28" width="210" height="67" styleName="canvasMod">

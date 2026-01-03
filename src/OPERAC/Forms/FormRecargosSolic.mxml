@@ -23,7 +23,6 @@
 			
 			public var datos:DatosSolic = new DatosSolic();
 			
-			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS
 			public var tipoAccion:int;
 			public var estatus:String;
 			private var du:Utils;
@@ -113,8 +112,8 @@
 			
 			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
 				this.tipoAccion = tipoAccion;
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 					
 				if (info != null){
 					datos = info;
@@ -129,12 +128,6 @@
 					metodoAplica.selectedValue = info.metodoAplic;
 				}	
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function validaMonto(event:Event):void{
 				numVal.source = TextInput(event.currentTarget);

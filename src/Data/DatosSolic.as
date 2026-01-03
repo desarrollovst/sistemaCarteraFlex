@@ -26,6 +26,7 @@ package Data
 		public var autPol:Number;
 		public var proyecto:String;
 		public var diasAtraso:String;
+		public var porcGL:Number;
 		public var guardaDatos:Boolean;	
 		
 		//varibles utilizadas para el mantenimiento de prestamos 

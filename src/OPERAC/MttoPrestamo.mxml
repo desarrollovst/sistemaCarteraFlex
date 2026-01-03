@@ -262,7 +262,6 @@
 			
 			//funcion que realiza la carga de datos 
 			public function formateaAcred(ciclo:String, fecSolic:String):void{
-				var i:int;
 				var cont:int = _xmlAcred.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -270,7 +269,7 @@
 				Arr.removeAll();
 				acredObj.removeAll();
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.codigo = _xmlAcred.Table[i].CDGCL;
 					oItem.nombre = _xmlAcred.Table[i].NOMBREC;
@@ -349,15 +348,16 @@
 						tipoAccion = 3
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
 					wsMS.setAccionPrn.send(tipoAccion, global.obtenerUsuario(), grupo, txtCiclo.text, "G", info.entregado, 
-											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred);
+										   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, 
+										   situacionAcred);
 				}
 			}
 			
 			public function init():void{
 				openEffect.duration = 1000;
 				openEffect.play([this]);
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Mantenimiento de Préstamo";
 			}
 			
@@ -391,9 +391,11 @@
 				info.devolucion = _xmlPrn.Table[0].CANTDEVOL;
 				info.devoluciones = _xmlPrn.Table[0].SUMADEV;
 				info.moneda = _xmlPrn.Table[0].CDGMO;
+				info.porcGL = _xmlPrn.Table[0].PORCGL;
 				
 				//Datos del calendario de la solicitud
 				info.periodicidad = _xmlPrn.Table[0].PERIODICIDAD;
+				info.reunion = _xmlPrn.Table[0].NOACUERDO;
 				info.diaJunta = _xmlPrn.Table[0].DIAJUNTA;
 				info.diasGracia = _xmlPrn.Table[0].DESFASEPAGO;
  				info.duracion = _xmlPrn.Table[0].PLAZO; 

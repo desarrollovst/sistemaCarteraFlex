@@ -1,28 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="752" height="180" creationPolicy="all">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="780" height="180" creationPolicy="all">
 	<mx:states>
 		<mx:State name="evaluacion">
-			<mx:SetProperty target="{diasMora}" name="x" value="32.35"/>
-			<mx:SetProperty target="{canvas1}" name="width" value="200"/>
-			<mx:SetProperty target="{canvas1}" name="x" value="508"/>
-			<mx:SetProperty target="{label1}" name="x" value="508"/>
-			<mx:SetProperty target="{canvas2}" name="width" value="456"/>
-			<mx:SetProperty target="{solicitado}" name="width" value="135"/>
-			<mx:SetProperty target="{solicitado}" name="height" value="24"/>
-			<mx:SetProperty target="{txtSolicitado}" name="width" value="65"/>
-			<mx:SetProperty target="{txtSolicitado}" name="height" value="24"/>
-			<mx:SetProperty target="{autorizado}" name="width" value="140"/>
-			<mx:SetProperty target="{autorizado}" name="height" value="24"/>
-			<mx:SetProperty target="{txtAutorizado}" name="width" value="65"/>
-			<mx:SetProperty target="{txtAutorizado}" name="height" value="24"/>
+			<mx:SetProperty target="{diasMora}" name="x" value="19"/>
+			<mx:SetProperty target="{canvas1}" name="width" value="160"/>
+			<mx:SetProperty target="{canvas1}" name="x" value="578"/>
+			<mx:SetProperty target="{lblCicloAnt}" name="x" value="578"/>
+			<mx:SetProperty target="{canvas2}" name="width" value="526"/>
 			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
-				<mx:FormItem id="autpolitica" label="Aut. Politica" x="151" y="7" width="145" height="24" labelWidth="65">
-					<mx:TextInput id="txtAutPol" width="65" height="24"/>
+				<mx:FormItem id="autpolitica" label="Aut. Politica" x="175" y="7" width="160" labelWidth="65">
+					<mx:TextInput id="txtAutPol" width="80"/>
 				</mx:FormItem>
 			</mx:AddChild>
-			<mx:SetProperty target="{diasMora}" name="width" value="137.33334"/>
-			<mx:SetProperty target="{diasMora}" name="height" value="24"/>
-			<mx:SetProperty target="{autorizado}" name="x" value="303"/>
+			<mx:SetProperty target="{autorizado}" name="x" value="351"/>
+			<mx:SetProperty target="{solicitado}" name="x" value="9"/>
 		</mx:State>
 	</mx:states>
 	<mx:Metadata>
@@ -37,6 +28,9 @@
 	
 	<mx:NumberValidator id="monedaV" source="{cboMoneda}" property="selectedIndex"
 	 minValue="1" triggerEvent="" lowerThanMinError="Moneda Requerida"/>
+	 
+	<mx:Validator id="porcGLV" source="{txtPorcGL}" property="text"
+	invalid="{txtPorcGL.setFocus()}" triggerEvent="" requiredFieldError="Garantía Requerida"/>
 	 
 	<mx:Script>
 		<![CDATA[
@@ -62,7 +56,6 @@
 			
 			public var datos:DatosSolic = new DatosSolic();
 			
-			public var wsMS:WebService;
 			public var tipoAccion:int;
 			public var estatus:String;
 			private var du:Utils;
@@ -93,7 +86,7 @@
 			}
 			
 			public function enviarDatosSolic(formData:DatosSolic):void{
-				var invalidArray:Array = Validator.validateAll([fecSolicV, fecEntV, monedaV]);
+				var invalidArray:Array = Validator.validateAll([fecSolicV, fecEntV, monedaV, porcGLV]);
 				
 				if(invalidArray.length == 0 && situacion.selection != null){	
 					formData.fecSolic = dtfSolicitud.text;
@@ -102,6 +95,7 @@
 					formData.moneda = cboMoneda.selectedItem.id;
 					formData.solicitado = Number(global.formatearNumerico(txtSolicitado.text));
 					formData.autorizado = Number(txtAutorizado.text != "" ? global.formatearNumerico(txtAutorizado.text) : txtAutorizado.text);
+					formData.porcGL = Number(global.formatearNumerico(txtPorcGL.text));
 					formData.guardaDatos = true;
 				}
 				else{
@@ -135,8 +129,9 @@
 				var params:Array = new Array();
 				this.tipoAccion = tipoAccion;
 				this.estatus = estatus;
-				global = new Globales();
+				
 				du = new Utils();
+				global = new Globales();
 						
 				var fec:Date;
 				var fecEnt:Date; 
@@ -180,6 +175,7 @@
 							txtAutorizado.text = global.formatearDecimal(info.autorizado.toString());
 							situacion.selectedValue = info.situacion;
 							txtDiasAtraso.text = info.diasAtraso;
+							txtPorcGL.text = global.formatearDecimal(info.porcGL.toString());
 												
 							cont = monedaObj.length;						
 							for(var j:int = 0; j < cont; j++){
@@ -201,12 +197,6 @@
 				});
 				wsCat.getCatalogoGral.send(13, params);
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function validaEntrega():void{
 				var fecAct:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
@@ -257,23 +247,26 @@
 		<mx:RadioButton id="rdbSolicitado" x="49" y="0" label="Solicitado" groupName="situacion" value="S" width="78"/>
 		<mx:RadioButton id="rdbAutorizado" x="49" y="44" label="Autorizado" groupName="situacion" value="A"/>	
 	</mx:Canvas>
-	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
-		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"/>
+	<mx:Canvas id="cnvMoneda" x="508" y="29" width="230" height="71" styleName="canvasMod">
+		<mx:ComboBox id="cboMoneda" x="68" y="10" labelField="nombre" width="150"/>
+		<mx:Label id="lblMoneda" x="14" y="13" text="Moneda:"/>
+		<mx:Label id="lblPorcGL" x="11" y="39" text="Garantía:"/>
+		<mx:TextInput id="txtPorcGL" width="40" x="68" y="38"/>
+		<mx:Label id="lblPorc" x="116" y="39" text="%"/>
 	</mx:Canvas>
-	<mx:Canvas x="44" y="125" width="362" height="40" styleName="canvasMod" enabled="false" id="canvas2">
-		<mx:FormItem id="solicitado" label="Solicitado:" x="10" y="7" width="160">
-			<mx:TextInput id="txtSolicitado" width="90"/>
+	<mx:Canvas x="44" y="125" width="370" height="40" styleName="canvasMod" enabled="false" id="canvas2">
+		<mx:FormItem id="solicitado" label="Solicitado:" x="10" y="7" width="150">
+			<mx:TextInput id="txtSolicitado" width="80"/>
 		</mx:FormItem>
-		<mx:FormItem id="autorizado" label="Autorizado:" x="183" y="7" width="167">
-			<mx:TextInput id="txtAutorizado" width="90"/>
+		<mx:FormItem id="autorizado" label="Autorizado:" x="183" y="7" width="160">
+			<mx:TextInput id="txtAutorizado" width="80"/>
 		</mx:FormItem>
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>
-	<mx:Label x="435" y="106" text="Ciclo Anterior" id="label1"/>
-	<mx:Label x="508" y="10" text="Moneda"/>
+	<mx:Label id="lblCicloAnt" x="435" y="106" text="Ciclo Anterior"/>
 	<mx:Label x="44" y="106" text="Montos"/>
-	<mx:Canvas x="435" y="125" width="273" height="40" styleName="canvasMod" id="canvas1">
-		<mx:FormItem id="diasMora" label="Días Atraso:" x="56" y="7" width="160">
+	<mx:Canvas x="435" y="125" width="303" height="40" styleName="canvasMod" id="canvas1">
+		<mx:FormItem id="diasMora" label="Días Atraso:" x="90.5" y="7" width="120">
 			<mx:TextInput id="txtDiasAtraso" width="40" editable="false"/>
 		</mx:FormItem>
 	</mx:Canvas>

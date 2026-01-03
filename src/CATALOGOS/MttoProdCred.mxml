@@ -148,8 +148,8 @@
 			//Datos de los Recargos del producto
 			info.tasaFija = _xmlProd.Table[0].TASARECFIJ;
 			info.factorTasa = _xmlProd.Table[0].TASARECTAS;
-			info.aplican = _xmlProd.Table[0].METRECA;
-			info.metodoAplic = _xmlProd.Table[0].MODOAPLIRECA;
+			info.aplican = _xmlProd.Table[0].MODOAPLIRECA;
+			info.metodoAplic = _xmlProd.Table[0].METRECA;
 			info.fijaMAP = _xmlProd.Table[0].FIJAMAP;
 			info.fijaRec = _xmlProd.Table[0].FIJAREC;
 			

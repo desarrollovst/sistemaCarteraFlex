@@ -705,31 +705,31 @@
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolic);
-						wsMS.setAccionSolic.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
-													 info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
-													 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
-													 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
-													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, info.pagoMicroSeg, 
-													 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, tipoSeguro, emplGenH, emplGenM, 
-													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
-													 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
-													 info.cicloRel, aval);
+						wsMS.setAccionSolic.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, 
+												 info.porcGL, info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+												 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+												 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+												 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
+												 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, info.pagoMicroSeg, 
+												 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, tipoSeguro, emplGenH, emplGenM, 
+												 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
+												 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
+												 info.cicloRel, aval);
 					}
 					//Servicio invocado en la etapa de evaluacion de la solicitud
 					else if(currentState == 'evaluacion'){
 						if(validaSituacion() == true){
 							wsMS.addEventListener(ResultEvent.RESULT, setAccionEvSolic);
-							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
-													   		info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
-													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
-													   		info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
-													   		info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, global.obtenerUsuario(), 
-													   		info.formaEntre, info.nombreCheq, info.pagoMicroSeg, info.multPerio, suc, promotor, info.tasaFija,
-													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
-													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
-													  	 	info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
-													  	 	reporte);
+							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, info.porcGL,
+													   info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+													   info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+													   info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+													   info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, global.obtenerUsuario(), 
+													   info.formaEntre, info.nombreCheq, info.pagoMicroSeg, info.multPerio, suc, promotor, info.tasaFija,
+													   acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
+													   info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
+													   info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
+													   reporte);
 						}
 						else{
 							wsMS.disconnect();
