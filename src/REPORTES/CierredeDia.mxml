@@ -23,7 +23,6 @@
 
 			private var _xmlRep:XML =  new XML();
 			
-			public var wsMS:WebService;
 			public var titulo:String;
 			public var fecha:String;
 			private var du:Utils;
@@ -36,15 +35,17 @@
 						
 			public function generar(event:Event):void{
 				if(comFiltroFecha.valida() == true){
+					var wsRep:WebService = new WebService;
 					fecha = comFiltroFecha.dtfFecha.text;
-					initConexion();
+					
+					du.initWsRep(wsRep);
 					du.sCursor();
 							
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsRep);
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -62,7 +63,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepCierreDia.send(fecha);	
+					wsRep.getRepCierreDia.send(fecha);	
 				}
 			}			
 						
@@ -74,12 +75,6 @@
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);
 			}		
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function limpiar(event:Event):void{
 				dgReporte.dataProvider = null;

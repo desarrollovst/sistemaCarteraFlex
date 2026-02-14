@@ -210,11 +210,13 @@
 			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
 			<!--<mx:DataGridColumn headerText="CDGCB" dataField="CDGCB"/>-->
 			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA"/>
-			<mx:DataGridColumn headerText="USUARIO" dataField="USUARIO"/>
-			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR"/>
-			<mx:DataGridColumn headerText="NOMBRE ASESOR" width="180" dataField="NOMASESOR"/>
-			<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NUMNOMINA"/>
+			<!--<mx:DataGridColumn headerText="USUARIO" dataField="USUARIO"/>-->
+			<!--<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR"/>-->
+			<mx:DataGridColumn headerText="ASESOR" width="180" dataField="NOMASESOR"/>
+			<!--<mx:DataGridColumn headerText="NUMERO NOMINA" dataField="NUMNOMINA"/>-->
 			<mx:DataGridColumn headerText="SUCURSAL" dataField="SUCURSAL"/>
+			<mx:DataGridColumn headerText="REF PAYCASH" dataField="REF_PAYCASH"/>
+			<mx:DataGridColumn headerText="REF STP" dataField="REF_STP"/>
 			<!--<mx:DataGridColumn headerText="SECUENCIA" dataField="SECUENCIA"/>-->
 		</Data:columns>
 	</Data:RowColorDataGrid>

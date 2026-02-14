@@ -122,7 +122,7 @@
 				<mx:DataGridColumn headerText="FECHA" dataField="FINICIO" width="70"/>
 				<mx:DataGridColumn headerText="TIPO TRANSFERENCIA" dataField="TIPO" width="140"/>
 				<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="110"/>-->
-				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="160"/>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO" width="160"/>
 				<!--<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100"/>-->
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="CLIENTE" width="200"/>
 				<mx:DataGridColumn headerText="CICLO ACREDITADO" dataField="CICLO_ACRED" width="120"/>
