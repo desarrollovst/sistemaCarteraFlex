@@ -295,7 +295,8 @@
 						tipoAccion = 3
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
 					wsMS.setAccionPrn.send(tipoAccion, global.obtenerUsuario(), grupo, txtCiclo.text, "G", info.entregado, 
-											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred);
+										   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, 
+										   situacionAcred);
 				}
 			}
 			
@@ -569,7 +570,7 @@
 			<Forms:FormProductoSolic id="formProdSolic" x="140" y="39" width="540" height="130"/>
 		</mx:Canvas>
 		<mx:Canvas id="datosGrals" label="Datos Generales" width="100%" height="100%">	
-			<Forms:FormDatosGralPrn id="formDatosGralPrn" height="195" width="800" x="10" y="10"/>
+			<Forms:FormDatosGralPrnAd id="formDatosGralPrn" height="195" width="800" x="10" y="10"/>
 		</mx:Canvas>
 		<mx:Canvas id="cvnCalendario" label="Calendario" width="100%" height="100%">	
 			<Forms:FormCalendarioSolic id="formCalendarioSolic" x="75" height="205"/>

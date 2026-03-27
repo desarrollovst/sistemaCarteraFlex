@@ -1169,7 +1169,7 @@
 				var res:String = event.result.toString();
 				
 				if (res.substr(0,1) == "1"){
-					/*var wsCat:WebService = new WebService;
+					var wsCat:WebService = new WebService;
 					var params:Array = new Array;
 					
 					du.initWsCat(wsCat);
@@ -1298,9 +1298,9 @@
 											
 											//PENDIENTE IMPLEMENTAR EVALUACION DE NIVEL DE RIESGO
 											//DE FORMA SINCRONA INVOCANDO EL METODO EVALUANIVELRIESGO()
-											global.desbloquear();*/
+											global.desbloquear();
 											cerrar();
-										/*});
+										});
 										//Envio de correo electronico correspondiente al resultado de la evaluacion de credito
 										wsEmail.setEnviaEmail.send(emailOri,destino,asunto,contenido);
 									});
@@ -1333,7 +1333,7 @@
 					params[1] = this.ciclo;
 					params[2] = this.clns;
 					params[3] = this.solicitud;
-					wsCat.getInfoGeneral.send(8, params);*/
+					wsCat.getInfoGeneral.send(8, params);
 				}
 				else if(res.substr(0,1) == "2")
 					cerrar();	
@@ -1347,18 +1347,18 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSolic);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
-					/*initConexionPayCash();
+					initConexionPayCash();
 					du.sCursor();
 						
 					du.ejecutaWsMethod(wsPayCash,function(evt:ResultEvent):void {
 						var res:String = evt.result.toString();			
 						
 						du.rCursor();
-						du.closeWs(wsPayCash);*/
+						du.closeWs(wsPayCash);
 						global.desbloquear();
 						cerrar();
-					/*});
-					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, global.obtenerUsuario());*/
+					});
+					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, global.obtenerUsuario());
 				}	
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
