@@ -1408,13 +1408,13 @@
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="790" y="526" width="40" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
 	<mx:Button id="btnAceptar" x="742" y="526" width="40" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
-	<mx:Canvas x="87" y="10" width="670" height="37" styleName="canvasMod">
-		<mx:Label x="13" y="8" text="Grupo Solidario:"/>
-		<mx:TextInput id="txtGrupo" x="99" y="5" width="199" editable="false"/>
+	<mx:Canvas x="87" y="10" width="670" height="34" styleName="canvasMod">
+		<mx:Label x="13" y="6" text="Grupo:"/>
+		<mx:TextInput id="txtGrupo" x="59" y="5" width="239" editable="false"/>
 		<mx:Label x="311" y="8" text="Ciclo:"/>
-		<mx:Label x="422" y="8" text="Sucursal:"/>
+		<mx:Label x="418" y="6" text="Sucursal:"/>
 		<mx:TextInput x="477" y="5" width="181" id="txtSucursal" editable="false"/>
-		<mx:TextInput x="345" y="5" width="45" id="txtCiclo" editable="false"/>
+		<mx:TextInput x="350" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>
 	<mx:Canvas x="10" y="311" width="824" height="209" styleName="canvasMod" id="canvas1">
 		<mx:DataGrid id="dgAcred" x="19.5" y="10" width="783" height="187" 

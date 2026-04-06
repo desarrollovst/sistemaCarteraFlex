@@ -394,7 +394,7 @@
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="200"/>
 					<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO" width="200"/>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>
+					<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>-->
 					<mx:DataGridColumn headerText="ASESOR DE CREDITO" dataField="PROMOTOR" width="200"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>

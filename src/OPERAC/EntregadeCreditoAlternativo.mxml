@@ -1,45 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
 	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
-	xmlns:Administracion="Administracion.*" height="100%">
+	height="100%">
 	
 	<!--Componente de mantenimiento de Prestamos-->
 	<mx:Script>
 		<![CDATA[
 			import Data.Permisos;
-			import Data.Utils;
-			import mx.controls.DataGrid;
 			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
 			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
 			import mx.formatters.SwitchSymbolFormatter;
 			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
-			import mx.events.DataGridEvent;				
-			import mx.events.CloseEvent;	
-			import mx.events.ListEvent;	
-			import mx.core.Application;
-			import mx.containers.TitleWindow;				
-			import mx.managers.PopUpManager;
-			import mx.controls.Alert;
-			import mx.collections.ArrayCollection;
-			import mx.effects.easing.Elastic;
-			import mx.events.ValidationResultEvent;            
+			import mx.rpc.events.FaultEvent;            
 
 			public var _xmlGrupos:XML = new XML();
 			public var _xmlPrn:XML = new XML();
 			public var _xmlAcred:XML = new XML();
 			public var dPermisos:XML = new XML();	
 			
-			public var wsMS:WebService = new WebService();	
 			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
+			public var clns:String;
 			public var accionPrn:int;
 			public var indPrn:int;
 			public var vScroll:Number;
@@ -59,8 +58,10 @@
 			}
 			
 			public function activarContModPrn(band:Boolean):void{
-				if(edicion == true)	
+				if(edicion == true){
 					btnEditarPrn.enabled = band;
+					btnImpEdoCta.enabled = band;
+				}
 			}
 			
 			public function actualizarAcred(event:Event):void{
@@ -72,8 +73,8 @@
 			}
 			
 			public function buscarGrupo():void{
-				var wsCat:WebService = new WebService;
-				var params:Array = new Array;
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
 				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
 					btnBuscar.setFocus();
 					dgGrupos.dataProvider = null;
@@ -97,7 +98,7 @@
 					params[0] = global.obtenerUsuario();
 					params[1] = txtCodGrupo.text;
 					params[2] = txtGrupo.text;
-					params[3] = ""; //variable que almacena el Tipo de Producto
+					params[3] = "AL";
 					wsCat.getListado.send(12, params);
 				}	
 			}
@@ -111,7 +112,8 @@
 				dgAcred.dataProvider = null;
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if (tipo == 2)
 					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
@@ -138,7 +140,8 @@
 				
 				du.initWsCat(wsCat);
 			 	du.sCursor();
-			 	if(tipo == 1)
+			 	
+			 	if(tipo == 2)
 			 		global.bloquear();
 			 		
 			 	du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {	
@@ -154,7 +157,7 @@
 							dgPrn.validateNow();
 							dgPrn.verticalScrollPosition = vScroll;
 							dgPrn.selectedIndex = indPrn;
-							this.accionPrn = 0;
+							accionPrn = 0;
 						}
 					}
 					seleccionaPrn();		
@@ -163,27 +166,46 @@
 				wsCat.getListado.send(9, params);
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+				result = global.formatearMoneda(item[column.dataField]);
+				return result;					
+			}
+			
+			private function imprimirEdoCta():void{
+				var url:String;
+				var codGrupo:String;
+				var infoCiclo:String;
+				var infoClns:String;
+				var usuario:String;
+				var tipoDoc:String;
+				
+				codGrupo = "&grupo=" + dgGrupos.selectedItem.CODIGO;
+				infoCiclo = "&ciclo=" + dgPrn.selectedItem.CICLO;
+				infoClns = "&clns=" + this.clns;
+				usuario = "&usuario=" + global.obtenerUsuario();
+				tipoDoc = "&tipoDoc=PDF";	
+				url = global.urlPdf + "&id=27" + codGrupo + infoCiclo + usuario + tipoDoc;
+				navigateToURL(new URLRequest(url), "_blank");
+			}
+
 			private function iniVar():void{
 				this.indPrn = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
 				du = new Utils();
 				global = new Globales();
 				permiso = new Permisos();
+				clns = "G";
 				alta = false;
 				borrado = false;
 				consulta = false;
 				edicion = false;
 				permisos();
+				txtCodGrupo.setFocus();
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}			
 			
 			public function mostrarFormPrn(tipo:int):void{
 				//tipo = 2 MODIFICA REGISTRO
@@ -194,7 +216,7 @@
 				var munic:String;
 				var ciclo:String;
 				if(edicion == true){
-					var comMttoPrn:MttoPrestamoSol = new MttoPrestamoSol();
+					var comMttoPrn:MttoPrestamoAlt = new MttoPrestamoAlt();
 					grupo = dgGrupos.selectedItem.CODIGO;
 					nomGrupo = dgGrupos.selectedItem.GRUPO;
 					coord = dgGrupos.selectedItem.CDGCO;
@@ -204,7 +226,7 @@
 						case 2: 
 							if (dgPrn.selectedIndex >= 0){
 								accionPrn = tipo;
-								comMttoPrn = MttoPrestamoSol(PopUpManager.createPopUp(this,MttoPrestamoSol,true));  
+								comMttoPrn = MttoPrestamoAlt(PopUpManager.createPopUp(this,MttoPrestamoAlt,true));  
 								comMttoPrn.addEventListener(Event.REMOVED_FROM_STAGE, actualizarPrn);
 								PopUpManager.centerPopUp(comMttoPrn);
 								iniVar();
@@ -227,7 +249,7 @@
 				var Params:Array;
 				var cont:int;
 			
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -239,13 +261,8 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (permiso.permisosEvSolic(global.obtenerArrayPerfil())){
-									borrado = true;
-									alta = true;
-									edicion = true;
-								}
 								break;	
-							/*case "B":
+							case "B":
 								borrado = true;
 								break;
 							case "I":
@@ -253,7 +270,7 @@
 								break;
 							case "E":
 								edicion = true;
-								break;*/
+								break;
 						}
 					}
 					du.rCursor();
@@ -280,6 +297,7 @@
 				activarContAcred(false);
 				if (dgGrupos.selectedIndex >= 0){
 					activarContPrn(true);
+					activarContModPrn(false);
 				}
 				else{
 					activarContPrn(false);
@@ -302,27 +320,27 @@
 	</mx:Script>
 	<mx:Canvas width="800" height="650" backgroundColor="#FFFFFF" backgroundAlpha="1.0"> 
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<Data:RowColorDataGrid id="dgGrupos" x="10" y="10" width="741.5" height="124" sortableColumns="false" 
+			<Data:RowColorDataGrid id="dgGrupos" x="10" y="10" width="741.5" height="124" sortableColumns="false"
 				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaGrupo()" 
-				doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(1)"> 
+				doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="200"/>
 					<mx:DataGridColumn headerText="SUCURSAL" dataField="NOMCO" width="200"/>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>
-					<mx:DataGridColumn headerText="OFICIAL DE CREDITO" dataField="PROMOTOR" width="200"/>
+					<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>-->
+					<mx:DataGridColumn headerText="ASESOR DE CREDITO" dataField="PROMOTOR" width="200"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Label x="18" y="10" text="GRUPO SOLIDARIO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18" y="10" text="GRUPO ALTERNATIVO" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="656.75" y="39" width="61" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/images/iconBusq.png')" click="buscarGrupo()" toolTip="Buscar Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas x="98.25" y="39" width="550.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodGrupo" x="10" y="7" text="CODIGO:" width="53"/>
-			<mx:Label id="lblGrupo" x="137" y="7" text="GRUPO:" width="52.5"/>
-			<mx:TextInput id="txtGrupo" x="187" y="5" width="351.5" enter="buscarGrupo()" maxChars="50"/>
+			<mx:Label id="lblCodGrupo" x="12" y="7" text="Código:"/>
+			<mx:Label id="lblGrupo" x="140" y="7" text="Grupo:"/>
 			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtGrupo" x="187" y="5" width="351.5" enter="buscarGrupo()" maxChars="50"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle0" x="18.5" y="289" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgPrn" x="10" y="10" width="741.5" height="124" sortableColumns="false"
@@ -330,24 +348,19 @@
 			  	doubleClickEnabled="true" itemDoubleClick="mostrarFormPrn(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="35"/>
-					<mx:DataGridColumn headerText="CANT. AUTORIZADA" dataField="CANTAUTOR" width="100"/>
-					<mx:DataGridColumn headerText="CANT. ENTREGADA" dataField="CANTENTRE" width="100"/>
+					<mx:DataGridColumn headerText="CANT. AUTORIZADA" dataField="CANTAUTOR" width="100" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="CANT. ENTREGADA" dataField="CANTENTRE" width="100" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="DEVOLUCIONES" dataField="CANTDEVOL" width="80"/>
 					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="80"/>
-					<mx:DataGridColumn headerText="INICIO CICLO" dataField="INICIO" width="70"/>
-					<mx:DataGridColumn headerText="CONCILIADO" dataField="CONCILIADO" width="80"/>
+					<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="70"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Canvas x="621" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
-			<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
-			<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
-		</mx:Canvas>
 		<mx:Label x="18.5" y="260" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Label x="18.5" y="465" text="PRÉSTAMO AL ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="671" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcredPrn(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+		<mx:Canvas x="722" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaAcredPrn(2)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="124" sortableColumns="false"
@@ -355,14 +368,16 @@
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="90"/>
-					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="90"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="90" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="90" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACIONC" width="65"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Image x="725" y="19" width="57" height="57" source="assets/images/users2.png"/>
-		<mx:Image x="739" y="238" width="43" height="43" source="assets/images/notepad.png"/>
-		<mx:Image x="739" y="443" width="43" height="43" source="assets/images/user2.png"/>
+		<mx:Canvas x="627" y="244" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/images/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
+			<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/images/folder.png')" click="buscarListaPrn(2)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
+			<mx:Button id="btnImpEdoCta" x="106" y="3" icon="@Embed(source='assets/images/print.png')" enabled="false" click="imprimirEdoCta()" toolTip="Emitir Estado de Cuenta" width="40"/>
+		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

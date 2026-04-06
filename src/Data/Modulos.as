@@ -33,8 +33,7 @@ package Data
 		//Modulos
 		public var frm_1:AdministraciondeUsuarios;
 		public var frm_2_1:PerfilesdeUsuario;	
-		public var frm_9:AcreditadosdeGrupo;	
-		public var frm_10:SolicituddeCreditoSolidario;	
+		public var frm_9:AcreditadosdeGrupo;
 		public var frm_11:formPdf;
 		public var frm_12:EvaluaciondeCreditoComunal;
 		public var frm_14:EntregadeCreditoComunal;
@@ -138,9 +137,6 @@ package Data
 		public var frm_136:ModificaciondeTasadeInteres;
 		public var frm_137:Indicadores;
 		public var frm_138:CarteraVencida;
-		public var frm_139:SolicituddeCreditoOportuno;
-		public var frm_140:EvaluaciondeCreditoOportuno;
-		public var frm_141:EntregadeCreditoOportuno;
 	 	public var frm_142:DevoluciondeExcedente;
 	 	public var frm_143:RegistrodeDevoluciondeExcedente;
 	 	public var frm_144:ReimpresiondeCheques;
@@ -169,8 +165,6 @@ package Data
 	 	public var frm_168:SituacionCarteraHistorico;
 	 	public var frm_169:Referencias;
 	 	public var frm_170:SolicituddeCreditoComunal;
-	 	public var frm_171:EvaluaciondeCreditoSolidario;
-	 	public var frm_172:EntregadeCreditoSolidario;
 	 	public var frm_173:RegistrodeAclaracionesdeIncentivos;
 	 	public var frm_174:CargadeEstadosdeCuenta;
 	 	
@@ -384,6 +378,10 @@ package Data
 		
 		public var frm_350:PolizadeSegurosFecha;
 		public var frm_351:PolizadeDevengoFecha;
+		
+		public var frm_352:SolicituddeCreditoAlternativo;
+		public var frm_353:EvaluaciondeCreditoAlternativo;
+		public var frm_354:EntregadeCreditoAlternativo;
 
 		public function Modulos()
 		{

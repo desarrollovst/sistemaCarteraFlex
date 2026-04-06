@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" xmlns:Data="Data.*"
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
 	layout="absolute" width="844" height="600" title="Edición" showCloseButton="true" close="cerrar()" 
 	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*">
 	<mx:states>
@@ -7,51 +7,50 @@
 			<mx:RemoveChild target="{dgAcred}"/>
 			<mx:RemoveChild target="{btnGuardarHor}"/>
 			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
-				<Data:RowColorDataGrid id="dgAcredEv" x="10" y="10" width="802" height="187" draggableColumns="false" 
-		    	editable="true" sortableColumns="false" horizontalScrollPolicy="on" itemEditBegin="desactivaEdicion(event)">
-					<Data:columns>
-						<mx:DataGridColumn headerText="CODIGO" editable="false" headerWordWrap="true" dataField="codigo" width="60"/>
-						<mx:DataGridColumn headerText="ACREDITADO" editable="false" headerWordWrap="true" dataField="nombre" width="180"/>
-						<mx:DataGridColumn headerText="SOLICITUD" editable="false" headerWordWrap="true" dataField="solicitud" width="75"/>
-						<mx:DataGridColumn headerText="MONTO SOLICITADO" headerWordWrap="true" dataField="cantSolic" width="80" editable="false"/>	
-						<mx:DataGridColumn headerText="AUTORIZADO POLITICA" headerWordWrap="true" dataField="autorPolit" width="85" editable="false"/>
-						<mx:DataGridColumn headerText="SOLICITADO" headerWordWrap="true" textAlign="center" rendererIsEditor="true" dataField="solicitado" width="80" editorDataField="selected" editable="false">
-							<mx:itemRenderer>
-								<mx:Component>
-				  					<mx:CheckBox change="outerDocument.selSolicitadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
-				  				</mx:Component>
-							</mx:itemRenderer>
-						</mx:DataGridColumn>
-						<mx:DataGridColumn headerText="AUTORIZADO" headerWordWrap="true" textAlign="center" rendererIsEditor="true" dataField="autorizado" width="85" editorDataField="selected" editable="false">
-							<mx:itemRenderer>
-								<mx:Component>
-				  					<mx:CheckBox change="outerDocument.selAutorizadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
-				  				</mx:Component>
-							</mx:itemRenderer>
-						</mx:DataGridColumn>
-						<mx:DataGridColumn headerText="RECHAZADO" headerWordWrap="true" textAlign="center" rendererIsEditor="true" dataField="rechazado" width="80" editorDataField="selected" editable="false">
-							<mx:itemRenderer>
-								<mx:Component>
-				  					<mx:CheckBox change="outerDocument.selRechazadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
-				  				</mx:Component>
-							</mx:itemRenderer>
-						</mx:DataGridColumn>
-						<mx:DataGridColumn headerText="MONTO AUTORIZADO" headerWordWrap="true" editable="true" dataField="cantAutor" width="85">
-							<mx:itemEditor>
-								<mx:Component>
-				  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMontoAutorizado()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
-				  				</mx:Component>
-							</mx:itemEditor>
-						</mx:DataGridColumn>
-						<mx:DataGridColumn headerText="REP" headerWordWrap="true" editable="true" width="30">
-							<mx:itemRenderer>
-								<mx:Component>
-				  					<mx:Button click="outerDocument.muestraReporte()" width="10" label="..."/> 
-				  				</mx:Component>
-							</mx:itemRenderer>
-						</mx:DataGridColumn>
-					</Data:columns>
-				</Data:RowColorDataGrid>
+				<mx:DataGrid id="dgAcredEv" x="10" y="10" width="802" height="187" 
+		    	editable="true" sortableColumns="false" itemEditBegin="desactivaEdicion(event)">
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" editable="false" headerWordWrap="true" dataField="codigo" width="45"/>
+					<mx:DataGridColumn headerText="ACREDITADO" editable="false" headerWordWrap="true" dataField="nombre" width="140"/>
+					<!--<mx:DataGridColumn headerText="SOLICITUD" editable="false" headerWordWrap="true" dataField="solicitud" width="55"/>-->
+					<mx:DataGridColumn headerText="MONTO SOLICITADO" headerWordWrap="true" dataField="cantSolic" width="65" editable="false"/>	
+					<mx:DataGridColumn headerText="SOLICITADO" textAlign="center" headerWordWrap="true" rendererIsEditor="true" dataField="solicitado" width="60" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selSolicitadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="AUTORIZADO" headerWordWrap="true" rendererIsEditor="true" textAlign="center" dataField="autorizado" width="65" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selAutorizadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="RECHAZADO" headerWordWrap="true" textAlign="center" rendererIsEditor="true" dataField="rechazado" width="65" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selRechazadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" headerWordWrap="true" editable="true" dataField="cantAutor" width="65">
+						<mx:itemEditor>
+							<mx:Component>
+			  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMontoAutorizado()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+			  				</mx:Component>
+						</mx:itemEditor>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="REP" headerWordWrap="true" editable="true" width="30">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:Button click="outerDocument.muestraReporte()" width="10" label="..."/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+		</mx:DataGrid>
 			</mx:AddChild>
 			<mx:AddChild position="lastChild">
 				<mx:Button id="btnGuardar" x="10" y="529" label="Guardar" width="80" click="modificaSolic()"/>
@@ -66,14 +65,11 @@
 					<Forms:FormAnalisis id="formAnalisis" height="211" y="0" x="11"/>	
 				</mx:Canvas>
 			</mx:AddChild>
-			<mx:AddChild position="lastChild">
-				<mx:Button id="btnAnalizar" click="analizaReporte()" x="107" y="529" label="Analizar CC" visible="false"/>
-			</mx:AddChild>
 		</mx:State>
 	</mx:states>
 	<mx:Script>
 		<![CDATA[
-			import Data.Permisos;
+			import OPERAC.Forms.FormCalendarioSolicSol;
 			import Data.EventSolic;
 			import Data.DatosSolic;
 			import Data.Globales;
@@ -100,17 +96,17 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.utils.ObjectUtil;
 			
+			[Bindable]	
+			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
 			[Bindable]
-			private var info:DatosSolic;
+			public var info:DatosSolic;
 			private var _xmlSolic:XML =  new XML();
 			private var _xmlAcred:XML =  new XML();
 			private var _xmlCiclo:XML =  new XML();
-			private var _xmlControl:XML =  new XML();
+			private var _xmlControl:XML =  new XML();	
 			private var _xmlPres:XML =  new XML();
-			[Bindable]	
-			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
 			
-			public var comMttoDatosSolic:MttoDatosSolic;
+			public var comAvalAcred:AvalAcred;
 			
 			//arreglos para almacenar la informacion individual de los acreditados
 			public var acred:Array;
@@ -121,6 +117,7 @@
 			public var reporte:Array;
 			public var causaBaja:Array;
 			public var proyInv:Array;
+			public var tipoSeguro:Array;
 			public var emplGenH:Array;
 			public var emplGenM:Array;
 			public var emplSostH:Array;
@@ -138,9 +135,10 @@
 			
 			private var du:Utils;
 			private var global:Globales;
-			private var permiso:Permisos;
-			private var tipoProd:String;
+			private var estatus:String;
+			private var tipoProdRel:String;
 			private var wsMS:WebService;
+			private var wsEmail:WebService;
 			private var wsReg:WebService;
 			private var wsPayCash:WebService;
 			public var bandMod:Boolean;	
@@ -155,15 +153,75 @@
 			//public var montoMax:Number;
 			public var promotor:String;
 			public var titulo:String;
-			public var openEffect:Effect = new Fade();
+			public var openEffect:Fade = new Fade();
+			
+			public var formCalendarioSol:FormCalendarioSolicSol = new FormCalendarioSolicSol();
+			
+			private function actualizaCredRelac(event:Event):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var tipoProd:String;
+				var cdgclnsRel:String;
+				var cicloRel:String;
+				var clnsRel:String;
+				var comRelac:FormRelacionadoSolic = event.currentTarget as FormRelacionadoSolic;
+				tipoProd = comRelac.obtieneTipoProd();
+				cdgclnsRel = comRelac.obtieneCodigo();
+				cicloRel = comRelac.obtieneCiclo();
+				clnsRel = "G";
+				
+				this.tipoProdRel = tipoProd;	
+				
+				formRelacSolic.removeEventListener("validarCredRel",actualizaCredRelac);
+				
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if(res == "1"){
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							var _xmlHor:XML = new XML(evt.result);
+							
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							var horario:String = _xmlHor.Table[0].HORARIO;
+							formCalendarioSolic.actualizaReunion(_xmlHor.Table[0].NOACUERDO);
+							formCalendarioSolic.actualizaHora(horario.substr(0,2), horario.substr(3,2));
+						});
+						params[0] = cdgclnsRel;
+						params[1] = clnsRel;
+						params[2] = cicloRel;
+						wsCat.getInfoGeneral.send(3, params);
+						
+					}
+					else if(res == "0"){
+						Alert.show("Crédito Relacionado incorrecto. Verifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						formRelacSolic.limpia();
+					}
+					formRelacSolic.addEventListener("validarCredRel",actualizaCredRelac);
+				});
+				wsMS.getValidaCredRel.send(grupo, "G", tipoProd, cdgclnsRel, clnsRel, cicloRel);
+			}
 			
 			public function actualizaDatos(event:Event):void{
+				var comAvalAcred:AvalAcred = event.currentTarget as AvalAcred;
+				Arr[indAcred].aval = comAvalAcred.obtieneAcred();
+				Arr[indAcred].nomAval = comAvalAcred.obtieneNomAcred(); 
 				dgAcred.dataProvider = Arr;
 			}
 			
 			public function actualizaFecEntre(event:CalendarLayoutChangeEvent):void{
 				var fecSel:Date = DateField(event.currentTarget).selectedDate;
-				formCalendarioSolicSolidario.actualizaDiaJunta(fecSel.getDay().toString());
+				formCalendarioSolic.actualizaDiaJunta(fecSel.getDay().toString());
 			}
 			
 			public function actualizaFecSolic(event:CalendarLayoutChangeEvent):void{
@@ -202,8 +260,8 @@
 				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
 				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
 				var wsCat:WebService = new WebService();
-				var params:Array = new Array();				
-
+				var params:Array = new Array();
+				
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
@@ -218,153 +276,25 @@
 						//montoMax = Number(_xmlControl.Table[0].MONTOMAX);
 						if(currentState == null){
 							formDatosGralSolic.activaControles(_xmlControl);
-							formCalendarioSolicSolidario.activaControles(_xmlControl);
+							if(tipoProdRel == "01")
+								formCalendarioSolic.activaControles(_xmlControl);
 							formTasasSolic.activaControles(_xmlControl);
 							formRecargosSolic.activaControles(_xmlControl);
 							formEntregaSolic.activaControles(_xmlControl);						
 							if(tipo == 1){
 								formDatosGralSolic.cargaParamsProd(_xmlControl);
-								formCalendarioSolicSolidario.cargaParamsProd(_xmlControl);
+								if(tipoProdRel == "01")
+									formCalendarioSolic.cargaParamsProd(_xmlControl);
 								formTasasSolic.cargaParamsProd(_xmlControl);	
 								formRecargosSolic.cargaParamsProd(_xmlControl);
 								formEntregaSolic.cargaParamsProd(_xmlControl);
 							}
 						}
 					}
-					wsCat = null;
 				});
 				params[0] = tipoProd;
 				params[1] = prodCred;
 				wsCat.getInfoRegistro.send(1, params);
-			}
-			
-			//FUNCION ANALIZAR REPORTE			
-			private function analizaReporte():void{
-				//Analizar grupo en circulo de credito
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var codAcreds:Array = new Array();
-				var cantSoli:Number = 0;
-				var j:int = 0;
-				var estatusCC:String = "";
-				//Ciclo para filtrar los codigos de los clientes con monto Autorizado > 0
-				for(var i:int = 0; i < acred.length; i++){
-					cantSoli = Number(acred[i].cantSolic);//SOLICITADO
-					estatusCC = acred[i].estatusCC;
-					if( cantSoli > 0 && estatusCC != "S"){
-						codAcreds[j] = acred[i].codigo.toString();			 
-						j+=1;
-					}					
-				}
-				
-				initConexion();
-				du.sCursor();
-
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
-				 	var resEnv:String = evt.result.toString();
-					du.closeWs(wsMS);
-					du.rCursor();
-					var cods: Array = resEnv.split("|");
-					 
-					for(var i:int = 0; i < cods.length -1; i++){
-						var cod:Array = cods[i].split("-");
-						var c:String = cod[0];
-						var e:String = cod[1];
-						
-						for(var j:int = 0; j < acred.length; j++){
-							if(acred[j].codigo.toString() == c){
-								acred[j].estatusCC = e;
-							}	 
-					 	}
-					}		
-					dgAcredEv.rowColorFunction = seleccionaColor;
- 					validaReporteCred();
-				});
-				wsMS.setAccionAnalizaReporte.send(codAcreds,global.obtenerUsuario());
-			}
-			
-			
-			//FUNCION VALIDA REPORTE DE CREDITO			
-			private function validaReporteCred():void{
-				//Analizar grupo an validaciones propuestas por el usuario	
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var codAcreds:Array = new Array();
-				var j:int = 0;
-				var estatusCC:String = "";
-				var noConsul:Boolean = false;
-				//Ciclo para filtrar los codigos de los clientes con monto Autorizado > 0
-				for(var i:int = 0; i < acred.length; i++){
-				 	estatusCC = acred[i].estatusCC;
-					if( estatusCC != "S")
-						noConsul = true;
-					codAcreds[j] = acred[i].codigo.toString();			 
-				    j+=1;				
-				} 
-				
-				if (noConsul == false){
-					initConexion();
-					du.sCursor();
-	
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {
-						var resEnv:String = evt.result.toString();
-						du.closeWs(wsMS);
-						du.rCursor();
-						var cods: Array = resEnv.split("|");
-						 
-						for(var i:int = 0; i < cods.length -1; i++){
-							var cod:Array = cods[i].split("-");
-							var c:String = cod[0];
-							var e:String = cod[1];
-							
-							for(var j:int = 0; j < acred.length; j++){	 
-								if(acred[i].codigo.toString() == c){
-									  acred[i].codigo.toString();			 
-									  acred[i].estatusRC = e;// 0|1|2|3
-								}
-						 	}
-						} 	
-						dgAcredEv.rowColorFunction = selecColorRepCred;
-	 					Alert.show("El proceso de analisis de crédito ha terminado exitosamente."
-	 					,titulo,4,null,null,global.iInfo);
-					});
-					wsMS.getValiRepCredGpal.send(codAcreds,"CC");
-				
-				} else {
-					Alert.show("No se ha ejecutado el proceso de analisis de crédito," + 
-							" debido a que existen clientes sin consulta vigente"
-	 						,titulo,4,null,null,global.iAlert);
-				}
-			}
-			
-			public function selecColorRepCred(datagrid:DataGrid, rowIndex:int, color:uint):uint{
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var rColor:uint;
-				var estatus:String = acred[rowIndex].estatusRC;
-				if (estatus == '0') {
-					rColor = 0x00bfff;// AZUL: ERROR durante ejecucion;					
-				}
-				if (estatus == '1') {
-					rColor = color; // SIN COLOR, paso las validaciones
-				}
-				if (estatus == '2') {
-					rColor = 0xbef781;// VERDE, Error de RFC o mayor a 3 cuentas
-				}
-				if (estatus == '3') {
-					rColor = 0x8f999b;// GRIS: no tiene una consulta vigente
-				}
-				if (estatus == '4') {
-					rColor = 0xfa5858;// ROJO: Error de Quebranto o SDO_VENCIDO > 6000
-				}
-				return rColor;
-			}
-			
-			public function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var rColor:uint;
-				if (acred[rowIndex].estatusCC == 'N') 
-					rColor = 0xf6f694;
-				else
-					rColor = color;
-				return rColor;
 			}
 			
 			public function calculaMontoAutorizado():void{
@@ -384,11 +314,10 @@
 				}
 				formDatosGralSolic.txtSolicitado.text = solicitado.toString();
 			}
-		
+			
 			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
 				var wsCat:WebService = new WebService();
 				var params:Array = new Array();
-				ocultarBotones(); //OCULTA LOS BOTONES DE ACUERDO AL PERFIL AAMC
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
@@ -402,7 +331,6 @@
 					if (_xmlAcred.elements().length() > 0){
 						formateaAcred(ciclo, fecSolic);
 						//asigna la lista de acreditados a los formularios que la implementan
-						formProcSolidario.cargaAcred(acredObj);
 						formEntregaSolic.cargaAcred(acredObj);
 						if(currentState == null)
 							dgAcred.dataProvider = Arr;
@@ -424,7 +352,7 @@
 				}
 				else if(ciclo == ""){
 					params[1] = fecSolic;
-					wsCat.getListado.send(4, params); //METODO QUE MUESTRA LA LISTA DE ACREDITADOS QUE CORRESPONDEN A UNA NUEVA SOLICITUD
+					wsCat.getListado.send(4, params); //METODO QUE MUESTRA LA LISTA DE ACREDITADOS QUE CORRESPONDEN A UNA NUEVA SOLICITUD 
 				}
 			}
 			
@@ -444,6 +372,10 @@
 				txtCiclo.text = ciclo;
 				txtSucursal.text = nomSuc;
 				
+				if(currentState == 'evaluacion')
+					//selecciona la pestaña Datos Generales si la solicitud se encuentra en proceso de evaluacion
+					tabNav.selectedIndex= 1;
+				
 				du.initWsCat(wsCat);
 				du.sCursor();
 					
@@ -462,16 +394,17 @@
 						}
 						
 						//SI LA SOLICITUD FUE AUTORIZADA NO ES POSIBLE EDITARLA
-						else if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == null){
+						if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == null){
 							desactivaControles();
 							bandMod = false;
 							//ACTIVA EL BOTON QUE PERMITE MODIFICAR EL HORARIO Y DIA DE JUNTA
-							Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
+							btnGuardarHor.visible = true;
+							Alert.show("Unicamente es posible modificar el día de junta y horario de reunión, debido a que la solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
 						}
 						
 						//SI LA SOLICITUD FUE AUTORIZADA PUEDE SER MODIFICADA POR MESA DE CONTROL
 						//ANTES DE QUE SEA AUTORIZADA POR TESORERIA
-						else if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == 'evaluacion'){
+						if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == 'evaluacion'){
 							du.initWsCat(wsCat);
 							du.sCursor();
 							
@@ -485,7 +418,7 @@
 									desactivaControles();
 									bandMod = false;
 									Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
-								}
+								}				
 							});
 							//Consulta la tabla de prestamo para verificar que la situacion sea autorizado
 							params = new Array();
@@ -493,18 +426,10 @@
 							params[1] = ciclo;
 							wsCat.getInfoGrupo.send(5, params);
 						}
-						else {	
-							if(currentState == 'evaluacion'){
-								//selecciona la pestaña Datos Generales si la solicitud se encuentra en proceso de evaluacion
-								tabNav.selectedIndex= 1;
-								btnAnalizar.visible = true;
-							}						
-						}
-
 						solicitud = _xmlSolic.Table[0].SOLICITUD;
 						fecSolic = _xmlSolic.Table[0].FECSOLIC;
-						llenaRegistros();
 						cargaAcred(cdgGrupo, ciclo, fecSolic);
+						llenaRegistros();
 					}
 					else{
 						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
@@ -530,9 +455,7 @@
 			}
 			
 			public function desactivaEdicion(event:DataGridEvent):void{
-				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
-				var ind:int = dgAcredEv.selectedIndex;
-				if(acred[ind].autorizado != true && acred[ind].solicitado != true)
+				if(dgAcredEv.selectedItem.autorizado != true && dgAcredEv.selectedItem.solicitado != true)
 					event.preventDefault();
 				calculaMontoAutorizado();
 			}
@@ -541,30 +464,25 @@
 				info = new DatosSolic();
 				
 				if(_xmlSolic == "" || _xmlSolic.Table[0].SITUACION == 'S' || bandMod == true){
-					//valida que todos los clientes cuenten con proyecto de inversion
-					if(!validaProyecto())
+					if(validaSolicitado() == false)
 						return;
-					//valida que aquellos clientes que no renovaron tengan monto solicitado cero
-					if(!validaBajaAcred())
-						return;
-					//valida que los registros solicitados tengan una cantidad mayor a 0
-					if(!validaSolicitado())
+					if(validaAval() == false)
 						return;
 					//eventos enviar de los formularios incluidos
 					formProdSolic.enviarDatosSolic(info);
 					formDatosGralSolic.enviarDatosSolic(info);
-					formCalendarioSolicSolidario.enviarDatosSolic(info);
+					if(tipoProdRel == "01")
+						formCalendarioSolic.enviarDatosSolic(info);
 					formTasasSolic.enviarDatosSolic(info);
 					formRecargosSolic.enviarDatosSolic(info);
-					formProcSolidario.enviarDatosSolic(info);
 					formEntregaSolic.enviarDatosSolic(info);
+					formRelacSolic.enviarDatosSolic(info);
 					if(currentState == 'evaluacion'){
 						formExcepcionEv.enviarDatosSolic(info);
 						formAnalisis.enviarDatosSolic(info);
 					}
-					//valida que los registros autorizados tengan una cantidad mayor a 0
 					if(validaAutorizado())
-						validaControles();
+						validaFinal();
 				}
 				else{
 					Alert.show("No es posible modificar el registro de la solicitud.",titulo,4,null,null,global.iAlert);
@@ -586,7 +504,8 @@
 			public function enviarHorario():void{
 				info = new DatosSolic();
 				
-				formCalendarioSolicSolidario.enviarDatosSolic(info);
+				formCalendarioSolic.enviarDatosSolic(info);
+				validaHorario();
 			}
 			
 			//funcion que realiza la carga de datos 
@@ -603,13 +522,9 @@
 					oItem.codigo = _xmlAcred.Table[i].CDGCL;
 					oItem.nombre = _xmlAcred.Table[i].NOMBRE_CL;
 					oItem.telefono = _xmlAcred.Table[i].TELEFONO;
-					oItem.estatusCC = "N";// Estatus de Circulo de Crédito	
-					oItem.estatusRC = "";// Estatus de Analisis de reporte de credito
-					
 					if(ciclo == ""){
 						oItem.solicitud = fecSolic;
 						oItem.cantSolic = 0;
-						oItem.autorPolit = 0;
 						oItem.situacion = "Solicitado";
 						oItem.sitAcred = "S";
 						oItem.cantAut = 0;
@@ -618,24 +533,30 @@
 						oItem.rechazo = "";
 						//informacion del proyecto de inversion
 						oItem.proyecto = "";
+						oItem.tipoSeguro = false;
 						oItem.emplSostH = 0;
 						oItem.emplSostM = 0;
 						oItem.emplGenH = 0;
 						oItem.emplGenM = 0;
+						oItem.aval = "";
+						oItem.nomAval = "";
 					}
 					else if(ciclo != ""){
 						oItem.solicitud = _xmlAcred.Table[i].FECSOL;
 						oItem.cantSolic = _xmlAcred.Table[i].CANTSOLIC;
-						oItem.autorPolit = _xmlAcred.Table[i].AUTORPOLIT;
 						oItem.situacion = _xmlAcred.Table[i].SITUACIONC;
 						oItem.sitAcred = _xmlAcred.Table[i].SITACRED.toString(); 
 						//informacion del proyecto de inversion 
 						oItem.proyecto = _xmlAcred.Table[i].PROYECTO.toString();
+						oItem.tipoSeguro = _xmlAcred.Table[i].TIPOSEGURO.toString() == "F"? true: false;
 						oItem.emplSostH = _xmlAcred.Table[i].EMPLSOSTH;
 						oItem.emplSostM = _xmlAcred.Table[i].EMPLSOSTM;
 						oItem.emplGenH = _xmlAcred.Table[i].EMPLGENH;
 						oItem.emplGenM = _xmlAcred.Table[i].EMPLGENM;
 						oItem.cantAutor = _xmlAcred.Table[i].CANTAUTOR;
+						//Incorpora informacion del Aval del Credito
+						oItem.aval = _xmlAcred.Table[i].AVAL;
+						oItem.nomAval = _xmlAcred.Table[i].NOMAVAL;
 					}
 					oItem.solicitado = false;
 					oItem.autorizado = false;
@@ -655,7 +576,7 @@
 					oItem.rechazo = _xmlAcred.Table[i].RECHAZO;
 					oItem.reporte = _xmlAcred.Table[i].REPORTE;
 					if(oItem.proyecto != "")
-						oItem.datos = "OK"; 
+						oItem.datos = "OK";
 					//No ejecuta las ultimas lineas de codigo debido a que los acreditados 
 					//no se desplegaran en el proceso de evaluacion
 					if(oItem.sitAcred == "B" && currentState == "evaluacion")
@@ -683,6 +604,7 @@
 					reporte = new Array;
 					causaBaja = new Array;
 					proyInv = new Array;
+					tipoSeguro = new Array;
 					emplGenH = new Array;
 					emplGenM = new Array;
 					emplSostH = new Array;
@@ -699,16 +621,12 @@
 						cantAutor = Number(listaAcred[i].cantAutor);
 						situacionAcred[i] = listaAcred[i].situacion;
 						montos[i] = cantSolic;
-						/*if (cantSolic == 0 || (cantSolic >= montoMin && cantSolic <= montoMax))
-							montos[i] = cantSolic;
-						else{
-							Alert.show("El acreditado " + listaAcred[i].nombre +  " rebasó el límite mínimo / máximo del monto permitido",titulo,4,null,null,global.iAlert);
-							return false;
-						}*/
+
 						//Asignaciones en la etapa de registro de la solicitud
 						if(currentState == null){
 							situacionAcred[i] = listaAcred[i].sitAcred;
 							causaBaja[i] = listaAcred[i].causaBaja;
+							tipoSeguro[i] = listaAcred[i].tipoSeguro ? "F": "I";
 							emplGenH[i] = Number(listaAcred[i].emplGenH);
 							emplGenM[i] = Number(listaAcred[i].emplGenM);
 							emplSostH[i] = Number(listaAcred[i].emplSostH);
@@ -717,12 +635,7 @@
 						//Asignaciones en la etapa de evaluacion de la solicitud
 						else if(currentState == 'evaluacion'){
 							cantAutorAcred[i] = cantAutor;
-							/*if (cantAutor == 0 || (cantAutor >= montoMin && cantAutor <= montoMax))
-								cantAutorAcred[i] = cantAutor;
-							else{
-								Alert.show("El acreditado " + listaAcred[i].nombre +  " rebasó el límite mínimo / máximo del monto permitido",titulo,4,null,null,global.iAlert);
-								return false;
-							}*/
+							
 							//Asigna la situacion de la solicitud a cada cliente
 							situacionAcred[i] = listaAcred[i].sitAcred;
 		
@@ -732,7 +645,7 @@
 							reporte[i] = listaAcred[i].reporte;
 						}
 						proyInv[i] = listaAcred[i].proyecto;
-						aval[i] = "";
+						aval[i] = listaAcred[i].aval;
 					}
 				}
 				return true;
@@ -758,45 +671,52 @@
 				situacion[1] = "No Renueva";
 			}
 			
+			public function guardaHorario():void{
+				initConexion();
+				du.sCursor();
+				global.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setModHorario);
+				wsMS.setModHorario.send(grupo, "G", txtCiclo.text, info.reunion, info.horario);
+			}
+			
 			public function guardaSolic():void{
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
 					global.bloquear();
-					
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolic);
-									wsMS.setAccionSolic.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
-																 info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
-																 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
-																 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
-																 info.cdgProdCred, info.moneda, info.presidente, info.presidente, info.secretario, 
-																 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
-																 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
-																 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
-																 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
-																 info.cicloRel, aval);	
+						wsMS.setAccionSolic.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, 
+												 0, info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+												 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+												 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+												 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
+												 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, info.pagoMicroSeg, 
+												 info.multPerio, suc, promotor, info.tasaFija, acred, montos, proyInv, tipoSeguro, emplGenH, emplGenM, 
+												 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
+												 info.horario, info.reunion, situacionAcred, causaBaja, info.clnsRel, info.tipoProdRel, info.cdgclnsRel,
+												 info.cicloRel, aval);
 					}
 					//Servicio invocado en la etapa de evaluacion de la solicitud
 					else if(currentState == 'evaluacion'){
 						if(validaSituacion() == true){
 							wsMS.addEventListener(ResultEvent.RESULT, setAccionEvSolic);
-							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
-													   		info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
-													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
-													   		info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
-													   		info.cdgProdCred, info.moneda, info.presidente, info.presidente, info.secretario, 
-													   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, suc, promotor, info.tasaFija,
-													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
-													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
-													  	 	info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
-													  	 	reporte);
+							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, 0,
+													   info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+													   info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+													   info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+													   info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, global.obtenerUsuario(), 
+													   info.formaEntre, info.nombreCheq, info.pagoMicroSeg, info.multPerio, suc, promotor, info.tasaFija,
+													   acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
+													   info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
+													   info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred, info.insDoc, info.integracion,
+													   reporte);
 						}
 						else{
 							wsMS.disconnect();
-							du.rCursor();
 							global.desbloquear();
+							du.rCursor();
 						}
 					}
 				}
@@ -811,9 +731,7 @@
 				openEffect.play([this]);
 				du = new Utils();
 				global = new Globales();
-				permiso = new Permisos();
 				titulo = "Mantenimiento de Solicitud";
-				tipoProd = "SO";
 				formateaSituacion();
 			}
 			
@@ -823,11 +741,17 @@
 				wsMS.loadWSDL();
 			}	
 			
+			private function initConexionEmail():void{				
+				wsEmail = new WebService();			
+				wsEmail.wsdl = Application.application.wsStr.wsdlEmail.toString();
+				wsEmail.loadWSDL();
+			}
+			
 			private function initConexionReg():void{				
 				wsReg = new WebService();			
 				wsReg.wsdl = Application.application.wsStr.wsdlReg.toString();
 				wsReg.loadWSDL();
-			}	
+			}
 			
 			private function initConexionPayCash():void{				
 				wsPayCash = new WebService();			
@@ -844,7 +768,6 @@
 			}
 
 			public function llenaRegistros():void{
-				var estatus:String;
 				var numInt:int;
 				info = new DatosSolic();
 				if(currentState != null)
@@ -863,17 +786,18 @@
 				info.situacion = _xmlSolic.Table[0].SITUACION;
 				info.solicitado = _xmlSolic.Table[0].CANTSOLIC;
 				info.autorizado = _xmlSolic.Table[0].CANTAUTOR;
-				info.autPol = _xmlSolic.Table[0].AUTORPOLIT;
 				info.moneda = _xmlSolic.Table[0].CDGMO;
-				info.diasAtraso = _xmlSolic.Table[0].DIASATRASO;
 				
 				//Datos del calendario de la solicitud
 				info.periodicidad = _xmlSolic.Table[0].PERIODICIDAD;
+				info.reunion = _xmlSolic.Table[0].NOACUERDO;
+				info.diaJunta = _xmlSolic.Table[0].DIAJUNTA;
 				info.diasGracia = _xmlSolic.Table[0].DESFASEPAGO;
  				info.duracion = _xmlSolic.Table[0].DURACION; 
 				info.pagoCapital = _xmlSolic.Table[0].PERIGRCAP;
 				info.pagoInteres = _xmlSolic.Table[0].PERIGRINT;
 				info.multPerio = _xmlSolic.Table[0].MULTPER;
+				info.horario = _xmlSolic.Table[0].HORARIO;
 				
 				//Tasas de la solicitud
 				info.metodoCobro = _xmlSolic.Table[0].CDGMCI;
@@ -890,28 +814,38 @@
 				//Datos de la mesa directiva del grupo
 				info.presidente = _xmlSolic.Table[0].PRESIDENTE;
 				info.secretario = _xmlSolic.Table[0].SECRETARIO;
+				info.tesorero = _xmlSolic.Table[0].TESORERO;
 				
 				//Datos de entrega de la solicitud
 				info.formaEntre = _xmlSolic.Table[0].FORMAENTREGA;
 				info.nombreCheq = _xmlSolic.Table[0].NOMBRECH;
 				info.cdgCb = _xmlSolic.Table[0].CDGDO;
 				info.tipoDes = _xmlSolic.Table[0].CDGDOF;
+				info.pagoMicroSeg = _xmlSolic.Table[0].PAGOMICROSEG;
 				
 				numInt = Number(_xmlSolic.Table[0].NUMINT);
+				
+				info.tipoProdRel = _xmlSolic.Table[0].CDGTPCREL;
+				info.cdgclnsRel = _xmlSolic.Table[0].CDGCLNSREL;
+				info.cicloRel = _xmlSolic.Table[0].CICLOREL;
+				info.clnsRel = _xmlSolic.Table[0].CLNSREL;
+				
+				tipoProdRel = info.tipoProdRel;
 				
 				//bandMod indica si la informacion de la solicitud puede modificarse
 				if(info.situacion == 'S' || bandMod == true)		
 					formProdSolic.prodCredObj.addEventListener(CollectionEvent.COLLECTION_CHANGE, actualizaListaProd);
-				//Categoria de Producto SO = solidario
-				formProdSolic.init(this.tipoProd, this.grupo, this.ciclo, this.clns, numInt, info, 2);
+				//Categoria de producto AL = Alternativo
+				formProdSolic.init("AL", this.grupo, this.ciclo, this.clns, numInt, info, 2);
 				formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
 				formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
 				formDatosGralSolic.init(info, 2, estatus);
-				formCalendarioSolicSolidario.init(info, 2, estatus);
+				
+				formCalendarioSolic.init(info, 2, estatus);
 				formTasasSolic.init(info, 2, estatus);
-				formProcSolidario.init(info, 2, estatus);
 				formRecargosSolic.init(info, 2, estatus);
 				formEntregaSolic.init(info, 2, estatus);
+				formRelacSolic.init(this.grupo, info, 2, estatus);
 				if(currentState == 'evaluacion'){
 					formExcepcionEv.init(info, 2, estatus);
 					formAnalisis.init(info,2,estatus);
@@ -929,17 +863,23 @@
 					Alert.show("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.",titulo,4,null,null,global.iAlert);
 			} 
 			
-			public function muestraDatosSolic():void{
+			public function muestraDatosAval():void{
 				if( _xmlSolic == "" || _xmlSolic.Table[0].SITUACION == 'S'){
 					indAcred = dgAcred.selectedIndex;
 					if(indAcred >= 0){
-						var fecha:String = Arr[indAcred].solicitud;
-						var nomGrupo:String = txtGrupo.text;
-						comMttoDatosSolic = new MttoDatosSolic();
-						comMttoDatosSolic = MttoDatosSolic(PopUpManager.createPopUp(this,MttoDatosSolic,true));
-						comMttoDatosSolic.addEventListener(Event.REMOVED_FROM_STAGE, actualizaDatos);
-						comMttoDatosSolic.init(grupo, nomGrupo, fecha, indAcred, Arr);
-						PopUpManager.centerPopUp(comMttoDatosSolic);
+						var res:Boolean;
+						//OBTIENE INFORMACION DEL CONTROL DE CREDITO RELACIONADO
+						var tipoProd:String = formRelacSolic.cboTipoProd.selectedItem.id;
+						var tipoCred:String = "G";
+						var cdgclnsRel:String = formRelacSolic.txtCodigo.text;
+						var cicloRel:String = formRelacSolic.txtCiclo.text;
+						if(validaCredRelac(tipoCred, tipoProd, cdgclnsRel, cicloRel)){
+							comAvalAcred = new AvalAcred();
+							comAvalAcred = AvalAcred(PopUpManager.createPopUp(this,AvalAcred,true));
+							comAvalAcred.addEventListener("seleccionar", actualizaDatos);
+							comAvalAcred.init(tipoProd, tipoCred, cdgclnsRel, cicloRel, grupo, "G");
+							PopUpManager.centerPopUp(comAvalAcred);
+						}
 					}		
 				}
 			}
@@ -952,19 +892,9 @@
 				PopUpManager.centerPopUp(comMttoReporte);
 			}
 			
-			//Oculta los botones de Guardado y Envio de acuerdo a los permisos asignados al perfil AAMC
-			private function ocultarBotones():void{
-				if(currentState == 'evaluacion'){
-					if(permiso.permisosEvSolic(global.obtenerArrayPerfil()) == false){
-						btnAceptar.visible = false;
-						btnGuardar.visible = false;
-					}
-				}
-			}
-			
 			private function registraCausaBaja(event:Event):void{
 				var comCausaBaja:RegCausaBaja = event.currentTarget as RegCausaBaja;
-				Arr[indAcred].causaBaja = comCausaBaja.cboCausa.selectedItem.id;
+				Arr[indAcred].causaBaja = comCausaBaja.obtieneCausa();
 				Arr[indAcred].sitAcred = "B";
 			}
 			
@@ -975,12 +905,11 @@
 			public function registraInfoSolic(cdgGrupo:String, nomGrupo:String, nomSuc:String, suc:String, promotor:String):void{
 				var wsCat:WebService = new WebService();
 				var params:Array = new Array();
-				var estatus:String;
 				var numInt:int;
 				
 				tipoAccion = 1;
 				init();
-				if(currentState != null)
+				if (currentState != null)
 					estatus = currentState.toString();
 				var fecSolic:String = global.formatearFecha(global.obtenerFechaSistema());
 				this.suc = suc;
@@ -1011,22 +940,24 @@
 						cargaAcred(cdgGrupo, "", fecSolic);
 						info = null;
 						formProdSolic.addEventListener("actualiza", actualizaProdCred);
-						formProdSolic.init(tipoProd, grupo, ciclo, clns, numInt, info, 1, suc);
+						formProdSolic.init("AL", grupo, ciclo, clns, numInt, info, 1, suc);
 						formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
 						formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
 						formDatosGralSolic.init(info, 1, estatus);
-						formCalendarioSolicSolidario.init(info, 1, estatus);
+						//para este tipo de solicitud inhabilita los controles de horario 
+						formCalendarioSolic.desactivaContHorario();
+						formCalendarioSolic.init(info, 1, estatus);
 						formTasasSolic.init(info, 1, estatus);
-						formProcSolidario.init(info, 1, estatus);
 						formEntregaSolic.init(info, 1, estatus);
+						formRelacSolic.addEventListener("validarCredRel",actualizaCredRelac);
+						formRelacSolic.init(grupo, info, 1, estatus);
 					}); 	
 					params[0] = grupo;
 					wsCat.getInfoGrupo.send(3, params);
 				});
 				params[0] = this.grupo;
 				params[1] = this.clns
-				params[2] = this.tipoProd;
-				wsCat.getInfoGeneral.send(11, params);
+				wsCat.getInfoGeneral.send(1, params);
 			} 
 			
 			public function selAutorizadoAcredEv(event:Event):void{
@@ -1121,14 +1052,16 @@
 			}
 			
 			private function setAccionEvSolic(event:ResultEvent):void{
-				var wsCat:WebService = new WebService;
-				var params:Array = new Array;
 				wsMS.disconnect();
 				du.rCursor();
 				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolic);
 				var res:String = event.result.toString();
+				
 				if (res.substr(0,1) == "1"){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					
 					du.initWsCat(wsCat);
 					du.sCursor();
 					global.bloquear();
@@ -1140,157 +1073,114 @@
 						if(_xmlEv.elements().length() > 0){
 							var destino:String;
 							var asunto:String = _xmlEv.Table[0].ASUNTO;
-							var resultado:String = _xmlEv.Table[0].RESULTADO;
+							var resultado:String = "<br>" + _xmlEv.Table[0].RESULTADO;
 							var emailOri:String = _xmlEv.Table[0].EMAILORI;
-							var emailCapt:String = _xmlEv.Table[0].EMAILCAPT;
-							var emailCoord:String = _xmlEv.Table[0].EMAILCOORD;
+							var emailAse:String = _xmlEv.Table[0].EMAILASE;
+							//var emailCoord:String = _xmlEv.Table[0].EMAILCOORD;
 							var emailGte:String = _xmlEv.Table[0].EMAILGTE;
+							var emailReg:String = _xmlEv.Table[0].EMAILREG;
+							//var emailDir:String = _xmlEv.Table[0].EMAILDIR;
 							var insDoc:String = _xmlEv.Table[0].INSDOC.toString() != ""? _xmlEv.Table[0].INSDOC: "SIN INCIDENCIAS";
-							var integ:String = _xmlEv.Table[0].INTEGRACION.toString() != ""? _xmlEv.Table[0].INTEGRACION + "\n": "";
+							var integ:String = _xmlEv.Table[0].INTEGRACION.toString() != ""? _xmlEv.Table[0].INTEGRACION + "<br>": "";
 							
-							resultado += "\n\nINCIDENCIAS DOCUMENTALES\n" + insDoc;
+							resultado = resultado.replace(/-/g,"<br>");
 							
-							destino = emailCapt != ""? emailCapt : "";
-							destino += (emailCoord != ""? ((destino != ""? ",": "") + emailCoord) : "");
-							destino += (emailGte != ""? ((destino != ""? ",": "") + emailGte) : ""); 
+							resultado += "<br><br>INCIDENCIAS DOCUMENTALES:<br>" + insDoc;
+							
+							destino = emailAse != ""? emailAse : "";
+							//destino += (emailCoord != ""? ((destino != ""? ",": "") + emailCoord) : "");
+							destino += (emailGte != ""? ((destino != ""? ",": "") + emailGte) : "");
+							destino += (emailReg != ""? ((destino != ""? ",": "") + emailReg) : "");
+							//destino += (emailDir != ""? ((destino != ""? ",": "") + emailDir) : ""); 
 							
 							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 								var _xmlEvAc:XML = new XML(evt.result);
 								var reporte:String = "";
+								var tabla:String = "";
 								
 								var cont:int = _xmlEvAc.elements().length();
 								
 								if(cont > 0){
-									for(var i:int = 0; i < cont; i++)
-										reporte += _xmlEvAc.Table[i].REPACRED + "\n";
+									for(var i:int = 0; i < cont; i++){
+										if(_xmlEvAc.Table[i].REPACRED && _xmlEvAc.Table[i].REPACRED.toString() != "")
+											reporte += _xmlEvAc.Table[i].CDGCL + " " + _xmlEvAc.Table[i].NOMCL + " " + _xmlEvAc.Table[i].REPACRED + "<br>";
+									}
 								}
 								if(reporte == "")
 									reporte = "SIN INCIDENCIAS";
-								
+									
+								if(cont > 0){
+									for(var i:int = 0; i < cont; i++){
+										if(_xmlEvAc.Table[i].NOMBRE){
+										tabla += "<tr>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].NOMCL+"</td>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTSOLIC+"</td>" + 
+													"<td style='border-style:solid;'> "+_xmlEvAc.Table[i].CANTAUTOR +"</td>" + 
+												"</tr>";
+										}
+									}
+								}
+								if(tabla == "")
+									tabla = "SIN INFORMACIÓN";
+									
 								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 									var _xmlEvExc:XML = new XML(evt.result);
 									var repExc:String = "";
 									
-									du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {                                                            
-                                    	var _xmlEnanos:XML = new XML(evt.result);
-
+									du.rCursor();
+									du.closeWs(wsCat);
 									
+									var contExc:int = _xmlEvExc.elements().length();
+									var contenido:String = "";
+								
+									if(contExc > 0){
+										for(var j:int = 0; j < contExc; j++)
+											repExc += (repExc != ""? "<br>": "") + _xmlEvExc.Table[j].ACRED + " " + _xmlEvExc.Table[j].NOMBRE + " " + _xmlEvExc.Table[j].DESCRIPCION + " " + _xmlEvExc.Table[j].OBSERVACION;
+									}
+									
+									integ = integ + repExc;
+									if(integ == "")
+										integ = "SIN INCIDENCIAS";
+									
+									//Se incorpora la cadena de enanos de grupo
+									resultado += "<br><br>INTEGRACIÓN:<br>" + integ;
+									resultado += "<br><br>REPORTE DE CRÉDITO:<br>" + reporte;
+									
+									contenido = "<tr>" + 
+													"<td style='color: #000000;  font-size: 18px; font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif; padding: 10px 20px 40px 20px; text-align: center;'>" + 
+														"<p style='text-align: left'><span>"+ resultado +"</span></p>" + 
+													"</td>" + 
+												"</tr>" + 
+												"<tr>" + 
+													"<td>" + 
+														"<table style='width:100%; border-collapse: collapse; font-size: 18px; font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif; text-align: center;'>" + 
+															"<tr>" + 
+																"<th style='border-style:solid;'>NOMBRE ACREDITADO</th>" + 
+																"<th style='border-style:solid;'>CANT SOLICITADA</th>" + 
+																"<th style='border-style:solid;'>CANT ENTREGADA</th>" + 
+															"</tr>" + 
+															tabla + 
+															
+														"</table>" + 
+													"</td>" + 
+												"</tr>";
+							
+									initConexionEmail();
+									du.sCursor();
+								
+									du.ejecutaWsMethod(wsEmail,function(evt:ResultEvent):void {											
+										var resEnv:String = evt.result.toString();
+										
 										du.rCursor();
-										du.closeWs(wsCat);
+										du.closeWs(wsEmail);
 										
-										var contExc:int = _xmlEvExc.elements().length();
-									
-										if(contExc > 0){
-											for(var j:int = 0; j < contExc; j++)
-												repExc += (repExc != ""? "\n": "") + _xmlEvExc.Table[j].ACRED + " " + _xmlEvExc.Table[j].NOMBRE + " " + _xmlEvExc.Table[j].DESCRIPCION + " " + _xmlEvExc.Table[j].OBSERVACION;
-										}
-										
-										//Segmento de codigo que permite incorporar la información de enanos
-										var enanos:String = "";
-										if(_xmlEnanos.elements().length() > 0){
-											enanos = "\n\nLISTA DE CLIENTES SIN DERECHO A INCREMENTO:\n";
-										    for(var x:int = 0; x < _xmlEnanos.elements().length(); x++){
-										    	enanos += _xmlEnanos.Table[x].CDGCL + ".\n";
-										    }
-										}
-										
-										integ = integ + repExc;
-										if(integ == "")
-											reporte = "SIN INCIDENCIAS";
-										
-										resultado += "\n\nINTEGRACIÓN\n" + integ + enanos;
-										resultado += "\n\nREPORTE DE CRÉDITO\n" + reporte;
-									
-										initConexionReg();
-										du.sCursor();
-									
-										du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
-											var resEnv:String = evt.result.toString();
-											
-											du.rCursor();
-											du.closeWs(wsReg);
-											
-											global.desbloquear();
-											cerrar();
-											
-											initConexion();
-											du.sCursor();
-											
-											//Obtiene el resultado del calculo de Nivel de Riesgo Transaccional
-											du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{											
-												var resNiv:String = evt.result.toString();
-												
-												du.rCursor();
-												du.closeWs(wsMS);
-												
-												//verifica que el proceso de Calculo de Nivel de Riesgo se ejecute correctamente
-												 if(resNiv.substr(0,1) == "1"){
-												 	du.initWsCat(wsCat);
-													du.sCursor();
-													
-													du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
-														var _xmlNiv:XML = new XML(ev.result);
-														
-														du.closeWs(wsCat);
-														du.rCursor();
-														
-														//verifica el nivel de riesgo de los acreditados
-														if(_xmlNiv.elements().length() > 0){
-															Alert.show("Algunos Acreditados cuentan con un Nivel de Riesgo Transaccional Alto. Comuníquese con el Oficial de Cumplimiento.",titulo,4,null,null,global.iAlert);
-															du.initWsCat(wsCat);
-															du.sCursor();
-															
-															du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
-																var _xmlParams:XML = new XML(evt.result);
-																var email:String = _xmlParams.Table[0].CORREO_OFICIAL;
-																
-																du.closeWs(wsCat);
-																du.rCursor();
-															
-																initConexionReg();
-																du.sCursor();
-																				
-																du.ejecutaWsMethod(wsReg,function(evt:ResultEvent):void {											
-																	var resEnv:String = evt.result.toString();
-																	
-																	du.rCursor();
-																	du.closeWs(wsReg);
-																
-																	global.desbloquear();
-																	cerrar();
-																});
-																//Servicio de envio de Correo Electronico
-																wsReg.setEnviaEmail.send(emailOri,email,
-																						 "Nivel de Riesgo Transaccional","Algunos Acreditados del Grupo " + grupo + " con Ciclo " + ciclo + " cuentan con un Nivel de Riesgo Transaccional Alto");
-															});
-															//Metodo que obtiene informacion de la cuenta del oficial de cumplimiento
-															wsCat.getCatalogoGral.send(41);
-														}	
-														else{
-															global.desbloquear();
-															cerrar();
-														}				
-													});
-													//Metodo que obtiene informacion de los acreditados con un Nivel Alto de Riesgo Transaccional
-													params[0] = grupo;
-													params[1] = ciclo;
-													params[2] = clns;
-													wsCat.getListado.send(47, params);
-												}
-												else{
-													Alert.show("Falló el proceso de Cálculo de Nivel de Riesgo Transaccional." + resNiv,titulo,4,null,null,global.iAlert);
-												}
-											});
-											//Se ejecuta el procedimiento de Calculo de la Matriz de Riesgo
-											wsMS.setCalcNivelRiesgo.send(grupo, ciclo, clns, global.obtenerUsuario());
-										});
-										//Envio de correo electronico correspondiente al resultado de la evaluacion de credito
-										wsReg.setEnviaEmail.send(emailOri,destino,asunto,resultado);
+										//PENDIENTE IMPLEMENTAR EVALUACION DE NIVEL DE RIESGO
+										//DE FORMA SINCRONA INVOCANDO EL METODO EVALUANIVELRIESGO()
+										global.desbloquear();
+										cerrar();
 									});
- 									//Metodo que obtiene el resultado de los enanos del grupo
-									params[0] = grupo;
-									params[1] = ciclo;
-									wsCat.getInfoGeneral.send(16, params);
+									//Envio de correo electronico correspondiente al resultado de la evaluacion de credito
+									wsEmail.setEnviaEmail.send(emailOri,destino,asunto,contenido);
 								});
 								//Metodo que obtiene el resultado de las excepciones de la evaluacion de credito
 								params[0] = grupo;
@@ -1299,11 +1189,10 @@
 								params[3] = global.obtenerUsuario();
 								wsCat.getInfoGeneral.send(10, params);
 							});
-							//Metodo que obtiene el resultado por acreditado de la evaluacion de credito
-							params[0] = grupo;
-							params[1] = ciclo;
-							params[2] = clns;
-							params[3] = solicitud;
+							params[0] = this.grupo;
+							params[1] = this.ciclo;
+							params[2] = this.clns;
+							params[3] = this.solicitud;
 							wsCat.getInfoGeneral.send(9, params);
 						}
 						else{
@@ -1311,7 +1200,6 @@
 							Alert.show("No se ha encontrado la Evaluación del Área de Crédito",titulo,4,null,null,global.iAlert);
 						}
 					});
-					//Metodo que obtiene el resultado grupal de la evaluacion de credito
 					params[0] = this.grupo;
 					params[1] = this.ciclo;
 					params[2] = this.clns;
@@ -1323,7 +1211,7 @@
 				else
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
-				
+			
 			private function setAccionSolic(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
@@ -1342,13 +1230,25 @@
 						cerrar();
 					});
 					wsPayCash.getInfoPayCashCorta.send(grupo, info.cdgTipoProd, global.obtenerUsuario());
-				}	
+				}
 				else{
 					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 					global.desbloquear();
 				}		
 			}
-
+			
+			private function setModHorario(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				global.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setModHorario);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1")
+					cerrar();
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
 			//Funcion que valida que los registros autorizados tengan una cantidad mayor a 0
 			public function validaAutorizado():Boolean{
 				for(var i:int = 0; i < Arr.length; i++){
@@ -1360,13 +1260,22 @@
 				return true;
 			}
 			
-			//Funcion que valida que los acreditados que no renuevan no tengan registrado ningun monto solicitado
-			public function validaBajaAcred():Boolean{
-				for(var i:int = 0; i < Arr.length; i++){
-					if(Arr[i].situacion == "No Renueva" && Arr[i].cantSolic > 0){
-						Alert.show("El acreditado " + Arr[i].nombre + " no renovará su crédito por lo tanto no puede tener un monto solicitado.\n\nModifique la información del cliente",titulo,4,null,null,global.iAlert);
-						return false;
-					}
+			private function validaCredRelac(clns:String, tipoProd:String, cdgclns:String, ciclo:String):Boolean{
+				if(clns == ""){
+					Alert.show("Debe seleccionar el Tipo de Crédito relacionado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(tipoProd == ""){
+					Alert.show("Debe seleccionar el Tipo de Producto relacionado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cdgclns == ""){
+					Alert.show("Debe seleccionar el Código del Crédito relacionado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(ciclo == ""){
+					Alert.show("Debe seleccionar el Ciclo del Crédito relacionado.",titulo,4,null,null,global.iAlert);
+					return false;
 				}
 				return true;
 			}
@@ -1375,16 +1284,21 @@
 				info = event.customProp;
 			}
 			
-			//Funcion que valida que los controles que integran la solicitud cuentan con los datos requeridos
-			public function validaControles():void{
-				if (info.guardaProd == true && info.guardaDatos == true && info.guardaRecargos == true && 
-					info.guardaProc == true && info.guardaEntre == true && info.guardaTasas == true)
+			public function validaFinal():void{
+				if (info.guardaProd == true && info.guardaDatos == true && info.guardaCalendario == true && info.guardaTasas == true && 
+					info.guardaRecargos == true && info.guardaEntre == true && info.guardaRelac == true)
 					guardaSolic();
 				else
 					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 			}
 			
-			//Funcion que valida que el monto capturado tiene un formato adecuado
+			public function validaHorario():void{
+				if (info.guardaCalendario == true)
+					guardaHorario();
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+			
 			public function validaMonto(event:Event):void{	
 				numVal.source = TextInput(event.currentTarget);
 				vResult = numVal.validate();
@@ -1393,19 +1307,8 @@
                 	TextInput(event.currentTarget).text = "";
 			}
 			
-			//Funcion que valida que todos los acreditados cuentan con un proyecto de inversion registrado
-			public function validaProyecto():Boolean{
-				for(var i:int = 0; i < Arr.length; i++){
-					if(Arr[i].cantSolic > 0 && Arr[i].sitAcred == "S" && Arr[i].datos != "OK"){
-						Alert.show("El acreditado " + Arr[i].nombre + " no cuenta con un proyecto de inversión registrado.\n\nModifique la información del cliente",titulo,4,null,null,global.iAlert);
-						return false;
-					}
-				}
-				return true;
-			}
-			
 			public function validaSituacion():Boolean{
-				//Condicion que verifica la situacion de la solicitud
+				//condicion que verifica la situacion de la solicitud
 				if(info.situacion != 'S'){
 					for(var i:int = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred == 'S'){
@@ -1439,9 +1342,13 @@
 			
 			//Funcion que valida que los registros solicitados tengan una cantidad mayor a 0
 			public function validaSolicitado():Boolean{
+				return true;
+			}
+			
+			private function validaAval():Boolean{
 				for(var i:int = 0; i < Arr.length; i++){
-					if(Arr[i].sitAcred == 'S' && Arr[i].cantSolic == 0){
-						Alert.show("La solicitud del acreditado " + Arr[i].nombre + " fue registrada sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					if(Arr[i].aval == ""){
+						Alert.show("El acreditado " + Arr[i].nombre + " no tiene Aval registrado.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 						return false;
 					}
 				}
@@ -1453,15 +1360,15 @@
 	 <mx:NumberValidator id="numVal" property="text" precision="2"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
 
-	<mx:TabNavigator id="tabNav" width="824" height="251" x="10" y="52" creationPolicy="all">
+	<mx:TabNavigator id="tabNav" width="824" height="251" x="10" y="52" creationPolicy="all">	
 		<mx:Canvas label="Producto" width="100%" height="100%">
 			<Forms:FormProductoSolic id="formProdSolic" x="140" y="39" width="540" height="130"/>
 		</mx:Canvas>
 		<mx:Canvas label="Datos Generales" width="100%" height="100%">	
-			<Forms:FormDatosGralSolic id="formDatosGralSolic" height="195" width="800" x="10" y="10"/>
+			<Forms:FormDatosGralSolicAd id="formDatosGralSolic" height="195" width="800" x="10" y="10"/>
 		</mx:Canvas>
-		<mx:Canvas label="Calendario" width="100%" height="100%">	
-			<Forms:FormCalendarioSolicSol id="formCalendarioSolicSolidario" x="75" height="205"/>
+		<mx:Canvas id="cvnCalendario" label="Calendario" width="100%" height="100%">	
+			<Forms:FormCalendarioSolic id="formCalendarioSolic" x="75" height="205"/>
 		</mx:Canvas>
 		<mx:Canvas label="Tasas" width="100%" height="100%">	
 			<Forms:FormTasasSolic id="formTasasSolic" x="55" height="195" y="10"/>
@@ -1469,22 +1376,22 @@
 		<mx:Canvas label="Recargos" width="100%" height="100%">	
 			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
 		</mx:Canvas>
-		<mx:Canvas label="Comité" width="100%" height="100%">	
-			<Forms:FormProcSolidario id="formProcSolidario" x="111" height="185" y="18" width="600"/>
-		</mx:Canvas>
 		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
 			<Forms:FormEntregaSolic id="formEntregaSolic" x="75"/>
 		</mx:Canvas>
+		<mx:Canvas label="Relacionado" width="100%" height="100%">
+			<Forms:FormRelacionadoSolic id="formRelacSolic" x="141" y="48" width="540" height="110"/>
+		</mx:Canvas>
 	</mx:TabNavigator>
-	<mx:Button id="btnCancelar" x="770" y="528" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" visible="true"/>
-	<mx:Button id="btnAceptar" x="698" y="528" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" visible="true"/>
-	<mx:Canvas x="87" y="10" width="670" height="37" styleName="canvasMod">
-		<mx:Label x="37" y="7" text="Grupo:"/>
-		<mx:TextInput id="txtGrupo" x="87" y="5" width="199" editable="false"/>
-		<mx:Label x="299" y="8" text="Ciclo:"/>
-		<mx:Label x="410" y="8" text="Sucursal:"/>
-		<mx:TextInput x="465" y="5" width="181" id="txtSucursal" editable="false"/>
-		<mx:TextInput x="333" y="5" width="45" id="txtCiclo" editable="false"/>
+	<mx:Button id="btnCancelar" x="790" y="526" width="40" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="742" y="526" width="40" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()"/>
+	<mx:Canvas x="87" y="10" width="670" height="34" styleName="canvasMod">
+		<mx:Label x="10" y="6" text="Grupo:"/>
+		<mx:TextInput id="txtGrupo" x="56" y="5" width="242" editable="false"/>
+		<mx:Label x="318.5" y="6" text="Ciclo:"/>
+		<mx:Label x="418" y="6" text="Sucursal:"/>
+		<mx:TextInput x="477" y="5" width="181" id="txtSucursal" editable="false"/>
+		<mx:TextInput x="357.5" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>
 	<mx:Canvas x="10" y="311" width="824" height="209" styleName="canvasMod" id="canvas1">
 		<mx:DataGrid id="dgAcred" x="19.5" y="10" width="783" height="187" 
@@ -1492,7 +1399,7 @@
 			<mx:columns>
 				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="50"/>
 				<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="170"/>
-				<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>
+				<!--<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>-->
 				<mx:DataGridColumn headerText="SOLICITADO" dataField="cantSolic" width="70" editable="true" >	
 					<mx:itemEditor>
 						<mx:Component>
@@ -1500,17 +1407,17 @@
 		  				</mx:Component>
 					</mx:itemEditor>
 				</mx:DataGridColumn>
-				<mx:DataGridColumn headerText="SITUACION" editable="true" dataField="situacion" editorDataField="selectedItem" width="90">
-					<mx:itemEditor>
-						<mx:Component>
-							<mx:ComboBox initialize="outerDocument.iniciaSituacion(event)" width="90" fontSize="10" verticalCenter="0" change="outerDocument.selSituacionAcred(event)"/> 
-						</mx:Component>
-					</mx:itemEditor>
-				</mx:DataGridColumn>	
-				<mx:DataGridColumn headerText="DATOS" editable="false" dataField="datos" width="50">
+				<mx:DataGridColumn headerText="AVAL" editable="false" dataField="nomAval" width="170">
 					<mx:itemRenderer>
 						<mx:Component>
-							<mx:Label click="outerDocument.muestraDatosSolic()" width="50"/>
+							<mx:Label click="outerDocument.muestraDatosAval()" width="50"/>
+		  				</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="SEGURO FAMILIAR" editable="true" rendererIsEditor="true" dataField="tipoSeguro" width="80" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:CheckBox textAlign="center" width="25" fontSize="10" verticalCenter="0"/>
 		  				</mx:Component>
 					</mx:itemRenderer>
 				</mx:DataGridColumn>

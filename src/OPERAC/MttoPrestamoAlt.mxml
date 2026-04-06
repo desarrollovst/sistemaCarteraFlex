@@ -91,16 +91,6 @@
 				formDatosGralPrn.txtDevuelto.text = devuelto.toString();
 			}
 			
-			private function cambiaFormCal(tipoProd:String):void{
-				if(tipoProd == "04"){				
-					cvnCalendario.removeChild(formCalendarioSolic)
-					cvnCalendario.addChild(formCalendarioSol);					
-					formCalendarioSol.x = 75;
-					formCalendarioSol.height = 205;	
-					formCalendarioSol.init(info,tipoAccion,estatus);
-				} 
-			}
-			
 			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
@@ -164,7 +154,7 @@
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlPrn = new XML(evt.result);
-					
+						
 						du.rCursor();
 						du.closeWs(wsCat);
 					
@@ -194,9 +184,6 @@
 			}
 				
 			public function enviar():void{
-				global = new Globales();
-				info = new DatosSolic();
-				
 				if(bandMod == true){
 					//eventos enviar de los formularios incluidos
 					formDatosGralPrn.enviarDatosSolic(info);
@@ -295,15 +282,16 @@
 						tipoAccion = 3
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
 					wsMS.setAccionPrn.send(tipoAccion, global.obtenerUsuario(), grupo, txtCiclo.text, "G", info.entregado, 
-											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred);
+										   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, 
+										   situacionAcred);
 				}
 			}
 			
 			public function init():void{
 				openEffect.duration = 1000;
 				openEffect.play([this]);
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Mantenimiento de Préstamo";
 			}
 			
@@ -369,6 +357,7 @@
 				//Datos de entrega del credito
 				info.formaEntre = _xmlPrn.Table[0].FORMAENTREGA;
 				info.nombreCheq = _xmlPrn.Table[0].NOMBRECH;
+				info.pagoMicroSeg = _xmlPrn.Table[0].PAGOMICROSEG;
 				
 				numInt = Number(_xmlPrn.Table[0].NUMINT);
 				
@@ -379,12 +368,10 @@
 				
 				this.tipoProdRel = _xmlPrn.Table[0].CDGTPCREL;
 				
-				formProdSolic.init("OP", this.grupo, this.ciclo, this.clns, numInt, info, 2);
+				formProdSolic.init("AL", this.grupo, this.ciclo, this.clns, numInt, info, 2);
 				formDatosGralPrn.init(info, 2, estatus);
 				if(tipoProdRel == "01")
 					formCalendarioSolic.init(info, 2, estatus);
-				else if(tipoProdRel == "04")
-					cambiaFormCal(tipoProdRel);
 				formTasasSolic.init(info, 2, estatus);
 				formRecargosSolic.init(info, 2, estatus);
 				formEntregaSolic.init(info, 2, estatus);
@@ -568,7 +555,7 @@
 			<Forms:FormProductoSolic id="formProdSolic" x="140" y="39" width="540" height="130"/>
 		</mx:Canvas>
 		<mx:Canvas id="datosGrals" label="Datos Generales" width="100%" height="100%">	
-			<Forms:FormDatosGralPrn id="formDatosGralPrn" height="195" width="800" x="10" y="10"/>
+			<Forms:FormDatosGralPrnAd id="formDatosGralPrn" height="195" width="800" x="10" y="10"/>
 		</mx:Canvas>
 		<mx:Canvas id="cvnCalendario" label="Calendario" width="100%" height="100%">	
 			<Forms:FormCalendarioSolic id="formCalendarioSolic" x="75" height="205"/>
@@ -579,8 +566,8 @@
 		<mx:Canvas label="Recargos" width="100%" height="100%">	
 			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
 		</mx:Canvas>
-		<mx:Canvas label="Entrega/Pagos" width="100%" height="100%" id="canvas2">	
-			<Forms:FormEntregaSolic id="formEntregaSolic" x="134"/>
+		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
+			<Forms:FormEntregaSolic id="formEntregaSolic" x="76"/>
 		</mx:Canvas>
 		<mx:Canvas label="Relacionado" width="100%" height="100%">
 			<Forms:FormRelacionadoSolic id="formRelacSolic" x="141" y="48" width="540" height="110"/>

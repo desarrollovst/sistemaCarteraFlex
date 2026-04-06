@@ -90,6 +90,7 @@
 				cnvTasaFija.enabled = false;
 				cnvAplicaDesde.enabled = false;
 				cnvMetAplica.enabled = false;
+				activaContTasa();
 			}
 			
 			public function enviarDatosSolic(formData:DatosSolic):void{
