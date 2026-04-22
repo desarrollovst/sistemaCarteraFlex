@@ -282,8 +282,6 @@
 							formDatosGralSolic.activaControles(_xmlControl);
 							if(tipoProdRel == "01")
 								formCalendarioSolic.activaControles(_xmlControl);
-							else if(tipoProdRel == "04")
-								formCalendarioSol.activaControles(_xmlControl);
 							formTasasSolic.activaControles(_xmlControl);
 							formRecargosSolic.activaControles(_xmlControl);
 							formEntregaSolic.activaControles(_xmlControl);						
@@ -291,8 +289,6 @@
 								formDatosGralSolic.cargaParamsProd(_xmlControl);
 								if(tipoProdRel == "01")
 									formCalendarioSolic.cargaParamsProd(_xmlControl);
-								else if(tipoProdRel == "04")
-									formCalendarioSol.cargaParamsProd(_xmlControl);
 								formTasasSolic.cargaParamsProd(_xmlControl);	
 								formRecargosSolic.cargaParamsProd(_xmlControl);
 								formEntregaSolic.cargaParamsProd(_xmlControl);
@@ -324,13 +320,6 @@
 			}
 			
 			private function cambiaFormCal(tipoProd:String):void{
-				if(tipoProd == "04"){				
-					cvnCalendario.removeChild(formCalendarioSolic)
-					cvnCalendario.addChild(formCalendarioSol);					
-					formCalendarioSol.x = 75;
-					formCalendarioSol.height = 205;	
-					formCalendarioSol.init(info,tipoAccion,estatus);
-				} 
 			}
 			
 			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
@@ -349,6 +338,7 @@
 					if (_xmlAcred.elements().length() > 0){
 						formateaAcred(ciclo, fecSolic);
 						//asigna la lista de acreditados a los formularios que la implementan
+						formComSolic.cargaAcred(acredObj);
 						formEntregaSolic.cargaAcred(acredObj);
 						if(currentState == null)
 							dgAcred.dataProvider = Arr;
@@ -491,10 +481,9 @@
 					formDatosGralSolic.enviarDatosSolic(info);
 					if(tipoProdRel == "01")
 						formCalendarioSolic.enviarDatosSolic(info);
-					else if(tipoProdRel == "04")
-						formCalendarioSol.enviarDatosSolic(info);
 					formTasasSolic.enviarDatosSolic(info);
 					formRecargosSolic.enviarDatosSolic(info);
+					formComSolic.enviarDatosSolic(info);
 					formEntregaSolic.enviarDatosSolic(info);
 					formRelacSolic.enviarDatosSolic(info);
 					if(currentState == 'evaluacion'){
@@ -861,12 +850,9 @@
 				
 				if(tipoProdRel == "01")
 					formCalendarioSolic.init(info, 2, estatus);
-				else if(tipoProdRel == "04"){
-					cambiaFormCal(tipoProdRel);
-					formCalendarioSol.init(info, 2, estatus);
-				}
 				formTasasSolic.init(info, 2, estatus);
 				formRecargosSolic.init(info, 2, estatus);
+				formComSolic.init(info, 2, estatus);
 				formEntregaSolic.init(info, 2, estatus);
 				formRelacSolic.init(this.grupo, info, 2, estatus);
 				if(currentState == 'evaluacion'){
@@ -971,6 +957,7 @@
 						formCalendarioSolic.desactivaContHorario();
 						formCalendarioSolic.init(info, 1, estatus);
 						formTasasSolic.init(info, 1, estatus);
+						formComSolic.init(info, 1, estatus);
 						formEntregaSolic.init(info, 1, estatus);
 						formRelacSolic.addEventListener("validarCredRel",actualizaCredRelac);
 						formRelacSolic.init(grupo, info, 1, estatus);
@@ -1398,6 +1385,9 @@
 		</mx:Canvas>
 		<mx:Canvas label="Recargos" width="100%" height="100%">	
 			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
+		</mx:Canvas>
+		<mx:Canvas label="Comité" width="100%" height="100%">	
+			<Forms:FormComMinSolic id="formComSolic" x="110" height="205"/>
 		</mx:Canvas>
 		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
 			<Forms:FormEntregaSolicAd id="formEntregaSolic" x="75"/>

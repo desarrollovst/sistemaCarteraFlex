@@ -331,6 +331,7 @@
 					if (_xmlAcred.elements().length() > 0){
 						formateaAcred(ciclo, fecSolic);
 						//asigna la lista de acreditados a los formularios que la implementan
+						formComSolic.cargaAcred(acredObj);
 						formEntregaSolic.cargaAcred(acredObj);
 						if(currentState == null)
 							dgAcred.dataProvider = Arr;
@@ -475,6 +476,7 @@
 						formCalendarioSolic.enviarDatosSolic(info);
 					formTasasSolic.enviarDatosSolic(info);
 					formRecargosSolic.enviarDatosSolic(info);
+					formComSolic.enviarDatosSolic(info);
 					formEntregaSolic.enviarDatosSolic(info);
 					formRelacSolic.enviarDatosSolic(info);
 					if(currentState == 'evaluacion'){
@@ -688,7 +690,7 @@
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolic);
 						wsMS.setAccionSolic.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, 
-												 0, info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+												 info.porcGL, info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
 												 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 												 info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 												 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
@@ -702,7 +704,7 @@
 					else if(currentState == 'evaluacion'){
 						if(validaSituacion() == true){
 							wsMS.addEventListener(ResultEvent.RESULT, setAccionEvSolic);
-							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, 0,
+							wsMS.setAccionEvSolic.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado, info.porcGL,
 													   info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
 													   info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													   info.formaDist, "G", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
@@ -787,6 +789,7 @@
 				info.solicitado = _xmlSolic.Table[0].CANTSOLIC;
 				info.autorizado = _xmlSolic.Table[0].CANTAUTOR;
 				info.moneda = _xmlSolic.Table[0].CDGMO;
+				info.porcGL = _xmlSolic.Table[0].PORCGL;
 				
 				//Datos del calendario de la solicitud
 				info.periodicidad = _xmlSolic.Table[0].PERIODICIDAD;
@@ -844,6 +847,7 @@
 				formCalendarioSolic.init(info, 2, estatus);
 				formTasasSolic.init(info, 2, estatus);
 				formRecargosSolic.init(info, 2, estatus);
+				formComSolic.init(info, 2, estatus);
 				formEntregaSolic.init(info, 2, estatus);
 				formRelacSolic.init(this.grupo, info, 2, estatus);
 				if(currentState == 'evaluacion'){
@@ -948,6 +952,7 @@
 						formCalendarioSolic.desactivaContHorario();
 						formCalendarioSolic.init(info, 1, estatus);
 						formTasasSolic.init(info, 1, estatus);
+						formComSolic.init(info, 1, estatus);
 						formEntregaSolic.init(info, 1, estatus);
 						formRelacSolic.addEventListener("validarCredRel",actualizaCredRelac);
 						formRelacSolic.init(grupo, info, 1, estatus);
@@ -1253,7 +1258,7 @@
 			public function validaAutorizado():Boolean{
 				for(var i:int = 0; i < Arr.length; i++){
 					if(Arr[i].sitAcred == 'A' && Arr[i].cantAutor == 0){
-						Alert.show("El préstamo del acreditado " + Arr[i].nombre + " fue autorizado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+						Alert.show("El crédito del acreditado " + Arr[i].nombre + " fue autorizado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 						return false;
 					}
 				}
@@ -1365,7 +1370,7 @@
 			<Forms:FormProductoSolic id="formProdSolic" x="140" y="39" width="540" height="130"/>
 		</mx:Canvas>
 		<mx:Canvas label="Datos Generales" width="100%" height="100%">	
-			<Forms:FormDatosGralSolicAd id="formDatosGralSolic" height="195" width="800" x="10" y="10"/>
+			<Forms:FormDatosGralSolic id="formDatosGralSolic" height="195" width="800" x="10" y="10"/>
 		</mx:Canvas>
 		<mx:Canvas id="cvnCalendario" label="Calendario" width="100%" height="100%">	
 			<Forms:FormCalendarioSolic id="formCalendarioSolic" x="75" height="205"/>
@@ -1375,6 +1380,9 @@
 		</mx:Canvas>
 		<mx:Canvas label="Recargos" width="100%" height="100%">	
 			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
+		</mx:Canvas>
+		<mx:Canvas label="Comité" width="100%" height="100%">	
+			<Forms:FormComMinSolic id="formComSolic" x="110" height="205"/>
 		</mx:Canvas>
 		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
 			<Forms:FormEntregaSolic id="formEntregaSolic" x="75"/>

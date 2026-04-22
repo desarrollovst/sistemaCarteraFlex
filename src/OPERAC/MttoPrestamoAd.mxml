@@ -117,6 +117,7 @@
 					if (_xmlAcred.elements().length() > 0){
 						formateaAcred(ciclo, fecSolic);
 						//asigna la lista de acreditados a los formularios que la implementan
+						formComSolic.cargaAcred(acredObj);
 						formEntregaSolic.cargaAcred(acredObj);
 						dgAcredEnt.dataProvider = Arr;
 					} 	
@@ -389,6 +390,7 @@
 					cambiaFormCal(tipoProdRel);
 				formTasasSolic.init(info, 2, estatus);
 				formRecargosSolic.init(info, 2, estatus);
+				formComSolic.init(info, 2, estatus);
 				formEntregaSolic.init(info, 2, estatus);
 				formRelacSolic.init(this.grupo, info, 2, estatus);
 			}
@@ -581,6 +583,9 @@
 		<mx:Canvas label="Recargos" width="100%" height="100%">	
 			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
 		</mx:Canvas>
+		<mx:Canvas label="Comité" width="100%" height="100%">	
+			<Forms:FormComMinSolic id="formComSolic" x="110" height="205"/>
+		</mx:Canvas>
 		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
 			<Forms:FormEntregaSolicAd id="formEntregaSolic" x="134"/>
 		</mx:Canvas>
@@ -590,13 +595,13 @@
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="794" y="528" icon="@Embed(source='assets/images/iconCancel.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="746" y="528" icon="@Embed(source='assets/images/iconAccept.png')" click="enviar()" width="40"/>
-	<mx:Canvas x="87" y="10" width="670" height="37" styleName="canvasMod">
-		<mx:Label x="13" y="8" text="Grupo Solidario:"/>
+	<mx:Canvas x="87" y="10" width="670" height="34" styleName="canvasMod">
+		<mx:Label x="9" y="6" text="Grupo Solidario:"/>
 		<mx:TextInput id="txtGrupo" x="99" y="5" width="199" editable="false"/>
-		<mx:Label x="311" y="8" text="Ciclo:"/>
-		<mx:Label x="422" y="8" text="Municipio:"/>
+		<mx:Label x="315" y="6" text="Ciclo:"/>
+		<mx:Label x="418" y="6" text="Sucursal:"/>
 		<mx:TextInput x="477" y="5" width="181" id="txtMunicipio" editable="false"/>
-		<mx:TextInput x="345" y="5" width="45" id="txtCiclo" editable="false"/>
+		<mx:TextInput x="354" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>
 	<mx:Canvas x="10" y="311" width="824" height="209" styleName="canvasMod" id="canvas1">
 		<mx:DataGrid id="dgAcredEnt" x="10" y="10" width="802" height="187" 

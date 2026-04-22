@@ -472,7 +472,7 @@ package Data
 			return cadena;
 		}
 		
-		public function rellenarCadena(caracter:String, longitud):String{
+		public function rellenarCadena(caracter:String, longitud:int):String{
 			var cadena:String = "";
 			
 			for(var i:int = 0; i < longitud; i++)

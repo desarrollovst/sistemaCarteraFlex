@@ -374,7 +374,8 @@
 	<mx:Label x="246.5" y="119" text="Pago Microseguro"/>
 	<mx:Canvas id="cnvMicroSeg" x="246.5" y="138" width="385" height="40" styleName="canvasMod">
 		<mx:RadioButtonGroup id="pagoMicroSeg"/>
-		<mx:RadioButton id="rdbFinanciado" x="78.25" y="7" label="Financiado" groupName="pagoMicroSeg" value="F"/>
-		<mx:RadioButton id="rdbUnaExh" x="186.75" y="7" label="Una sola exhibición" groupName="pagoMicroSeg" value="P"/>
+		<mx:RadioButton id="rdbFinanciado" x="10" y="7" label="Financiado" groupName="pagoMicroSeg" value="F"/>
+		<mx:RadioButton id="rdbUnaExh" x="132.5" y="7" label="Una sola exhibición" groupName="pagoMicroSeg" value="P"/>
+		<mx:RadioButton id="rdbSinSeguro" x="295" y="7" label="Sin Seguro" groupName="pagoMicroSeg" value=""/>
 	</mx:Canvas>
 </mx:Canvas>

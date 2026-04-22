@@ -1563,7 +1563,7 @@
 			<Forms:FormProcSolic id="formProcSolic" x="110" height="205"/>
 		</mx:Canvas>
 		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
-			<Forms:FormEntregaSolic id="formEntregaSolic" x="75"/>
+			<Forms:FormEntregaSolic id="formEntregaSolic" x="76"/>
 		</mx:Canvas>
 		<mx:Canvas label="Lugar de Reunión" width="100%" height="100%">
 			<Forms:FormLugarSolic id="formLugarSolic" x="155" width="510" height="211" y="4"/>	
