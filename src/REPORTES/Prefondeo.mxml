@@ -77,7 +77,7 @@
 						lblTotal.text = "";
 					}
 				});
-				wsRep.getRepPrefondeoAgrup.send(dtfFecha.text);	
+				wsRep.getRepPrefondeoAgrup.send(dtfFecha.text, dtfFechaFinal.text);	
 			}			
 						
 			public function initApp():void{
@@ -95,6 +95,7 @@
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
 			public function valida():Boolean{
@@ -105,18 +106,24 @@
 				return true;
 			}
 			
+			private function validarFecha():void{
+				dtfFecha.selectedDate = global.validarFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+			}
+			
 		]]>
 	</mx:Script>
 	<mx:CurrencyFormatter id="numVal" decimalSeparatorFrom="." precision="2" thousandsSeparatorFrom="," currencySymbol="$"/>
 	
-	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53.5" width="140.04999" height="68.5" styleName="canvasMod">
-		<mx:Label x="13.5" y="10" text="Fecha Inicio" width="81" height="20"/>
-		<mx:DateField id="dtfFecha" x="13.5" y="28.5" width="111"/>
+	<mx:Label id="lblTitulo" x="18" y="10" width="270" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="270.05" height="68.5" styleName="canvasMod">
+		<mx:Label x="13.5" y="10" text="Fecha Inicial" height="20"/>
+		<mx:DateField id="dtfFecha" x="13.5" y="28.5" width="111" change="validarFecha()"/>
+		<mx:Label x="141.05" y="10" text="Fecha Final" height="20"/>
+		<mx:DateField id="dtfFechaFinal" x="141.05" y="28.5" width="111" change="validarFecha()"/>
 	</mx:Canvas>
-	<mx:Button x="71.25" y="130" label="Generar" click="generar()"/>
-	<mx:Button x="149.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
-	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="77.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="155.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección"/>
 	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
 		<mx:columns>
 			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="80"/>
