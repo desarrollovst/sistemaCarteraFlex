@@ -48,8 +48,8 @@
 			public function initApp():void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Reporte de Préstamos"
 				lblTitulo.text = titulo.toUpperCase();
 				rep = "-1";

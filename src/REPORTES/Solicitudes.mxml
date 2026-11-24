@@ -20,7 +20,6 @@
 			import mx.rpc.soap.WebService;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
-			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;
 			import mx.utils.ObjectUtil;
 			import mx.validators.Validator;
@@ -65,8 +64,8 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Reporte de Solicitudes";
 				comRepSol.init("-1", titulo, "");
 				comRepSol.addEventListener("enviar",generar);	
@@ -95,7 +94,6 @@
 				<mx:DataGridColumn headerText="AUTORIZA" dataField="AUTCARPE"/>
 				<mx:DataGridColumn headerText="FECHA AUTORIZA" dataField="FAUTCAR"/>
 				<mx:DataGridColumn headerText="TIEMPO AUTORIZA" dataField="TIEMPOAUT"/>
-				<mx:DataGridColumn headerText="COD ASESOR" dataField="COD_ASESOR"/>
 				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR"/>
 				<mx:DataGridColumn headerText="COD REGION" dataField="COD_REGION"/>
 				<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION"/>

@@ -27,7 +27,7 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			public function init(tipo:String, fecha:String):void{
+			public function init(tipo:String, fecha:String, cuenta:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
@@ -47,12 +47,13 @@
 				});
 				params[0] = tipo;
 				params[1] = fecha;
+				params[2] = cuenta;
 				wsCat.getListado.send(85, params);
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Detalle de Pagos Duplicados";
 				this.title = titulo;
 			}

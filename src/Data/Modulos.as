@@ -382,6 +382,7 @@ package Data
 		public var frm_352:SolicituddeCreditoAlternativo;
 		public var frm_353:EvaluaciondeCreditoAlternativo;
 		public var frm_354:EntregadeCreditoAlternativo;
+		public var frm_355:MicrosegurosNoReportados;
 
 		public function Modulos()
 		{

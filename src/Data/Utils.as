@@ -42,7 +42,7 @@ package Data
 			xmlCC = xmlResult.child("wsdlCC");
 			xmlRep = xmlResult.child("wsdlRep");
 			xmlRepCont = xmlResult.child("wsdlRepCont");
-			xmlAdCred = xmlAdCred.child("wsdlAdCred");
+			xmlAdCred = xmlResult.child("wsdlAdCred");
 			
 			strWsdl = xmlL.toString();
 			strWsdlAdmin = xmlAdmin.toString();
@@ -60,6 +60,13 @@ package Data
 			ws.loadWSDL();	
 			ws.addEventListener(FaultEvent.FAULT, wsFault);						
 			return ws;		
+		}
+		
+		public function initWsAdCred(ws:WebService):WebService{
+			ws.wsdl = this.strWsAdCred;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);						
+			return ws;
 		}
 		
 		public function initWsAdmin(ws:WebService):WebService{

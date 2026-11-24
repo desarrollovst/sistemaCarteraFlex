@@ -65,7 +65,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsRep.getRepMicroseguros.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio());
+					wsRep.getRepMicroseguros.send(compMesAnio.obtieneMes(), compMesAnio.obtieneAnio(), "S");
 				}	
 			}			
 						

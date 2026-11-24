@@ -136,7 +136,8 @@
 			<mx:DataGridColumn headerText="FORMA ENTREGA" dataField="FORMAENTREGA" width="110"/>
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUA" width="100"/>
 			<mx:DataGridColumn headerText="CANT SOLICITADA" dataField="CANTSOLIC" width="120"/>
-			<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANTAUTOR" width="125"/>			
+			<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANTAUTOR" width="125"/>
+			<mx:DataGridColumn headerText="ENTREGADO REAL" dataField="ENTRREAL" width="125"/>
 			<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>-->
 			<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="150"/>
 		</mx:columns>

@@ -54,10 +54,9 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.soap.WebService;
 			
-			public var wsMS:WebService;
 			public var titulo:String;
 			private var fecha:String;
-			private var info:String;
+			private var cuenta:String;
 			private var usuario:String;
 			private var du:Utils;
 			private var global:Globales;
@@ -65,26 +64,14 @@
 			private var _xmlRep:XML = new XML();
 						
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Registro de Pagos PayCash";
 				lblTitulo.text = titulo.toUpperCase();
 				usuario = global.obtenerUsuario();
 				limpiar();
 			}		
 			
-			private function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlAdCred.toString();
-				wsMS.loadWSDL();
-			}	
-			
-			private function initConexionRep():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			private function limpiar():void{
 				var fec:Date;
 				if (currentState == "resultado")
@@ -99,34 +86,38 @@
 				var comDetalle:DetallePagosDup = new DetallePagosDup();
 				comDetalle = DetallePagosDup(PopUpManager.createPopUp(objMtto,DetallePagosDup,true));
 				PopUpManager.centerPopUp(comDetalle);
-				comDetalle.init(tipo.toString(), this.fecha);	
+				comDetalle.init(tipo.toString(), fecha, cuenta);	
 			}
 			
 			private function registrar():void{
 				var movimientos:Number = 0;
 				var montoMovs:Number = 0;
-				if(validar()){			
-					this.fecha = dtfFecha.text;
+				if(validar()){
+					var wsAdCred:WebService = new WebService;
+					fecha = dtfFecha.text;
 					
-					initConexion();
+					du.initWsAdCred(wsAdCred);
 					du.sCursor();
 					global.bloquear();
 					
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+					du.ejecutaWsMethod(wsAdCred,function(evt:ResultEvent):void{																				
 						var res:String = evt.result.toString();
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsAdCred);
 						
-						if(res.substr(0,1) == "1"){
-							initConexionRep();
+						if(res.substr(0, 1) == "1"){
+							var wsRep:WebService = new WebService;
+							cuenta = res.substr(2, 2);
+							
+							du.initWsRep(wsRep);
 							du.sCursor();
 							
-							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+							du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void{																				
 								_xmlRep = new XML(evt.result.toString());
 								
 								du.rCursor();
-								du.closeWs(wsMS);
+								du.closeWs(wsRep);
 								global.desbloquear();
 								
 								if(_xmlRep.elements().length() > 0){
@@ -144,14 +135,14 @@
 								else
 									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							});
-							wsMS.getRepPagosPayCash.send(fecha);
+							wsRep.getRepPagosPayCash.send(fecha);
 						}
 						else{
-							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);	
+							Alert.show(res.substr(2, res.length), titulo, 4, null, null, global.iAlert);	
 							global.desbloquear();
 						}
 					});
-					wsMS.setRegistroPagosPayCash.send(fecha, usuario);
+					wsAdCred.setRegistroPagosPayCash.send(fecha, usuario);
 				}
 			}
 				
@@ -165,11 +156,11 @@
 		]]>
 	</mx:Script>
 	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53" width="264.05" height="40.5" styleName="canvasMod" id="canvas1">
-		<mx:Label x="55.5" y="8.5" text="Fecha:" textAlign="right" id="label1"/>
+	<mx:Label id="lblCriterios" x="18" y="34" text="Criterios de Selección"/>
+	<mx:Canvas id="cnvCriterios" x="17.95" y="53" width="264.05" height="40.5" styleName="canvasMod">
+		<mx:Label id="lblFecha" x="55.5" y="8.5" text="Fecha:" textAlign="right"/>
 		<mx:DateField id="dtfFecha" x="101.5" y="8" width="111"/>
 	</mx:Canvas>
-	<mx:Button x="73.5" y="105" label="Registrar" click="registrar()" id="btnRegistrar"/>
-	<mx:Button x="158.5" y="105" label="Limpiar" click="limpiar()" id="btnLimpiar"/>
-	<mx:Label x="18" y="34" text="Criterios de Selección" id="label2"/>
+	<mx:Button id="btnRegistrar" x="73.5" y="105" label="Registrar" click="registrar()"/>
+	<mx:Button id="btnLimpiar" x="158.5" y="105" label="Limpiar" click="limpiar()"/>
 </mx:Canvas>
